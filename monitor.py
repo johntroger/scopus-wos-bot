@@ -191,6 +191,23 @@ def get_latest_scopus_excel_url() -> Tuple[str, str]:
     return full_url, filename
 
 
+def read_scopus_sheet_auto_header(excel_bytes: io.BytesIO, sheet_name: str) -> pd.DataFrame:
+    """Đọc sheet Excel của Scopus và tự động phát hiện dòng tiêu đề (tránh các dòng ghi chú ở đầu sheet)."""
+    excel_bytes.seek(0)
+    df_preview = pd.read_excel(excel_bytes, sheet_name=sheet_name, header=None, nrows=15, dtype=str)
+    header_row_idx = 0
+    for idx, row in df_preview.iterrows():
+        row_vals = " | ".join([str(v).strip().lower() for v in row.values if pd.notna(v)])
+        if ("source title" in row_vals) or ("sourcerecord id" in row_vals) or ("reason for discontinuation" in row_vals):
+            header_row_idx = int(idx)
+            break
+
+    excel_bytes.seek(0)
+    df = pd.read_excel(excel_bytes, sheet_name=sheet_name, header=header_row_idx, dtype=str)
+    df.columns = [str(c).strip() for c in df.columns]
+    return df
+
+
 def check_scopus_updates(state: dict, watchlist: dict, lookup_db: dict) -> List[str]:
     """
     Tải và phân tích bảng tính Scopus Source List mới nhất:
@@ -207,10 +224,14 @@ def check_scopus_updates(state: dict, watchlist: dict, lookup_db: dict) -> List[
 
     is_first_run = not state.get("known_discontinued_ids")
     last_file = state.get("last_scopus_file", "")
-    has_lookup_index = bool(lookup_db.get("discontinued_journals"))
+    disc_list_existing = lookup_db.get("discontinued_journals", [])
+    has_valid_lookup = bool(
+        disc_list_existing
+        and disc_list_existing[0].get("title") != disc_list_existing[0].get("source_id")
+    )
 
-    # Nếu tên file chưa đổi, đã có dữ liệu khởi tạo và đã có file tra cứu thì không cần tải lại 26MB
-    if filename == last_file and not is_first_run and has_lookup_index:
+    # Nếu tên file chưa đổi, đã có dữ liệu khởi tạo và đã có file tra cứu hợp lệ thì không cần tải lại 26MB
+    if filename == last_file and not is_first_run and has_valid_lookup:
         print(f"[Scopus] File {filename} đã được kiểm tra và tạo chỉ mục tra cứu trước đó.")
         return messages
 
@@ -226,37 +247,48 @@ def check_scopus_updates(state: dict, watchlist: dict, lookup_db: dict) -> List[
     disc_sheet_name = next((s for s in sheet_names if "discontinued" in s.lower()), None)
     main_sheet_name = next((s for s in sheet_names if "scopus sources" in s.lower()), sheet_names[0])
 
-    excel_bytes.seek(0)
-    df_main = pd.read_excel(excel_bytes, sheet_name=main_sheet_name, dtype=str)
-    df_main.columns = [str(c).strip() for c in df_main.columns]
+    df_main = read_scopus_sheet_auto_header(excel_bytes, main_sheet_name)
+    print(f"[Scopus] Cột của sheet '{main_sheet_name}': {list(df_main.columns[:8])}")
 
     source_id_col = next((c for c in df_main.columns if "sourcerecord id" in c.lower() or "source id" in c.lower()), df_main.columns[0])
     asjc_col = next((c for c in df_main.columns if "asjc" in c.lower()), None)
+    main_pub_col = next((c for c in df_main.columns if "publisher" in c.lower()), None)
 
     asjc_prefixes = tuple(watchlist.get("asjc_prefixes", ["14", "20"]))
     watch_issns = {normalize_issn(x) for x in watchlist.get("issns", []) if normalize_issn(x)}
     watch_titles = {t.strip().lower() for t in watchlist.get("titles", []) if t.strip()}
 
     econ_bus_source_ids: Set[str] = set()
+    publisher_by_sid: Dict[str, str] = {}
     for _, row in df_main.iterrows():
         sid = clean_str(row.get(source_id_col, ""))
+        if main_pub_col and sid:
+            pub_val = clean_str(row.get(main_pub_col, ""))
+            if pub_val:
+                publisher_by_sid[sid] = pub_val
         asjc_val = clean_str(row.get(asjc_col, "")) if asjc_col else ""
         codes = [c.strip() for c in re.split(r"[;,\s]+", asjc_val) if c.strip()]
         if any(c.startswith(asjc_prefixes) for c in codes):
             econ_bus_source_ids.add(sid)
 
     if disc_sheet_name:
-        excel_bytes.seek(0)
-        df_disc = pd.read_excel(excel_bytes, sheet_name=disc_sheet_name, dtype=str)
-        df_disc.columns = [str(c).strip() for c in df_disc.columns]
+        df_disc = read_scopus_sheet_auto_header(excel_bytes, disc_sheet_name)
+        print(f"[Scopus] Cột của sheet '{disc_sheet_name}': {list(df_disc.columns)}")
 
         d_id_col = next((c for c in df_disc.columns if "source id" in c.lower() or "sourcerecord" in c.lower()), df_disc.columns[0])
         d_title_col = next((c for c in df_disc.columns if "source title" in c.lower() or "title" in c.lower()), df_disc.columns[1])
-        d_issn_col = next((c for c in df_disc.columns if "issn" in c.lower() and "e-issn" not in c.lower()), None)
+        d_issn_col = next((c for c in df_disc.columns if "issn" in c.lower() and "e-issn" not in c.lower() and "eissn" not in c.lower()), None)
         d_eissn_col = next((c for c in df_disc.columns if "e-issn" in c.lower() or "eissn" in c.lower()), None)
         d_reason_col = next((c for c in df_disc.columns if "reason" in c.lower()), None)
         d_pub_col = next((c for c in df_disc.columns if "publisher" in c.lower()), None)
-        d_year_col = next((c for c in df_disc.columns if "year" in c.lower() or "discontinued" in c.lower() or "coverage" in c.lower()), None)
+        d_year_col = next(
+            (
+                c for c in df_disc.columns
+                if c not in (d_id_col, d_title_col, d_issn_col, d_eissn_col, d_reason_col, d_pub_col)
+                and any(k in c.lower() for k in ["year", "discontinued", "coverage", "last", "issue", "completion"])
+            ),
+            None,
+        )
 
         known_ids = set(state.get("known_discontinued_ids", []))
         current_ids = set()
@@ -276,7 +308,7 @@ def check_scopus_updates(state: dict, watchlist: dict, lookup_db: dict) -> List[
             issn = clean_str(row.get(d_issn_col, "")) if d_issn_col else ""
             eissn = clean_str(row.get(d_eissn_col, "")) if d_eissn_col else ""
             reason = clean_str(row.get(d_reason_col, "")) if d_reason_col else "Discontinued"
-            publisher = clean_str(row.get(d_pub_col, "")) if d_pub_col else "N/A"
+            publisher = (clean_str(row.get(d_pub_col, "")) if d_pub_col else "") or publisher_by_sid.get(sid, "N/A")
             disc_year = clean_str(row.get(d_year_col, "")) if d_year_col else ""
 
             discontinued_records.append({
