@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Hệ thống Tự động Theo dõi & Cảnh báo Tạp chí bị loại khỏi Scopus + Cảnh báo sớm Retraction Watch / WoS
-Hỗ trợ gửi thông báo tự động qua Zalo Bot (bot.zaloplatforms.com) và Telegram Bot.
+Hệ thống Tự động Theo dõi, Cảnh báo & Tra cứu 2 chiều Tạp chí bị loại khỏi Scopus + Retraction Watch
+Hỗ trợ gửi thông báo và trả lời tra cứu tự động qua Zalo Bot (bot.zaloplatforms.com) và Telegram Bot.
 """
 
 import io
@@ -21,6 +21,7 @@ RETRACTION_WATCH_CSV_URL = "https://gitlab.com/crossref/retraction-watch-data/-/
 
 STATE_FILE = "state.json"
 WATCHLIST_FILE = "watchlist.json"
+LOOKUP_INDEX_FILE = "discontinued_lookup.json"
 
 HEADERS = {
     "User-Agent": (
@@ -32,7 +33,7 @@ HEADERS = {
 
 
 # ==============================================================================
-# 1. MODULE GỬI THÔNG BÁO QUA ZALO BOT & TELEGRAM BOT
+# 1. MODULE GỬI & NHẬN TIN NHẮN QUA ZALO BOT & TELEGRAM BOT
 # ==============================================================================
 
 def split_text_chunks(text: str, max_length: int = 1850) -> List[str]:
@@ -57,10 +58,10 @@ def split_text_chunks(text: str, max_length: int = 1850) -> List[str]:
     return chunks
 
 
-def send_zalo_message(text: str) -> bool:
+def send_zalo_message(text: str, target_chat_id: str = "") -> bool:
     """Gửi tin nhắn qua Zalo Bot Platform (https://bot.zaloplatforms.com)."""
     bot_token = os.environ.get("ZALO_BOT_TOKEN", "").strip()
-    chat_id = os.environ.get("ZALO_CHAT_ID", "").strip()
+    chat_id = (target_chat_id or os.environ.get("ZALO_CHAT_ID", "")).strip()
 
     if not bot_token or not chat_id:
         print("[Zalo] Chưa cấu hình ZALO_BOT_TOKEN hoặc ZALO_CHAT_ID. Bỏ qua gửi Zalo.")
@@ -79,7 +80,7 @@ def send_zalo_message(text: str) -> bool:
             resp = requests.post(url, json=payload, timeout=20)
             data = resp.json()
             if resp.status_code == 200 and data.get("ok", True):
-                print(f"[Zalo] Đã gửi thành công phần {idx}/{len(chunks)}.")
+                print(f"[Zalo] Đã gửi thành công phần {idx}/{len(chunks)} tới {chat_id}.")
             else:
                 print(f"[Zalo] Lỗi từ Zalo API: {resp.status_code} - {data}")
                 success = False
@@ -90,10 +91,10 @@ def send_zalo_message(text: str) -> bool:
     return success
 
 
-def send_telegram_message(text: str) -> bool:
+def send_telegram_message(text: str, target_chat_id: str = "") -> bool:
     """Gửi tin nhắn qua Telegram Bot API."""
     bot_token = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
-    chat_id = os.environ.get("TELEGRAM_CHAT_ID", "").strip()
+    chat_id = (target_chat_id or os.environ.get("TELEGRAM_CHAT_ID", "")).strip()
 
     if not bot_token or not chat_id:
         print("[Telegram] Chưa cấu hình TELEGRAM_BOT_TOKEN hoặc TELEGRAM_CHAT_ID. Bỏ qua gửi Telegram.")
@@ -112,7 +113,7 @@ def send_telegram_message(text: str) -> bool:
         try:
             resp = requests.post(url, json=payload, timeout=20)
             if resp.status_code == 200:
-                print(f"[Telegram] Đã gửi thành công phần {idx}/{len(chunks)}.")
+                print(f"[Telegram] Đã gửi thành công phần {idx}/{len(chunks)} tới {chat_id}.")
             else:
                 print(f"[Telegram] Lỗi từ Telegram API: {resp.status_code} - {resp.text}")
                 success = False
@@ -159,8 +160,15 @@ def normalize_issn(val: str) -> str:
     return cleaned
 
 
+def clean_str(val) -> str:
+    if val is None or pd.isna(val):
+        return ""
+    s = str(val).strip()
+    return "" if s.lower() == "nan" else s
+
+
 # ==============================================================================
-# 3. KIỂM TRA SCOPUS DISCONTINUED & INACTIVE SOURCES
+# 3. KIỂM TRA SCOPUS & TẠO CHỈ MỤC TRA CỨU (LOOKUP INDEX)
 # ==============================================================================
 
 def get_latest_scopus_excel_url() -> Tuple[str, str]:
@@ -169,7 +177,6 @@ def get_latest_scopus_excel_url() -> Tuple[str, str]:
     resp.raise_for_status()
     html = resp.text
 
-    # Tìm link chứa ext_list_*.xlsx trên Contentful CDN của Elsevier
     matches = re.findall(
         r'(?:https?:)?//downloads\.ctfassets\.net/[^"\'\s<>]+/ext_list_[^"\'\s<>]+\.xlsx',
         html,
@@ -184,12 +191,11 @@ def get_latest_scopus_excel_url() -> Tuple[str, str]:
     return full_url, filename
 
 
-def check_scopus_updates(state: dict, watchlist: dict) -> List[str]:
+def check_scopus_updates(state: dict, watchlist: dict, lookup_db: dict) -> List[str]:
     """
     Tải và phân tích bảng tính Scopus Source List mới nhất:
     1. Kiểm tra sheet 'Discontinued Titles ...' để phát hiện tạp chí mới bị loại vì lý do chất lượng.
-    2. Kiểm tra sheet 'Scopus Sources ...' để tra cứu mã ngành ASJC (14xx Quản trị/Kinh doanh, 20xx Kinh tế)
-       và kiểm tra xem có tạp chí nào trong Watchlist bị chuyển sang 'Inactive' hay không.
+    2. Xuất toàn bộ danh sách Discontinued ra `discontinued_lookup.json` để phục vụ Bot tra cứu 2 chiều.
     """
     messages = []
     try:
@@ -201,13 +207,14 @@ def check_scopus_updates(state: dict, watchlist: dict) -> List[str]:
 
     is_first_run = not state.get("known_discontinued_ids")
     last_file = state.get("last_scopus_file", "")
+    has_lookup_index = bool(lookup_db.get("discontinued_journals"))
 
-    # Nếu tên file chưa đổi và đã có dữ liệu khởi tạo thì không cần tải lại 26MB mỗi ngày
-    if filename == last_file and not is_first_run:
-        print(f"[Scopus] File {filename} đã được kiểm tra trước đó. Không có bản cập nhật tháng mới.")
+    # Nếu tên file chưa đổi, đã có dữ liệu khởi tạo và đã có file tra cứu thì không cần tải lại 26MB
+    if filename == last_file and not is_first_run and has_lookup_index:
+        print(f"[Scopus] File {filename} đã được kiểm tra và tạo chỉ mục tra cứu trước đó.")
         return messages
 
-    print(f"[Scopus] Đang tải file {filename} để phân tích...")
+    print(f"[Scopus] Đang tải file {filename} để phân tích & cập nhật cơ sở dữ liệu tra cứu...")
     resp = requests.get(excel_url, headers=HEADERS, timeout=120)
     resp.raise_for_status()
     excel_bytes = io.BytesIO(resp.content)
@@ -219,15 +226,11 @@ def check_scopus_updates(state: dict, watchlist: dict) -> List[str]:
     disc_sheet_name = next((s for s in sheet_names if "discontinued" in s.lower()), None)
     main_sheet_name = next((s for s in sheet_names if "scopus sources" in s.lower()), sheet_names[0])
 
-    # Đọc sheet chính để lấy thông tin ASJC cho các Source ID và kiểm tra Watchlist
     excel_bytes.seek(0)
     df_main = pd.read_excel(excel_bytes, sheet_name=main_sheet_name, dtype=str)
     df_main.columns = [str(c).strip() for c in df_main.columns]
 
-    # Map Source ID -> ASJC codes & Subject Area từ sheet chính
     source_id_col = next((c for c in df_main.columns if "sourcerecord id" in c.lower() or "source id" in c.lower()), df_main.columns[0])
-    title_col = next((c for c in df_main.columns if "source title" in c.lower()), df_main.columns[1])
-    status_col = next((c for c in df_main.columns if "active or inactive" in c.lower()), None)
     asjc_col = next((c for c in df_main.columns if "asjc" in c.lower()), None)
 
     asjc_prefixes = tuple(watchlist.get("asjc_prefixes", ["14", "20"]))
@@ -236,13 +239,12 @@ def check_scopus_updates(state: dict, watchlist: dict) -> List[str]:
 
     econ_bus_source_ids: Set[str] = set()
     for _, row in df_main.iterrows():
-        sid = str(row.get(source_id_col, "")).strip()
-        asjc_val = str(row.get(asjc_col, "")) if asjc_col else ""
+        sid = clean_str(row.get(source_id_col, ""))
+        asjc_val = clean_str(row.get(asjc_col, "")) if asjc_col else ""
         codes = [c.strip() for c in re.split(r"[;,\s]+", asjc_val) if c.strip()]
         if any(c.startswith(asjc_prefixes) for c in codes):
             econ_bus_source_ids.add(sid)
 
-    # Đọc sheet Discontinued Titles
     if disc_sheet_name:
         excel_bytes.seek(0)
         df_disc = pd.read_excel(excel_bytes, sheet_name=disc_sheet_name, dtype=str)
@@ -250,35 +252,47 @@ def check_scopus_updates(state: dict, watchlist: dict) -> List[str]:
 
         d_id_col = next((c for c in df_disc.columns if "source id" in c.lower() or "sourcerecord" in c.lower()), df_disc.columns[0])
         d_title_col = next((c for c in df_disc.columns if "source title" in c.lower() or "title" in c.lower()), df_disc.columns[1])
-        d_issn_col = next((c for c in df_disc.columns if "issn" in c.lower()), None)
+        d_issn_col = next((c for c in df_disc.columns if "issn" in c.lower() and "e-issn" not in c.lower()), None)
         d_eissn_col = next((c for c in df_disc.columns if "e-issn" in c.lower() or "eissn" in c.lower()), None)
         d_reason_col = next((c for c in df_disc.columns if "reason" in c.lower()), None)
         d_pub_col = next((c for c in df_disc.columns if "publisher" in c.lower()), None)
+        d_year_col = next((c for c in df_disc.columns if "year" in c.lower() or "discontinued" in c.lower() or "coverage" in c.lower()), None)
 
         known_ids = set(state.get("known_discontinued_ids", []))
         current_ids = set()
+        discontinued_records = []
 
         new_watchlist_disc = []
         new_econ_disc = []
         new_other_disc = []
 
         for _, row in df_disc.iterrows():
-            sid = str(row.get(d_id_col, "")).strip()
-            if not sid or sid.lower() == "nan":
+            sid = clean_str(row.get(d_id_col, ""))
+            if not sid or not sid.isdigit():
                 continue
             current_ids.add(sid)
 
-            if sid not in known_ids:
-                title = str(row.get(d_title_col, "N/A")).strip()
-                issn = str(row.get(d_issn_col, "")).strip() if d_issn_col else ""
-                eissn = str(row.get(d_eissn_col, "")).strip() if d_eissn_col else ""
-                reason = str(row.get(d_reason_col, "Discontinued")).strip() if d_reason_col else "Discontinued"
-                publisher = str(row.get(d_pub_col, "N/A")).strip() if d_pub_col else "N/A"
+            title = clean_str(row.get(d_title_col, "")) or "N/A"
+            issn = clean_str(row.get(d_issn_col, "")) if d_issn_col else ""
+            eissn = clean_str(row.get(d_eissn_col, "")) if d_eissn_col else ""
+            reason = clean_str(row.get(d_reason_col, "")) if d_reason_col else "Discontinued"
+            publisher = clean_str(row.get(d_pub_col, "")) if d_pub_col else "N/A"
+            disc_year = clean_str(row.get(d_year_col, "")) if d_year_col else ""
 
+            discontinued_records.append({
+                "source_id": sid,
+                "title": title,
+                "issn": issn,
+                "eissn": eissn,
+                "publisher": publisher,
+                "reason": reason,
+                "discontinued_info": disc_year,
+            })
+
+            if sid not in known_ids:
                 norm_issn = normalize_issn(issn)
                 norm_eissn = normalize_issn(eissn)
-                issn_display = issn if issn and issn != "nan" else (eissn if eissn and eissn != "nan" else "N/A")
-
+                issn_display = issn or eissn or "N/A"
                 entry_str = f"• {title} (ISSN: {issn_display}) | NXB: {publisher} | Lý do: {reason}"
 
                 if (norm_issn in watch_issns) or (norm_eissn in watch_issns) or (title.lower() in watch_titles):
@@ -291,6 +305,11 @@ def check_scopus_updates(state: dict, watchlist: dict) -> List[str]:
                 else:
                     new_other_disc.append(entry_str)
 
+        # Lưu danh sách chi tiết vào lookup_db để phục vụ tra cứu
+        lookup_db["scopus_version"] = disc_sheet_name
+        lookup_db["updated_at"] = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+        lookup_db["discontinued_journals"] = discontinued_records
+
         state["known_discontinued_ids"] = sorted(list(current_ids))
         state["last_scopus_file"] = filename
 
@@ -298,8 +317,8 @@ def check_scopus_updates(state: dict, watchlist: dict) -> List[str]:
             msg = [
                 f"✅ KHỞI TẠO HỆ THỐNG THEO DÕI SCOPUS THÀNH CÔNG",
                 f"• Bản dữ liệu hiện tại: {filename} ({disc_sheet_name})",
-                f"• Tổng số tạp chí trong danh sách Discontinued đã ghi nhận làm mốc: {len(current_ids)} tạp chí.",
-                f"• Từ lần cập nhật tiếp theo của Elsevier, Bot sẽ gửi cảnh báo chi tiết các tạp chí mới bị loại."
+                f"• Tổng số tạp chí trong danh sách Discontinued đã lưu vào bộ nhớ tra cứu: {len(current_ids)} tạp chí.",
+                f"• Bạn có thể nhắn tên tạp chí hoặc mã ISSN trực tiếp cho Bot để kiểm tra xem tạp chí đó có bị Discontinued hay không!"
             ]
             messages.append("\n".join(msg))
         else:
@@ -331,15 +350,14 @@ def check_scopus_updates(state: dict, watchlist: dict) -> List[str]:
 
 
 # ==============================================================================
-# 4. KIỂM TRA RETRACTION WATCH (CẢNH BÁO SỚM TRƯỚC KHI WOS/SCOPUS LOẠI)
+# 4. KIỂM TRA RETRACTION WATCH & CẬP NHẬT THỐNG KÊ RÚT BÀI THEO TẠP CHÍ
 # ==============================================================================
 
-def check_retraction_watch(state: dict, watchlist: dict) -> List[str]:
+def check_retraction_watch(state: dict, watchlist: dict, lookup_db: dict) -> List[str]:
     """
     Đọc dữ liệu CSV mới nhất từ GitLab Crossref / Retraction Watch:
-    - Phát hiện các bài báo mới bị rút (Retracted) hoặc bày tỏ quan ngại (Expression of Concern)
-      thuộc các tạp chí trong Watchlist hoặc thuộc lĩnh vực Kinh tế - Quản trị - Marketing.
-    - Cảnh báo sớm các tạp chí có nhiều bài bị rút cùng lúc (dấu hiệu sắp bị WoS đưa vào 'On Hold').
+    - Phát hiện các bài báo mới bị rút.
+    - Cập nhật thống kê số bài bị rút của các tạp chí vào `lookup_db` để tra cứu.
     """
     messages = []
     print("[Retraction Watch] Đang kiểm tra dữ liệu mới nhất từ GitLab Crossref...")
@@ -355,11 +373,19 @@ def check_retraction_watch(state: dict, watchlist: dict) -> List[str]:
         print("[Retraction Watch] Không tìm thấy cột 'Record ID'.")
         return messages
 
+    # Lưu thống kê số lượng bài bị rút theo từng tạp chí (cho các tạp chí có >= 2 bài bị rút)
+    journal_counts_all = df["Journal"].dropna().str.strip().value_counts()
+    retraction_stats = {
+        str(j_name): int(cnt)
+        for j_name, cnt in journal_counts_all.items()
+        if int(cnt) >= 2 and str(j_name).lower() != "nan"
+    }
+    lookup_db["retraction_counts_by_journal"] = retraction_stats
+
     df["Record_ID_Int"] = pd.to_numeric(df["Record ID"], errors="coerce").fillna(0).astype(int)
     max_record_id = int(df["Record_ID_Int"].max())
     last_record_id = int(state.get("last_retraction_record_id", 0))
 
-    # Lần chạy đầu tiên: lưu mốc Record ID lớn nhất hiện tại
     if last_record_id == 0:
         state["last_retraction_record_id"] = max_record_id
         print(f"[Retraction Watch] Khởi tạo mốc Record ID = {max_record_id}.")
@@ -384,12 +410,12 @@ def check_retraction_watch(state: dict, watchlist: dict) -> List[str]:
     econ_hits = []
 
     for _, row in new_rows.iterrows():
-        journal = str(row.get("Journal", "N/A")).strip()
-        title = str(row.get("Title", "N/A")).strip()
-        subject = str(row.get("Subject", "")).strip()
-        reason = str(row.get("Reason", "N/A")).strip()
-        nature = str(row.get("RetractionNature", "Retraction")).strip()
-        r_date = str(row.get("RetractionDate", "")).strip()
+        journal = clean_str(row.get("Journal", "")) or "N/A"
+        title = clean_str(row.get("Title", "")) or "N/A"
+        subject = clean_str(row.get("Subject", ""))
+        reason = clean_str(row.get("Reason", "")) or "N/A"
+        nature = clean_str(row.get("RetractionNature", "")) or "Retraction"
+        r_date = clean_str(row.get("RetractionDate", ""))
 
         item_text = (
             f"• [{nature}] Tạp chí: {journal}\n"
@@ -402,7 +428,6 @@ def check_retraction_watch(state: dict, watchlist: dict) -> List[str]:
         elif any(kw in subject.lower() or kw in journal.lower() for kw in bus_keywords):
             econ_hits.append(item_text)
 
-    # Thống kê tạp chí có số bài bị rút tăng đột biến trong đợt cập nhật mới (dấu hiệu WoS On Hold)
     journal_counts = new_rows["Journal"].value_counts()
     spike_journals = [
         f"• {j_name}: {count} bài bị rút cùng lúc"
@@ -434,7 +459,126 @@ def check_retraction_watch(state: dict, watchlist: dict) -> List[str]:
 
 
 # ==============================================================================
-# 5. HÀM CHÍNH (MAIN)
+# 5. MODULE TRA CỨU TẠP CHÍ 2 CHIỀU (NHẮN TÊN TẠP CHÍ / ISSN VÀO ZALO BOT)
+# ==============================================================================
+
+def search_journal_in_lookup(query: str, lookup_db: dict) -> str:
+    """
+    Tìm kiếm tạp chí theo Tên hoặc mã ISSN trong cơ sở dữ liệu Discontinued của Scopus
+    và thống kê Retraction Watch.
+    """
+    q = query.strip()
+    if len(q) < 3:
+        return (
+            "ℹ️ HƯỚNG DẪN TRA CỨU TẠP CHÍ:\n"
+            "Hãy nhắn tên tạp chí (ví dụ: 'Journal of Business Research') hoặc mã ISSN (ví dụ: '0148-2963') "
+            "để kiểm tra xem tạp chí có nằm trong danh sách bị loại (Discontinued) của Scopus và lịch sử rút bài trên Retraction Watch hay không."
+        )
+
+    norm_q_issn = normalize_issn(q)
+    q_lower = q.lower()
+
+    disc_list = lookup_db.get("discontinued_journals", [])
+    retraction_map: Dict[str, int] = lookup_db.get("retraction_counts_by_journal", {})
+    scopus_ver = lookup_db.get("scopus_version", "Scopus Discontinued List")
+
+    matched_disc = []
+    for item in disc_list:
+        title = item.get("title", "")
+        issn = normalize_issn(item.get("issn", ""))
+        eissn = normalize_issn(item.get("eissn", ""))
+
+        if norm_q_issn and len(norm_q_issn) == 8 and (norm_q_issn == issn or norm_q_issn == eissn):
+            matched_disc.append(item)
+        elif q_lower in title.lower():
+            matched_disc.append(item)
+
+    # Tìm thống kê bài bị rút trên Retraction Watch
+    matched_retractions = []
+    for j_name, count in retraction_map.items():
+        if q_lower in j_name.lower():
+            matched_retractions.append((j_name, count))
+    matched_retractions.sort(key=lambda x: x[1], reverse=True)
+
+    lines = [f"🔍 KẾT QUẢ KIỂM TRA TẠP CHÍ: \"{q}\""]
+    lines.append(f"(Dữ liệu đối chiếu: {scopus_ver})\n")
+
+    if matched_disc:
+        lines.append(f"🚨 CẢNH BÁO: Tìm thấy {len(matched_disc)} kết quả trong danh sách BỊ LOẠI (DISCONTINUED) khỏi Scopus:")
+        for item in matched_disc[:10]:
+            issn_str = item.get("issn") or item.get("eissn") or "N/A"
+            eissn_str = f" / e-ISSN: {item.get('eissn')}" if item.get("eissn") and item.get("issn") else ""
+            lines.append(
+                f"• Tên tạp chí: {item.get('title')}\n"
+                f"  - ISSN: {issn_str}{eissn_str}\n"
+                f"  - NXB: {item.get('publisher')}\n"
+                f"  - Lý do bị loại: {item.get('reason')}\n"
+                f"  - Thông tin ngừng lập chỉ mục: {item.get('discontinued_info') or 'Đã ngừng coverage'}"
+            )
+        if len(matched_disc) > 10:
+            lines.append(f"... và {len(matched_disc) - 10} kết quả trùng khớp khác.")
+    else:
+        lines.append(
+            "✅ TRẠNG THÁI SCOPUS DISCONTINUED:\n"
+            "Không tìm thấy tạp chí này trong danh sách bị loại (Discontinued Titles) của Scopus!"
+        )
+
+    lines.append("")
+    if matched_retractions:
+        lines.append("📊 LỊCH SỬ BÀI BÁO BỊ RÚT TRÊN RETRACTION WATCH:")
+        for j_name, cnt in matched_retractions[:5]:
+            risk_tag = "⚠️ (Số lượng cao - Cần thận trọng)" if cnt >= 20 else ""
+            lines.append(f"• {j_name}: {cnt} bài từng bị rút/đính chính {risk_tag}")
+    else:
+        lines.append("📊 RETRACTION WATCH: Tạp chí này không có (hoặc có < 2) bài bị rút trong cơ sở dữ liệu Retraction Watch.")
+
+    return "\n".join(lines)
+
+
+def process_incoming_zalo_queries(state: dict, lookup_db: dict) -> None:
+    """Đọc các tin nhắn người dùng gửi tới Zalo Bot qua getUpdates và tự động trả lời kết quả tra cứu."""
+    bot_token = os.environ.get("ZALO_BOT_TOKEN", "").strip()
+    if not bot_token:
+        return
+
+    url = f"https://bot-api.zaloplatforms.com/bot{bot_token}/getUpdates"
+    try:
+        resp = requests.post(url, json={"timeout": 5}, timeout=15)
+        if resp.status_code != 200:
+            return
+        data = resp.json()
+    except Exception as exc:
+        print(f"[Zalo Query] Không thể gọi getUpdates: {exc}")
+        return
+
+    results = data.get("result") or []
+    if isinstance(results, dict):
+        results = [results]
+
+    processed_ids: List[str] = state.get("processed_zalo_msg_ids", [])
+
+    for item in results:
+        msg = item.get("message") or item
+        msg_id = str(msg.get("message_id") or item.get("event_id") or "")
+        if msg_id and msg_id in processed_ids:
+            continue
+
+        chat_info = msg.get("chat") or msg.get("from") or {}
+        chat_id = str(chat_info.get("id") or "")
+        text = str(msg.get("text") or "").strip()
+
+        if chat_id and text:
+            print(f"[Zalo Query] Nhận yêu cầu tra cứu từ {chat_id}: '{text}'")
+            reply = search_journal_in_lookup(text, lookup_db)
+            send_zalo_message(reply, target_chat_id=chat_id)
+            if msg_id:
+                processed_ids.append(msg_id)
+
+    state["processed_zalo_msg_ids"] = processed_ids[-200:]
+
+
+# ==============================================================================
+# 6. HÀM CHÍNH (MAIN)
 # ==============================================================================
 
 def main():
@@ -445,24 +589,36 @@ def main():
             "last_scopus_file": "",
             "known_discontinued_ids": [],
             "last_retraction_record_id": 0,
+            "processed_zalo_msg_ids": [],
             "last_updated": "",
         },
     )
     watchlist = load_json_file(WATCHLIST_FILE, {})
+    lookup_db = load_json_file(LOOKUP_INDEX_FILE, {})
 
     all_notifications: List[str] = []
 
-    # 1. Kiểm tra danh sách tạp chí bị loại khỏi Scopus (Elsevier)
-    scopus_msgs = check_scopus_updates(state, watchlist)
+    # 1. Kiểm tra danh sách tạp chí bị loại khỏi Scopus (Elsevier) & Cập nhật cơ sở dữ liệu tra cứu
+    scopus_msgs = check_scopus_updates(state, watchlist, lookup_db)
     all_notifications.extend(scopus_msgs)
 
     # 2. Kiểm tra dữ liệu rút bài hàng ngày từ Retraction Watch (GitLab Crossref)
-    rw_msgs = check_retraction_watch(state, watchlist)
+    rw_msgs = check_retraction_watch(state, watchlist, lookup_db)
     all_notifications.extend(rw_msgs)
 
-    # Lưu trạng thái mới
+    # 3. Nếu người dùng truyền từ khóa tra cứu trực tiếp từ giao diện GitHub Actions (workflow_dispatch input)
+    manual_query = os.environ.get("LOOKUP_QUERY", "").strip()
+    if manual_query:
+        query_result = search_journal_in_lookup(manual_query, lookup_db)
+        all_notifications.append(query_result)
+
+    # 4. Kiểm tra và trả lời các tin nhắn tra cứu gửi vào Zalo Bot
+    process_incoming_zalo_queries(state, lookup_db)
+
+    # Lưu trạng thái mới & chỉ mục tra cứu
     state["last_updated"] = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
     save_json_file(STATE_FILE, state)
+    save_json_file(LOOKUP_INDEX_FILE, lookup_db)
 
     # Gửi thông báo nếu có cập nhật mới
     if all_notifications:

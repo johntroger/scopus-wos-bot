@@ -4,8 +4,13 @@ on:
   # Chạy tự động mỗi ngày vào lúc 07:30 sáng giờ Việt Nam (00:30 UTC)
   schedule:
     - cron: '30 0 * * *'
-  # Cho phép bấm nút "Run workflow" chạy thủ công bất cứ lúc nào trên giao diện GitHub
+  # Cho phép bấm nút "Run workflow" chạy thủ công hoặc nhập tên tạp chí/ISSN để tra cứu ngay
   workflow_dispatch:
+    inputs:
+      lookup_query:
+        description: 'Nhập Tên tạp chí hoặc mã ISSN cần kiểm tra Discontinued (để trống nếu chỉ quét định kỳ)'
+        required: false
+        default: ''
 
 permissions:
   contents: write
@@ -29,21 +34,23 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run Monitor Script
+      - name: Run Monitor & Lookup Script
         env:
           # Cấu hình Zalo Bot (lấy từ https://bot.zaloplatforms.com)
           ZALO_BOT_TOKEN: ${{ secrets.ZALO_BOT_TOKEN }}
           ZALO_CHAT_ID: ${{ secrets.ZALO_CHAT_ID }}
-          # Cấu hình Telegram Bot (tùy chọn - điền bên nào gửi bên đó, điền cả 2 gửi cả 2)
+          # Cấu hình Telegram Bot (tùy chọn)
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          # Từ khóa tra cứu tạp chí (nếu nhập khi bấm Run workflow)
+          LOOKUP_QUERY: ${{ github.event.inputs.lookup_query }}
         run: |
           python monitor.py
 
-      - name: Save updated state back to repository
+      - name: Save updated state & lookup index back to repository
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add state.json
-          git diff --staged --quiet || git commit -m "chore: update tracking state [skip ci]"
+          git add state.json discontinued_lookup.json
+          git diff --staged --quiet || git commit -m "chore: update tracking state and discontinued lookup db [skip ci]"
           git push
