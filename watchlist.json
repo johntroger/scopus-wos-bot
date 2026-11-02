@@ -1,0 +1,27 @@
+{
+  "description": "Danh sách các tạp chí mục tiêu bạn muốn theo dõi đặc biệt (theo ISSN hoặc Tên tạp chí). Bất kỳ thay đổi nào (bị loại khỏi Scopus, có bài bị rút trên Retraction Watch, hoặc ngừng coverage) sẽ được báo động ưu tiên.",
+  "issns": [
+    "0148-2963",
+    "0309-0566",
+    "0969-6989",
+    "0265-1335"
+  ],
+  "titles": [
+    "Journal of Business Research",
+    "European Journal of Marketing",
+    "Journal of Retailing and Consumer Services",
+    "International Marketing Review"
+  ],
+  "asjc_prefixes": [
+    "14",
+    "20"
+  ],
+  "retraction_subjects": [
+    "(BUS) Business",
+    "Business - Economics",
+    "Business - Marketing",
+    "Business - Management",
+    "Business - General",
+    "(SOC) Sociology"
+  ]
+}
