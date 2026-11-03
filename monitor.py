@@ -186,8 +186,17 @@ def load_json_file(path: str, default: dict) -> dict:
 
 
 def save_json_file(path: str, data: dict) -> None:
-    with open(path, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
+    # Đối với cơ sở dữ liệu lớn discontinued_lookup.json: lưu dạng compact và kiểm tra tính toàn vẹn
+    if "lookup" in path:
+        critical_keys = ["hdgs_by_issn", "hdgs_councils", "aci_journals", "nafosted_national", "vn_standards_2026", "issn_linked_map"]
+        for ck in critical_keys:
+            if ck not in data:
+                print(f"[CẢNH BÁO TOÀN VẸN] Khóa '{ck}' không có trong CSDL! Đang giữ nguyên bản ghi trước đó...")
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, separators=(',', ':'))
+    else:
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
 
 
 def normalize_issn(val: str) -> str:
@@ -698,6 +707,15 @@ def search_journal_in_lookup(query: str, lookup_db: dict) -> str:
     vn_list = lookup_db.get("vn_standards_2026", [])
     hdgs_data = lookup_db.get("hdgsnn_kinhte", {})
     hdgs_journals = hdgs_data.get("journals", {})
+    hdgs_by_issn = lookup_db.get("hdgs_by_issn", {})
+    hdgs_by_title = lookup_db.get("hdgs_by_title", {})
+    issn_linked_map = lookup_db.get("issn_linked_map", {})
+    aci_data = lookup_db.get("aci_journals", {})
+    aci_by_issn = aci_data.get("by_issn", {})
+    aci_by_title = aci_data.get("by_title", {})
+    nafosted_data = lookup_db.get("nafosted_national", {})
+    nafosted_by_issn = nafosted_data.get("by_issn", {})
+    nafosted_by_title = nafosted_data.get("by_title", {})
     scopus_ver = lookup_db.get("scopus_version", "Scopus Discontinued List")
     wos_delisted_list = lookup_db.get("wos_delisted_journals", [])
     beall_journals_list = lookup_db.get("beall_standalone_journals", [])
@@ -814,35 +832,65 @@ def search_journal_in_lookup(query: str, lookup_db: dict) -> str:
                 matched_vn = item
                 break
 
-    # 6. Tra cứu Khung điểm HĐGSNN ngành Kinh tế (QĐ 26/QĐ-HĐGSNN)
+    # 6. Tra cứu Khung điểm 28 Hội đồng Giáo sư Nhà nước (QĐ 26/QĐ-HĐGSNN)
     matched_hdgs = None
-    for title, info in hdgs_journals.items():
-        t_norm = normalize_vn_text(title)
-        t_clean = clean_vn_journal_name(title)
-        info_issns = [normalize_issn(x) for x in str(info.get("issn", "")).split(",") if normalize_issn(x)]
-        if norm_q_issn and len(norm_q_issn) == 8 and norm_q_issn in info_issns:
-            matched_hdgs = {"title": title, **info}
-            break
-        if t_norm == norm_q_vn or t_clean == clean_q_vn:
-            matched_hdgs = {"title": title, **info}
-            break
+    if norm_q_issn and len(norm_q_issn) == 8:
+        if norm_q_issn in hdgs_by_issn:
+            matched_hdgs = hdgs_by_issn[norm_q_issn]
+        elif norm_q_issn in issn_linked_map:
+            for li in issn_linked_map[norm_q_issn]:
+                if li in hdgs_by_issn:
+                    matched_hdgs = hdgs_by_issn[li]
+                    break
 
     if not matched_hdgs and len(clean_q_vn) >= 4:
-        for title, info in hdgs_journals.items():
-            t_clean = clean_vn_journal_name(title)
-            if t_clean in clean_q_vn or (len(clean_q_vn) >= 8 and clean_q_vn in t_clean):
-                matched_hdgs = {"title": title, **info}
-                break
+        if clean_q_vn in hdgs_by_title:
+            matched_hdgs = hdgs_by_title[clean_q_vn]
+        else:
+            for t_clean, info in hdgs_by_title.items():
+                if t_clean in clean_q_vn or (len(clean_q_vn) >= 8 and clean_q_vn in t_clean):
+                    matched_hdgs = info
+                    break
 
     if not matched_hdgs and matched_vn:
-        vn_norm = normalize_vn_text(matched_vn.get("title", ""))
         vn_clean = clean_vn_journal_name(matched_vn.get("title", ""))
+        if vn_clean in hdgs_by_title:
+            matched_hdgs = hdgs_by_title[vn_clean]
+
+    # Fallback Kinh tế cũ
+    if not matched_hdgs:
         for title, info in hdgs_journals.items():
-            t_norm = normalize_vn_text(title)
             t_clean = clean_vn_journal_name(title)
-            if t_norm == vn_norm or t_clean == vn_clean or t_clean in vn_clean or vn_clean in t_clean:
-                matched_hdgs = {"title": title, **info}
+            if t_clean == clean_q_vn or (len(clean_q_vn) >= 4 and t_clean in clean_q_vn):
+                matched_hdgs = {"title": title, "scores": [{"council": "Kinh tế", "points": info.get("points")}]}
                 break
+
+    # 6.5. Tra cứu ACI & NAFOSTED Quốc gia
+    matched_aci = None
+    matched_nafosted_national = None
+    if norm_q_issn and len(norm_q_issn) == 8:
+        if norm_q_issn in aci_by_issn:
+            matched_aci = aci_by_issn[norm_q_issn]
+        if norm_q_issn in nafosted_by_issn:
+            matched_nafosted_national = nafosted_by_issn[norm_q_issn]
+
+    if not matched_aci and len(clean_q_vn) >= 4:
+        if clean_q_vn in aci_by_title:
+            matched_aci = aci_by_title[clean_q_vn]
+        else:
+            for t_clean, info in aci_by_title.items():
+                if t_clean in clean_q_vn or clean_q_vn in t_clean:
+                    matched_aci = info
+                    break
+
+    if not matched_nafosted_national and len(clean_q_vn) >= 4:
+        if clean_q_vn in nafosted_by_title:
+            matched_nafosted_national = nafosted_by_title[clean_q_vn]
+        else:
+            for t_clean, info in nafosted_by_title.items():
+                if t_clean in clean_q_vn or clean_q_vn in t_clean:
+                    matched_nafosted_national = info
+                    break
 
     # 7. Tra cứu Retraction Watch
     target_name = (
@@ -928,24 +976,48 @@ def search_journal_in_lookup(query: str, lookup_db: dict) -> str:
         lines.append("• Đánh giá rủi ro: CỰC KỲ NGUY HIỂM. Bài đăng sau ngày bị loại sẽ bị 0 điểm HĐGSNN và không được tính chuẩn đầu ra Tiến sĩ.")
 
     # PHẦN 3: TIÊU CHUẨN VIỆT NAM & ĐIỂM HĐGSNN
-    if matched_vn or matched_hdgs or matched_sjr:
-        lines.append("\n🇻🇳 2. TIÊU CHUẨN VIỆT NAM & ĐIỂM HĐGSNN:")
+    # PHẦN 3: TIÊU CHUẨN KHOA HỌC VIỆT NAM (2026), NAFOSTED & ĐIỂM HĐGSNN
+    is_nafosted_intl = (
+        matched_sjr
+        and matched_sjr.get("quartile") in ["Q1", "Q2", "Q3"]
+        and not matched_disc
+        and not matched_beall_journal
+        and not matched_beall_publisher
+        and not matched_wos_delisted
+    )
+
+    if matched_vn or matched_hdgs or matched_sjr or matched_aci or matched_nafosted_national:
+        lines.append("\n🇻🇳 2. TIÊU CHUẨN VIỆT NAM, NAFOSTED & HĐGSNN:")
         if matched_vn:
             lines.append(f"• Chuẩn khoa học VN 2026: ✅ ĐẠT TIÊU CHUẨN QUỐC GIA (STT: {matched_vn.get('stt')} / 341)")
             lines.append(f"• Phân nhóm: {matched_vn.get('cat')}")
         elif matched_sjr or matched_abdc:
             lines.append("• Chuẩn khoa học VN 2026: Tạp chí quốc tế (công nhận tính điểm theo quy chế đào tạo & HĐGSNN)")
 
-        hdgs_point_str = ""
-        if matched_hdgs and matched_hdgs.get("points"):
-            hdgs_point_str = f"🎯 {matched_hdgs.get('points')} (HĐGS ngành Kinh tế - QĐ 26/QĐ-HĐGSNN)"
-        elif matched_sjr and matched_sjr.get("quartile") == "Q1":
-            hdgs_point_str = "🎯 0 - 2,0 điểm (Scopus Q1 / Quyết định 26/QĐ-HĐGSNN)"
-        elif matched_sjr and matched_sjr.get("quartile"):
-            hdgs_point_str = f"🎯 0 - 1,5 điểm (Scopus {matched_sjr.get('quartile')} / Quyết định 26/QĐ-HĐGSNN)"
+        # Tiêu chuẩn Quỹ NAFOSTED
+        if matched_nafosted_national:
+            lines.append(f"• Chuẩn Quỹ NAFOSTED: 🇻🇳 ĐẠT CHUẨN QUỐC GIA UY TÍN (HĐ ngành: {matched_nafosted_national.get('council')} - Đủ điều kiện nghiệm thu đề tài NAFOSTED)")
+        elif is_nafosted_intl:
+            lines.append(f"• Chuẩn Quỹ NAFOSTED: 🎖️ ĐẠT CHUẨN QUỐC TẾ UY TÍN (Scopus {matched_sjr.get('quartile')} theo QĐ 14/QĐ-HĐQL-NAFOSTED - Đủ điều kiện chủ nhiệm/nghiệm thu đề tài cấp Quốc gia)")
 
-        if hdgs_point_str:
-            lines.append(f"• Điểm công trình HĐGSNN: {hdgs_point_str}")
+        # Chỉ mục ACI
+        if matched_aci:
+            lines.append(f"• Chỉ mục ACI (Đông Nam Á): 🌟 ĐẠT CHUẨN ACI ({matched_aci.get('title')} - Tính điểm HĐGSNN tối đa 1,25 điểm & chuẩn Tiến sĩ)")
+
+        # Điểm HĐGSNN 2025
+        if matched_hdgs and matched_hdgs.get("scores"):
+            lines.append("• Điểm HĐGSNN 2025 (QĐ 26/QĐ-HĐGSNN):")
+            scores = matched_hdgs.get("scores", [])
+            for sc in scores[:5]:
+                lines.append(f"  🎯 HĐGS {sc.get('council')}: {sc.get('points')}")
+            if len(scores) > 5:
+                lines.append(f"  🎯 (+{len(scores) - 5} Hội đồng ngành khác cũng tính điểm)")
+        elif matched_hdgs and matched_hdgs.get("points"):
+            lines.append(f"• Điểm công trình HĐGSNN: 🎯 {matched_hdgs.get('points')} (QĐ 26/QĐ-HĐGSNN)")
+        elif matched_sjr and matched_sjr.get("quartile") == "Q1":
+            lines.append("• Điểm công trình HĐGSNN: 🎯 0 - 2,0 điểm (Khung chung Scopus Q1 / QĐ 26/QĐ-HĐGSNN)")
+        elif matched_sjr and matched_sjr.get("quartile"):
+            lines.append(f"• Điểm công trình HĐGSNN: 🎯 0 - 1,5 điểm (Khung chung Scopus {matched_sjr.get('quartile')} / QĐ 26/QĐ-HĐGSNN)")
 
     # PHẦN 4: PHÂN HẠNG QUỐC TẾ
     if not matched_disc and (matched_sjr or matched_abdc):
