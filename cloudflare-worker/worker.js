@@ -84,8 +84,9 @@ function buildUserGuideMessage(displayName = "bạn", isFirstTime = false) {
     `• Gõ 5 : Xem 16 Tạp chí Việt Nam trong Scopus / WoS quốc tế\n` +
     `• Gõ 6 : Danh mục điểm 28 Hội đồng Giáo sư Nhà nước (QĐ 26/QĐ-HĐGSNN)\n` +
     `• Gõ aci : Xem danh mục Tạp chí Việt Nam trong ASEAN Citation Index\n` +
-    `• Gõ nafosted : Xem chuẩn công nhận bài báo Quỹ NAFOSTED Quốc gia\n\n` +
-    `👉 Hãy thử nhắn: VJCS, aci, nafosted, hdgs y hoc hoặc 10.1016/j.jbusres.2021.08.043`
+    `• Gõ nafosted : Xem chuẩn công nhận bài báo Quỹ NAFOSTED Quốc gia\n` +
+    `• So sánh 2 tạp chí : Nhắn 'so sánh JED và JABES' hoặc 'JED vs JABES'\n\n` +
+    `👉 Hãy thử nhắn: VJCS, so sánh JED và JABES, aci, hdgs y hoc`
   );
 }
 
@@ -766,6 +767,75 @@ function searchJournal(query, lookupDb) {
     q
   );
 
+  const isNafostedIntl =
+    matchedSjr &&
+    ["Q1", "Q2", "Q3"].includes(matchedSjr.quartile) &&
+    !matchedDisc &&
+    !matchedBeallJournal &&
+    !matchedBeallPublisher &&
+    !matchedWosDelisted;
+
+  // BẢNG TÓM TẮT KẾT LUẬN DÒNG 1 (TL;DR EXECUTIVE PILL) - HIỂN THỊ NGAY ĐẦU MÀN HÌNH ĐIỆN THOẠI
+  let executivePill = "";
+  if (matchedDisc) {
+    executivePill =
+      `🔴 CẢNH BÁO NGUY HIỂM: TẠP CHÍ BỊ LOẠI KHỎI SCOPUS (DISCONTINUED)\n` +
+      `⚠️ 0 điểm HĐGSNN • Bài đăng sau ngày bị loại KHÔNG được tính chuẩn Tiến sĩ\n` +
+      `━━━━━━━━━━━━━━━━━━━━━━━━━`;
+  } else if (matchedHijacked) {
+    executivePill =
+      `🚨 CẢNH BÁO LỪA ĐẢO: TẠP CHÍ BỊ CƯỚP TÊN MIỀN (HIJACKED)\n` +
+      `⚠️ Website giả mạo chiếm đoạt phí đăng bài • TUYỆT ĐỐI KHÔNG NỘP\n` +
+      `━━━━━━━━━━━━━━━━━━━━━━━━━`;
+  } else if (matchedWosDelisted) {
+    executivePill =
+      `🔴 CẢNH BÁO: BỊ LOẠI KHỎI WEB OF SCIENCE (WOS DELISTED)\n` +
+      `⚠️ Bị tước chỉ mục quốc tế do vi phạm tiêu chuẩn chất lượng\n` +
+      `━━━━━━━━━━━━━━━━━━━━━━━━━`;
+  } else if (matchedBeallJournal || matchedBeallPublisher) {
+    executivePill =
+      `⚠️ CẢNH BÁO RỦI RO: THUỘC DANH SÁCH SĂN MỒI (BEALL'S LIST)\n` +
+      `⚠️ Tiềm ẩn nguy cơ không được công nhận nghiệm thu / bảo vệ\n` +
+      `━━━━━━━━━━━━━━━━━━━━━━━━━`;
+  } else {
+    // Tạp chí an toàn / đạt chuẩn
+    let tierSummary = "";
+    if (matchedSjr?.quartile) {
+      tierSummary = `⭐ Scopus ${matchedSjr.quartile}`;
+    } else if (matchedVn) {
+      tierSummary = `🇻🇳 Chuẩn VN 2026`;
+    }
+
+    let hdgsSummary = "";
+    if (matchedHdgs?.scores && matchedHdgs.scores.length > 0) {
+      const topScore = matchedHdgs.scores[0];
+      hdgsSummary = `🎯 HĐGS ${topScore.council}: ${topScore.points}`;
+      if (matchedHdgs.scores.length > 1) {
+        hdgsSummary += ` (+${matchedHdgs.scores.length - 1} ngành)`;
+      }
+    } else if (matchedSjr?.quartile === "Q1") {
+      hdgsSummary = `🎯 HĐGS: 0 - 2,0đ (Q1)`;
+    } else if (matchedSjr?.quartile) {
+      hdgsSummary = `🎯 HĐGS: 0 - 1,5đ (${matchedSjr.quartile})`;
+    }
+
+    let nafSummary = "";
+    if (matchedNafostedNational) {
+      nafSummary = `🎖️ NAFOSTED Quốc gia`;
+    } else if (isNafostedIntl) {
+      nafSummary = `🎖️ NAFOSTED Quốc tế`;
+    } else if (matchedAci) {
+      nafSummary = `🌟 ASEAN ACI`;
+    }
+
+    const pillBadges = [tierSummary, hdgsSummary, nafSummary].filter(Boolean).join(" | ");
+
+    executivePill =
+      `🟢 KẾT LUẬN: ĐỦ CHUẨN XÉT GS/PGS & TIẾN SĨ (AN TOÀN)\n` +
+      (pillBadges ? `${pillBadges}\n` : "") +
+      `━━━━━━━━━━━━━━━━━━━━━━━━━`;
+  }
+
   const finalIssn = formatIssn(
     matchedHdgs?.issn ||
     matchedDisc?.issn ||
@@ -780,8 +850,11 @@ function searchJournal(query, lookupDb) {
 
   const orgPublisher = matchedVn?.org || matchedHdgs?.org || matchedDisc?.publisher || matchedWosDelisted?.publisher || (matchedBeallPublisher ? matchedBeallPublisher.name : "");
 
-  const lines = [`🔬 BÁO CÁO THẨM ĐỊNH TẠP CHÍ KHOA HỌC`];
-  lines.push(`📖 Tạp chí: "${finalTitle}"`);
+  const lines = [
+    executivePill,
+    `🔬 BÁO CÁO THẨM ĐỊNH TẠP CHÍ KHOA HỌC`,
+    `📖 Tạp chí: "${finalTitle}"`
+  ];
   if (KNOWN_ACRONYMS[qLower]) {
     lines.push(`(Được giải mã từ tên viết tắt: ${q.toUpperCase()})`);
   }
@@ -832,14 +905,6 @@ function searchJournal(query, lookupDb) {
   }
 
   // PHẦN 3: TIÊU CHUẨN KHOA HỌC VIỆT NAM (2026), NAFOSTED & ĐIỂM HĐGSNN
-  const isNafostedIntl =
-    matchedSjr &&
-    ["Q1", "Q2", "Q3"].includes(matchedSjr.quartile) &&
-    !matchedDisc &&
-    !matchedBeallJournal &&
-    !matchedBeallPublisher &&
-    !matchedWosDelisted;
-
   if (matchedVn || matchedHdgs || matchedSjr || matchedAci || matchedNafostedNational) {
     lines.push(`\n🇻🇳 2. TIÊU CHUẨN VIỆT NAM, NAFOSTED & HĐGSNN:`);
     if (matchedVn) {
@@ -955,7 +1020,15 @@ function searchJournal(query, lookupDb) {
     lines.push(`✅ ĐỦ CHUẨN QUỐC GIA: Đạt chuẩn khoa học Việt Nam 2026, tính điểm HĐGSNN và nghiệm thu đề tài NCKH trong nước.`);
   }
 
-  lines.push(`\n` + getRandomFooterTip());
+  const contextualTip = matchedHdgs?.scores && matchedHdgs.scores.length > 0
+    ? `💡 Gợi ý tiếp theo: Nhắn 'hdgs ${matchedHdgs.scores[0].council_key}' để xem top tạp chí ngành ${matchedHdgs.scores[0].council} có điểm cao nhất.`
+    : matchedAci
+    ? `💡 Gợi ý tiếp theo: Nhắn 'aci' để xem toàn bộ 30 tạp chí Việt Nam trong ASEAN Citation Index.`
+    : isNafostedIntl
+    ? `💡 Gợi ý tiếp theo: Nhắn 'so sánh <tạp chí 1> và <tạp chí 2>' để so sánh đối đầu trước khi nộp bài!`
+    : getRandomFooterTip();
+
+  lines.push(`\n` + contextualTip + (contextualTip.includes('(Gõ') ? '' : `\n(Gõ '1' để mở bảng hướng dẫn | Nhắn mã ISSN/tên để tra tiếp).`));
   return lines.join("\n").slice(0, 1950);
 }
 
@@ -1113,8 +1186,133 @@ async function resolveDoiMetadata(doi) {
 /**
  * Xử lý truy vấn thông minh: Tự động phát hiện DOI bài báo hoặc tra cứu Tạp chí
  */
+
+/**
+ * Tiền xử lý tin nhắn tự nhiên từ người dùng:
+ * 1. Bóc tách ý định So sánh 2 tạp chí ("so sánh A và B", "A vs B").
+ * 2. Tự động bóc mã ISSN / DOI nằm trong câu văn đàm thoại ("check giùm mã 0148-2963 với bot").
+ * 3. Gạt bỏ các từ đệm chào hỏi / nghi vấn thông dụng tiếng Việt.
+ */
+function extractCleanQuery(rawText) {
+  if (!rawText) return { type: 'normal', query: '' };
+  let t = rawText.trim();
+
+  // So sánh 2 tạp chí: "so sánh A và B" hoặc "A vs B"
+  const compareMatch =
+    t.match(/^(?:so\s+sánh|so\s+sanh|so\s+sanh\s+nhanh|so\s+sánh\s+nhanh|so\s+kèo|so\s+keo)\s+(.+?)\s+(?:và|va|với|voi)\s+(.+)$/i) ||
+    t.match(/^(.+?)\s+(?:vs|versus)\s+(.+)$/i);
+  if (compareMatch) {
+    return {
+      type: 'compare',
+      q1: compareMatch[1].trim(),
+      q2: compareMatch[2].trim()
+    };
+  }
+
+  // Tự động nhận diện DOI trong câu văn
+  const doiMatch = t.match(/\b(10\.\d{4,9}\/[-._;()/:A-Za-z0-9]+)\b/);
+  if (doiMatch) {
+    return { type: 'doi', query: doiMatch[1].replace(/[,.]+$/, '') };
+  }
+
+  // Tự động bóc mã ISSN trong câu hỏi tự nhiên
+  const issnMatch = t.match(/\b(\d{4}-?\d{3}[\dX])\b/i);
+  const isConversational = /(?:check|tra|xem|hỏi|hoi|giúp|giup|hộ|ho|cho\s+mình|cho\s+minh|tạp\s+chí|tap\s+chi|bài|bai)/i.test(t);
+  if (issnMatch && isConversational) {
+    return { type: 'normal', query: issnMatch[1] };
+  }
+
+  // Gạt bỏ các từ đệm chào hỏi / mở đầu
+  t = t.replace(/^(?:check\s+giùm|check\s+gium|check\s+hộ|check\s+ho|tra\s+cứu|tra\s+cuu|tra\s+giúp|tra\s+giup|tra\s+hộ|tra\s+ho|xem\s+giúp|xem\s+giup|xem\s+hộ|xem\s+ho|cho\s+mình\s+hỏi|cho\s+minh\s+hoi|kiểm\s+tra\s+giúp|kiem\s+tra\s+giup|kiểm\s+tra\s+hộ|kiem\s+tra\s+ho|hỏi\s+về|hoi\s+ve|thẩm\s+định|tham\s+dinh)\s+/i, '');
+
+  // Gạt bỏ các câu hỏi đuôi
+  t = t.replace(/\s+(?:có\s+(?:được\s+)?tính\s+điểm(?:\s+không)?|co\s+(?:duoc\s+)?tinh\s+diem(?:\s+khong)?|tính\s+điểm\s+thế\s+nào|tinh\s+diem\s+the\s+nao|có\s+scopus\s+không|co\s+scopus\s+khong).*$/i, '');
+  t = t.replace(/\s+(?:thế\s+nào\s+bot|the\s+nao\s+bot|thế\s+nào\s+vậy|the\s+nao\s+vay|được\s+mấy\s+điểm|duoc\s+may\s+diem|không\s+bot|khong\s+bot|bot\s+ơi|bot\s+oi|với\s+bot|nhé\s+bot)$/i, '');
+
+  return { type: 'normal', query: t.trim() };
+}
+
+/**
+ * Trích xuất bản tóm tắt siêu tốc của một tạp chí để phục vụ So sánh Đối đầu
+ */
+function parseJournalSummaryForComparison(query, lookupDb) {
+  const report = searchJournal(query, lookupDb);
+  const titleMatch = report.match(/📖 Tạp chí:\s*"([^"]+)"/);
+  const title = titleMatch ? titleMatch[1] : query;
+
+  const scopusMatch = report.match(/• SCImago Scopus:\s*(🌟\s*[Q\d]+[^\n]*)/);
+  const scopus = scopusMatch ? scopusMatch[1] : (report.includes('Chưa nằm trong CSDL Scopus') ? 'Chưa chỉ mục Scopus' : 'N/A');
+
+  const abdcMatch = report.match(/• Phân hạng ABDC \(Úc\):\s*([^\n]+)/);
+  const abdc = abdcMatch ? abdcMatch[1] : null;
+
+  const nafMatch = report.match(/• Chuẩn Quỹ NAFOSTED:\s*([^\n]+)/);
+  const naf = nafMatch ? nafMatch[1] : null;
+
+  const aciMatch = report.match(/• Chỉ mục ACI \(Đông Nam Á\):\s*([^\n]+)/);
+  const aci = aciMatch ? aciMatch[1] : null;
+
+  let hdgs = 'Chưa có thông tin điểm';
+  const hdgsMultiMatch = report.match(/• Điểm HĐGSNN 2025 \(QĐ 26\/QĐ-HĐGSNN\):\n((?:\s+🎯[^\n]+\n?)+)/);
+  if (hdgsMultiMatch) {
+    hdgs = hdgsMultiMatch[1].trim().split('\n').map(l => l.trim()).join(' | ');
+  } else {
+    const hdgsSingle = report.match(/• Điểm công trình HĐGSNN:\s*([^\n]+)/);
+    if (hdgsSingle) hdgs = hdgsSingle[1];
+  }
+
+  let safety = '✅ Đang hoạt động an toàn (Không thuộc danh sách đen)';
+  if (report.includes('CỰC KỲ NGUY HIỂM') || report.includes('BỊ LOẠI KHỎI SCOPUS')) {
+    safety = '🔴 CỰC KỲ NGUY HIỂM (Bị loại khỏi Scopus)';
+  } else if (report.includes('CẢNH BÁO LỪA ĐẢO') || report.includes('CƯỚP TÊN MIỀN')) {
+    safety = '🚨 NGUY HIỂM (Website giả mạo / cướp tên miền)';
+  } else if (report.includes("Beall's List (Predatory") || report.includes("NXB săn mồi")) {
+    safety = '⚠️ CẢNH BÁO (Thuộc danh sách săn mồi)';
+  } else if (report.includes('WOS DELISTED')) {
+    safety = '🔴 CẢNH BÁO (Bị loại khỏi Web of Science)';
+  }
+
+  return { title, scopus, abdc, naf, aci, hdgs, safety };
+}
+
+/**
+ * Xuất Bảng So Sánh Đối Đầu 2 Tạp Chí (Side-by-side Comparison)
+ */
+function compareTwoJournals(q1, q2, lookupDb) {
+  const j1 = parseJournalSummaryForComparison(q1, lookupDb);
+  const j2 = parseJournalSummaryForComparison(q2, lookupDb);
+
+  return (
+    `⚖️ BẢNG SO SÁNH ĐỐI ĐẦU 2 TẠP CHÍ:\n` +
+    `━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+    `1️⃣ ${j1.title.toUpperCase()}:\n` +
+    `• Xếp hạng Scopus: ${j1.scopus}\n` +
+    (j1.abdc ? `• Phân hạng ABDC: ${j1.abdc}\n` : '') +
+    (j1.naf ? `• Chuẩn NAFOSTED: ${j1.naf}\n` : '') +
+    (j1.aci ? `• ASEAN ACI: ${j1.aci}\n` : '') +
+    `• Điểm HĐGSNN: ${j1.hdgs}\n` +
+    `• Độ an toàn: ${j1.safety}\n\n` +
+    `2️⃣ ${j2.title.toUpperCase()}:\n` +
+    `• Xếp hạng Scopus: ${j2.scopus}\n` +
+    (j2.abdc ? `• Phân hạng ABDC: ${j2.abdc}\n` : '') +
+    (j2.naf ? `• Chuẩn NAFOSTED: ${j2.naf}\n` : '') +
+    (j2.aci ? `• ASEAN ACI: ${j2.aci}\n` : '') +
+    `• Điểm HĐGSNN: ${j2.hdgs}\n` +
+    `• Độ an toàn: ${j2.safety}\n` +
+    `━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+    `💡 ĐÁNH GIÁ CHUNG: So sánh trực quan giữa 2 tạp chí để phục vụ việc lựa chọn nộp bài và thẩm định tính điểm công trình.\n` +
+    `(Nhắn riêng mã ISSN hoặc Tên từng tạp chí để xem báo cáo thẩm định chi tiết 5 phần).`
+  );
+}
+
 async function resolveAndSearch(query, lookupDb) {
-  const text = (query || "").trim();
+  const parsed = extractCleanQuery(query);
+
+  if (parsed.type === 'compare') {
+    return compareTwoJournals(parsed.q1, parsed.q2, lookupDb);
+  }
+
+  const text = (parsed.query || query || "").trim();
   const cmd = text.toLowerCase();
 
   // 1. Phím tắt danh mục 28 Hội đồng GSNN (QĐ 26/QĐ-HĐGSNN)
