@@ -38,18 +38,82 @@ function normalizeIssn(val) {
 }
 
 /**
+ * Tạo nội dung Hướng dẫn sử dụng (Onboarding / Menu trợ giúp) thân thiện cho người mới
+ */
+function buildUserGuideMessage(displayName = "bạn", isFirstTime = false) {
+  const header = isFirstTime
+    ? `👋 Chào mừng ${displayName} đến với *Bot Tra cứu Tạp chí Scopus & WoS*!\n(Hệ thống đã tự động bật thông báo định kỳ cho bạn).\n\n`
+    : `📖 HƯỚNG DẪN SỬ DỤNG BOT TRA CỨU TẠP CHÍ SCOPUS & WOS\n\n`;
+
+  return (
+    header +
+    `🔎 CÁCH 1: TRA CỨU TẠP CHÍ TRỰC TIẾP\n` +
+    `Bạn chỉ cần nhắn trực tiếp *Mã ISSN* hoặc *Tên tạp chí* vào khung chat này. Ví dụ:\n` +
+    `• Nhắn: 1096-3685 (kiểm tra theo ISSN)\n` +
+    `• Nhắn: Journal of Business Research (kiểm tra theo tên)\n` +
+    `• Nhắn: Sustainability\n\n` +
+    `⌨️ CÁCH 2: GÕ PHÍM TẮT (1, 2, 3, 4)\n` +
+    `• Gõ 1 : Xem hướng dẫn & ví dụ mẫu\n` +
+    `• Gõ 2 : Xem các tạp chí Kinh tế - Quản trị bị loại khỏi Scopus\n` +
+    `• Gõ 3 : Xem thông tin phiên bản dữ liệu hiện tại\n` +
+    `• Gõ 4 : Bật nhận thông báo định kỳ (Gõ 'huy' để tắt)\n\n` +
+    `👉 Hãy thử nhắn ngay: 1096-3685 hoặc 0148-2963`
+  );
+}
+
+/**
+ * Liệt kê mẫu các tạp chí khối Kinh tế - Quản trị - Xã hội bị loại khỏi Scopus
+ */
+function getBusinessDiscontinuedSamples(lookupDb) {
+  const discList = lookupDb.discontinued_journals || [];
+  const scopusVer = lookupDb.scopus_version || "Scopus Discontinued List";
+  const keywords = [
+    "business",
+    "econom",
+    "marketing",
+    "management",
+    "finance",
+    "accounting",
+    "commerce",
+    "social",
+  ];
+
+  const filtered = discList.filter((item) => {
+    const t = (item.title || "").toLowerCase();
+    return keywords.some((kw) => t.includes(kw));
+  });
+
+  // Sắp xếp ưu tiên các tạp chí bị loại những năm gần đây nhất
+  filtered.sort((a, b) =>
+    String(b.discontinued_info || "").localeCompare(String(a.discontinued_info || ""))
+  );
+
+  const lines = [
+    `📊 DANH SÁCH TẠP CHÍ KHỐI KINH TẾ - QUẢN TRỊ - XÃ HỘI BỊ LOẠI KHỎI SCOPUS`,
+    `(Tổng cộng: ${filtered.length} tạp chí trong bản ${scopusVer})\n`,
+    `Một số tạp chí tiêu biểu bị ngừng lập chỉ mục gần đây:`,
+  ];
+
+  for (const item of filtered.slice(0, 10)) {
+    const issn = item.issn || item.eissn || "N/A";
+    lines.push(
+      `• ${item.title}\n  ISSN: ${issn} | Năm ngừng: ${item.discontinued_info || "N/A"} | NXB: ${item.publisher || "N/A"}`
+    );
+  }
+
+  lines.push(
+    `\n💡 Để kiểm tra một tạp chí cụ thể, hãy nhắn trực tiếp Tên tạp chí hoặc mã ISSN của tạp chí đó vào đây.`
+  );
+  return lines.join("\n").slice(0, 1950);
+}
+
+/**
  * Tra cứu tạp chí theo Tên hoặc Mã ISSN
  */
 function searchJournal(query, lookupDb) {
   const q = (query || "").trim();
   if (q.length < 3) {
-    return (
-      "ℹ️ HƯỚNG DẪN SỬ DỤNG BOT TRA CỨU SCOPUS & WOS:\n\n" +
-      "1️⃣ Tra cứu tạp chí: Nhắn trực tiếp Tên tạp chí (ví dụ: 'Journal of Business Research') hoặc mã ISSN (ví dụ: '1096-3685').\n" +
-      "2️⃣ Nhắn 'dangky': Nhận thông báo tự động mỗi khi Scopus loại tạp chí mới.\n" +
-      "3️⃣ Nhắn 'huy': Ngừng nhận thông báo tự động.\n" +
-      "4️⃣ Nhắn 'thongke': Xem phiên bản dữ liệu hiện tại."
-    );
+    return buildUserGuideMessage("bạn", false);
   }
 
   const normQIssn = normalizeIssn(q);
@@ -128,6 +192,7 @@ function searchJournal(query, lookupDb) {
     );
   }
 
+  lines.push(`\n💡 Mẹo: Gõ '1' để xem hướng dẫn | Gõ '2' xem DS ngành Kinh tế - Quản trị bị loại.`);
   return lines.join("\n").slice(0, 1950);
 }
 
@@ -179,7 +244,7 @@ async function removeSubscriber(env, chatId) {
 }
 
 /**
- * Giao diện Web Tra cứu & Cài đặt Zalo Bot 1-Click
+ * Giao diện Web Tra cứu & Hướng dẫn sử dụng cho người dùng
  */
 function renderWebPortal(workerOrigin, botConfigured, subscriberCount) {
   return `<!DOCTYPE html>
@@ -187,7 +252,7 @@ function renderWebPortal(workerOrigin, botConfigured, subscriberCount) {
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Hệ thống Tra cứu & Cảnh báo Tạp chí Scopus / WoS (Zalo Bot)</title>
+  <title>Bot Tra cứu Tạp chí Scopus & WoS (Zalo & Web)</title>
   <style>
     :root {
       --bg: #f8fafc;
@@ -206,7 +271,7 @@ function renderWebPortal(workerOrigin, botConfigured, subscriberCount) {
       line-height: 1.6;
       padding: 24px 16px;
     }
-    .container { max-width: 820px; margin: 0 auto; }
+    .container { max-width: 840px; margin: 0 auto; }
     .card {
       background: var(--card);
       border: 1px solid var(--border);
@@ -215,7 +280,7 @@ function renderWebPortal(workerOrigin, botConfigured, subscriberCount) {
       margin-bottom: 20px;
       box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
     }
-    h1 { margin-top: 0; font-size: 1.45rem; color: #0f172a; }
+    h1 { margin-top: 0; font-size: 1.42rem; color: #0f172a; }
     h2 { margin-top: 0; font-size: 1.15rem; color: #1e293b; }
     .badge {
       display: inline-block;
@@ -226,9 +291,10 @@ function renderWebPortal(workerOrigin, botConfigured, subscriberCount) {
       background: ${botConfigured ? "#dcfce7" : "#fef3c7"};
       color: ${botConfigured ? "#166534" : "#92400e"};
     }
-    .input-row { display: flex; gap: 10px; margin-top: 12px; }
+    .input-row { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
     input[type="text"], input[type="password"] {
       flex: 1;
+      min-width: 220px;
       padding: 11px 14px;
       border: 1px solid #cbd5e1;
       border-radius: 8px;
@@ -245,6 +311,17 @@ function renderWebPortal(workerOrigin, botConfigured, subscriberCount) {
       cursor: pointer;
     }
     button:hover { opacity: 0.92; }
+    .chip-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+    .chip {
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      color: #334155;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.83rem;
+      cursor: pointer;
+    }
+    .chip:hover { background: #e2e8f0; }
     pre {
       background: #0f172a;
       color: #f8fafc;
@@ -256,43 +333,105 @@ function renderWebPortal(workerOrigin, botConfigured, subscriberCount) {
       margin-top: 14px;
       display: none;
     }
-    .steps { padding-left: 20px; color: var(--muted); font-size: 0.94rem; }
-    .steps li { margin-bottom: 6px; }
+    .guide-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 14px;
+      margin-top: 12px;
+    }
+    .guide-box {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 14px;
+    }
+    .guide-box strong { color: #0f172a; display: block; margin-bottom: 4px; }
+    .share-box {
+      background: #eff6ff;
+      border: 1px dashed #60a5fa;
+      border-radius: 10px;
+      padding: 14px;
+      font-size: 0.9rem;
+      margin-top: 14px;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
-        <h1>🔍 Hệ thống Kiểm tra Tạp chí Scopus Discontinued & Retraction Watch</h1>
-        <span class="badge">${botConfigured ? "✅ Đã kết nối Zalo Bot (" + subscriberCount + " người đăng ký)" : "⚡ Sẵn sàng kết nối Zalo Bot"}</span>
+        <h1>🔍 Hệ thống Tra cứu Tạp chí Scopus Discontinued & Retraction Watch</h1>
+        <span class="badge">${botConfigured ? "✅ Bot Tra cứu Tạp chí đang hoạt động (" + subscriberCount + " người nhận tin)" : "⚡ Sẵn sàng kết nối Zalo Bot"}</span>
       </div>
       <p style="color:var(--muted);margin:6px 0 0;">
         Nhập <strong>Tên tạp chí</strong> hoặc <strong>Mã ISSN</strong> để kiểm tra tức thì xem tạp chí có bị loại khỏi Scopus (Discontinued) hoặc có lịch sử rút bài trên Retraction Watch hay không.
       </p>
       <div class="input-row">
-        <input type="text" id="qInput" placeholder="Ví dụ: 1096-3685 hoặc Academy of Accounting hoặc Journal of Business Research..." />
+        <input type="text" id="qInput" placeholder="Nhập Tên tạp chí hoặc ISSN (VD: 1096-3685, Journal of Business Research...)" />
         <button onclick="doSearch()">Kiểm tra ngay</button>
+      </div>
+      <div class="chip-row">
+        <span style="font-size:0.83rem;color:var(--muted);align-self:center;">Thử nhanh:</span>
+        <span class="chip" onclick="quickSearch('1096-3685')">1096-3685 (Đã bị loại)</span>
+        <span class="chip" onclick="quickSearch('2281-3993')">2281-3993 (Đã bị loại)</span>
+        <span class="chip" onclick="quickSearch('0148-2963')">0148-2963 (JBR - An toàn)</span>
+        <span class="chip" onclick="quickSearch('Marketing')">Từ khóa: Marketing</span>
       </div>
       <pre id="searchResult"></pre>
     </div>
 
     <div class="card">
-      <h2>🤖 Kết nối Zalo Bot 1-Click (Chia sẻ cho nhiều người cùng dùng)</h2>
-      <ol class="steps">
-        <li>Mở ứng dụng <strong>Zalo</strong> trên điện thoại, tìm <strong>Zalo Bot Manager</strong> &rarr; bấm <strong>Tạo bot</strong> (đặt tên bắt đầu bằng chữ <code>Bot</code>, ví dụ: <code>Bot Kiem Tra Tap Chi</code>).</li>
-        <li>Copy mã <strong>Bot Token</strong> mà Zalo Bot Manager gửi cho bạn, dán vào ô bên dưới và bấm <strong>Kích hoạt Zalo Bot</strong>.</li>
-        <li>Sau khi kích hoạt xong, bạn có thể gửi link hoặc mã QR của Bot cho đồng nghiệp/sinh viên. Ai nhắn tên tạp chí hoặc ISSN vào Zalo Bot sẽ được trả lời tự động trong <strong>0.5 giây</strong>!</li>
-      </ol>
-      <div class="input-row">
-        <input type="password" id="tokenInput" placeholder="Dán mã Zalo Bot Token (ví dụ: 123456789:abcXYZ...) vào đây" />
-        <button onclick="setupZalo()">Kích hoạt Zalo Bot</button>
+      <h2>📖 Hướng dẫn sử dụng trên Zalo (Dành cho Giảng viên, NCS & Sinh viên)</h2>
+      <p style="color:var(--muted);margin:4px 0 12px;">
+        Khi mở <strong>Bot Tra cứu Tạp chí</strong> trên Zalo, người dùng mới sẽ được Bot tự động gửi bảng hướng dẫn ngay từ tin nhắn hoặc nhãn dán (sticker) đầu tiên:
+      </p>
+      <div class="guide-grid">
+        <div class="guide-box">
+          <strong>1️⃣ Tra cứu theo Mã ISSN</strong>
+          Nhắn trực tiếp mã ISSN (có hoặc không có dấu gạch ngang).<br/>
+          <em>Ví dụ:</em> <code>1096-3685</code> hoặc <code>01482963</code>
+        </div>
+        <div class="guide-box">
+          <strong>2️⃣ Tra cứu theo Tên tạp chí</strong>
+          Nhắn tên đầy đủ hoặc một phần tên tạp chí.<br/>
+          <em>Ví dụ:</em> <code>Journal of Business Research</code>
+        </div>
+        <div class="guide-box">
+          <strong>3️⃣ Menu phím tắt (Gõ 1, 2, 3, 4)</strong>
+          • Gõ <code>1</code>: Xem hướng dẫn & ví dụ<br/>
+          • Gõ <code>2</code>: DS tạp chí Kinh tế bị loại<br/>
+          • Gõ <code>3</code>: Phiên bản dữ liệu<br/>
+          • Gõ <code>4</code>: Bật thông báo (<code>huy</code> để tắt)
+        </div>
       </div>
-      <pre id="setupResult"></pre>
+
+      <div class="share-box">
+        <strong>📋 Mẫu tin nhắn để bạn copy gửi vào nhóm Zalo Khoa / Nhóm Nghiên cứu:</strong>
+        <div id="shareTemplate" style="margin-top:6px;background:#fff;padding:10px;border-radius:6px;border:1px solid #dbeafe;">
+          Mời thầy/cô và các bạn sử dụng <strong>Bot Tra cứu Tạp chí Scopus &amp; Retraction Watch</strong> trên Zalo (hoặc tra cứu web tại ${workerOrigin}).<br/>
+          • <strong>Cách dùng trên Zalo:</strong> Mở Bot và nhắn trực tiếp <em>Tên tạp chí</em> hoặc <em>Mã ISSN</em> (ví dụ: <code>1096-3685</code> hoặc <code>Journal of Business Research</code>), Bot sẽ trả lời ngay lập tức tạp chí có nằm trong danh sách bị loại (Discontinued) của Scopus hay có lịch sử rút bài trên Retraction Watch hay không.<br/>
+          • Gõ <code>1</code> để xem hướng dẫn chi tiết hoặc gõ <code>2</code> để xem danh sách tạp chí khối Kinh tế - Quản trị bị loại khỏi Scopus.
+        </div>
+      </div>
     </div>
+
+    <details class="card" style="cursor:pointer;">
+      <summary style="font-weight:600;color:var(--muted);">⚙️ Cấu hình dành cho Quản trị viên (Cập nhật Zalo Bot Token)</summary>
+      <div style="margin-top:12px;cursor:default;">
+        <div class="input-row">
+          <input type="password" id="tokenInput" placeholder="Dán mã Zalo Bot Token mới nếu muốn thay đổi..." />
+          <button onclick="setupZalo()">Cập nhật Webhook</button>
+        </div>
+        <pre id="setupResult"></pre>
+      </div>
+    </details>
   </div>
 
   <script>
+    function quickSearch(val) {
+      document.getElementById('qInput').value = val;
+      doSearch();
+    }
     async function doSearch() {
       const q = document.getElementById('qInput').value.trim();
       const box = document.getElementById('searchResult');
@@ -355,7 +494,7 @@ export default {
       );
     }
 
-    // 2. API Tra cứu trực tiếp trên Web hoặc từ bên ngoài (/api/search?q=...)
+    // 2. API Tra cứu trực tiếp trên Web (/api/search?q=...)
     if (path === "/api/search") {
       const q = url.searchParams.get("q") || "";
       try {
@@ -384,7 +523,6 @@ export default {
           );
         }
 
-        // Tạo secret_token ngẫu nhiên hoặc cố định để xác thực Webhook Zalo
         let secretToken = await env.SCOPUS_BOT_KV.get("ZALO_WEBHOOK_SECRET");
         if (!secretToken) {
           secretToken =
@@ -444,11 +582,11 @@ export default {
 
         const msg = payload.message || {};
         const chatId = msg.chat?.id || msg.from?.id;
-        const displayName = msg.from?.display_name || "Bạn";
+        const displayName = msg.from?.display_name || "bạn";
         const text = (msg.text || "").trim();
 
-        if (!chatId || !text) {
-          return Response.json({ ok: true, note: "Verification or non-text event" });
+        if (!chatId) {
+          return Response.json({ ok: true, note: "Verification ping" });
         }
 
         const botToken =
@@ -457,42 +595,78 @@ export default {
         ctx.waitUntil(
           (async () => {
             try {
+              const subs = await getSubscribers(env);
+              const isNewUser = !subs[String(chatId)];
+              if (isNewUser) {
+                await addSubscriber(env, chatId, displayName);
+              }
+
+              // Nếu người dùng gửi Sticker chào hỏi, gửi ảnh, hoặc gõ lệnh trợ giúp / phím 1
               const cmd = text.toLowerCase();
+              const helpTriggers = [
+                "",
+                "1",
+                "menu",
+                "/menu",
+                "help",
+                "/help",
+                "start",
+                "/start",
+                "trogiup",
+                "trợ giúp",
+                "huongdan",
+                "hướng dẫn",
+                "cách dùng",
+                "cach dung",
+                "?",
+                "hi",
+                "hello",
+                "alo",
+                "xin chào",
+                "xin chao",
+                "chào",
+                "chao",
+                "bot",
+                "bot ơi",
+              ];
+
               let replyText = "";
 
-              if (["dangky", "/dangky", "subscribe", "/start", "start", "hi", "xin chào", "xin chao", "alo"].includes(cmd)) {
-                const total = await addSubscriber(env, chatId, displayName);
-                replyText =
-                  `👋 Xin chào ${displayName}!\n` +
-                  `✅ Bạn đã được đăng ký nhận cảnh báo tự động (Tổng số thành viên: ${total}).\n\n` +
-                  `🔍 CÁCH TRA CỨU TẠP CHÍ:\n` +
-                  `Hãy nhắn trực tiếp Tên tạp chí hoặc Mã ISSN vào đây, ví dụ:\n` +
-                  `• 1096-3685\n` +
-                  `• Journal of Business Research\n` +
-                  `• Academy of Accounting\n\n` +
-                  `(Nhắn 'huy' nếu muốn ngừng nhận thông báo định kỳ).`;
-              } else if (["huy", "/huy", "unsubscribe", "/stop"].includes(cmd)) {
-                await removeSubscriber(env, chatId);
-                replyText =
-                  "✅ Đã hủy nhận thông báo định kỳ. Bạn vẫn có thể nhắn Tên tạp chí hoặc ISSN bất cứ lúc nào để tra cứu!";
-              } else if (["thongke", "/thongke", "stats", "status"].includes(cmd)) {
+              if (!text || helpTriggers.includes(cmd)) {
+                replyText = buildUserGuideMessage(displayName, isNewUser);
+              } else if (["2", "kinhte", "kinh tế", "ds", "danh sách"].includes(cmd)) {
                 const db = await getLookupDatabase();
-                const subs = await getSubscribers(env);
+                replyText = getBusinessDiscontinuedSamples(db);
+              } else if (["3", "thongke", "/thongke", "stats", "status"].includes(cmd)) {
+                const db = await getLookupDatabase();
+                const updatedSubs = await getSubscribers(env);
                 replyText =
                   `📊 THÔNG TIN HỆ THỐNG SCOPUS & WOS BOT:\n` +
                   `• Phiên bản Scopus: ${db.scopus_version}\n` +
-                  `• Số tạp chí Discontinued đang lưu: ${(db.discontinued_journals || []).length} tạp chí\n` +
+                  `• Tổng số tạp chí Discontinued đang lưu: ${(db.discontinued_journals || []).length} tạp chí\n` +
                   `• Số tạp chí có lịch sử Retraction Watch: ${Object.keys(db.retraction_counts_by_journal || {}).length} tạp chí\n` +
-                  `• Số người đang đăng ký nhận cảnh báo: ${Object.keys(subs).length} người\n` +
-                  `• Cập nhật lần cuối: ${db.updated_at}`;
+                  `• Số thành viên đăng ký nhận cảnh báo: ${Object.keys(updatedSubs).length} người\n` +
+                  `• Cập nhật lần cuối: ${db.updated_at}\n\n` +
+                  `💡 Gõ '1' để xem hướng dẫn | Gõ '2' xem DS tạp chí Kinh tế bị loại.`;
+              } else if (["4", "dangky", "/dangky", "subscribe"].includes(cmd)) {
+                const total = await addSubscriber(env, chatId, displayName);
+                replyText =
+                  `✅ ${displayName} đã bật nhận cảnh báo định kỳ thành công (Tổng số: ${total} thành viên).\n` +
+                  `Mỗi khi Scopus công bố danh sách tạp chí bị loại tháng mới hoặc Retraction Watch có biến động lớn, Bot sẽ tự động nhắn cho bạn.\n\n` +
+                  `💡 Gõ 'huy' nếu muốn tắt thông báo định kỳ.`;
+              } else if (["huy", "/huy", "unsubscribe", "/stop"].includes(cmd)) {
+                await removeSubscriber(env, chatId);
+                replyText =
+                  "✅ Đã tắt thông báo định kỳ. Bạn vẫn có thể nhắn Tên tạp chí hoặc mã ISSN bất cứ lúc nào để tra cứu!";
               } else {
-                // Tự động ghi nhận người dùng mới vào danh sách nếu đây là lần đầu họ nhắn
-                const subs = await getSubscribers(env);
-                if (!subs[String(chatId)]) {
-                  await addSubscriber(env, chatId, displayName);
-                }
                 const db = await getLookupDatabase();
                 replyText = searchJournal(text, db);
+                // Nếu là người mới hoàn toàn và gõ tra cứu ngay ở tin nhắn đầu tiên, đính kèm lời chào ngắn ở đầu
+                if (isNewUser) {
+                  replyText =
+                    `👋 Chào ${displayName}! (Gõ '1' bất cứ lúc nào để xem bảng hướng dẫn sử dụng).\n\n` +
+                    replyText;
+                }
               }
 
               await sendZaloMessage(botToken, chatId, replyText);
