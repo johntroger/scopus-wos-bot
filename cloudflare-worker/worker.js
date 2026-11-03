@@ -1013,17 +1013,8 @@ async function processZaloIncomingMessage(env, botToken, update) {
 
   const text = (msgObj.text || update.text || "").trim();
 
-  // Lưu log sự kiện gần nhất nhận được để debug
-  await env.SCOPUS_BOT_KV.put(
-    "LAST_PROCESSED_MESSAGE",
-    JSON.stringify({
-      time: new Date().toISOString(),
-      chatId,
-      displayName,
-      text,
-      rawUpdate: update,
-    })
-  );
+  // Ghi log qua console.log (tiết kiệm 100% quota KV Write hàng ngày)
+  console.log(`[Zalo Update received] ChatId: ${chatId} (${displayName}): "${text}"`);
 
   if (!chatId) {
     console.error("Không tìm thấy chatId trong update:", update);
@@ -1210,15 +1201,8 @@ async function pollZaloUpdatesLoop(env) {
     }
   }
 
-  await env.SCOPUS_BOT_KV.put(
-    "LAST_POLL_STATUS",
-    JSON.stringify({
-      time: new Date().toISOString(),
-      durationMs: Date.now() - startTime,
-      processedCount,
-      lastDebug,
-    })
-  );
+  // Ghi log qua console.log (tiết kiệm 100% quota KV Write hàng ngày)
+  console.log(`[Zalo Poll finished] Duration: ${Date.now() - startTime}ms, Processed: ${processedCount}`);
   return { ok: true, processedCount, durationMs: Date.now() - startTime, lastDebug };
 }
 
@@ -1610,16 +1594,8 @@ export default {
     return Response.json({ ok: false, error: "Not found" }, { status: 404 });
   },
 
-  // 6. Cloudflare Cron Trigger chạy tự động mỗi 60 giây (* * * * *), khởi động chuỗi Ping-Pong 4 nhịp (4 x 14s = 56s)
+  // 6. Cloudflare Cron Trigger chạy tự động mỗi 60 giây (* * * * *) để nhận tin nhắn Zalo
   async scheduled(event, env, ctx) {
-    ctx.waitUntil(
-      (async () => {
-        await pollZaloUpdatesLoop(env);
-        await fetch(
-          "https://scopus-wos-poller.nttu-kts-johntroger.workers.dev/api/poll?step=1",
-          { headers: { "User-Agent": "Mozilla/5.0 Cloudflare-Relay" } }
-        ).catch(() => {});
-      })()
-    );
+    ctx.waitUntil(pollZaloUpdatesLoop(env));
   },
 };
