@@ -45,33 +45,31 @@ function normalizeIssn(val) {
  * Tạo nội dung Hướng dẫn sử dụng (Onboarding / Menu trợ giúp) thân thiện cho người mới
  */
 function buildUserGuideMessage(displayName = "bạn", isFirstTime = false) {
-  const header = isFirstTime
-    ? `👋 Chào mừng ${displayName} đến với Bot Thẩm định Tạp chí Khoa học Quốc tế & Quốc gia!\n(Hệ thống đã tự động bật thông báo định kỳ cho bạn).\n\n`
-    : `📖 CẨM NANG TRA CỨU TẠP CHÍ KHOA HỌC (SCOPUS, WOS, ABDC & CHUẨN VIỆT NAM)\n\n`;
+  const greeting = isFirstTime
+    ? `👋 Kính chào ${displayName}!\n(Hệ thống đã tự động bật thông báo cảnh báo tạp chí mới cho bạn).\n\n`
+    : `👋 Chào ${displayName}!\n\n`;
 
   return (
-    header +
-    `🔎 CÁCH 1: TRA CỨU TRỰC TIẾP (TẠP CHÍ HOẶC BÀI BÁO)\n` +
-    `Bạn chỉ cần nhắn trực tiếp bất kỳ thông tin nào sau đây:\n` +
-    `• Mã DOI bài báo: Nhắn trực tiếp mã 10.xxxx/... (Ví dụ: 10.1016/j.jbusres.2021.08.043) để xem tên bài, tác giả, phí APC & thẩm định tạp chí\n` +
-    `• Mã ISSN quốc tế: 0148-2963 hoặc 2515-964X\n` +
-    `• Tên viết tắt chuẩn: JABES, JED, JBR, JCR, JBE, MISQ, AMJ...\n` +
-    `• Tạp chí Việt Nam: Kinh tế và Quản lý, Tạp chí Cộng sản, Kinh tế và Phát triển...\n\n` +
-    `📋 CƠ SỞ DỮ LIỆU TÍCH HỢP:\n` +
-    `1. Scopus Discontinued (Tạp chí bị loại trừ mới nhất)\n` +
-    `2. Retraction Watch (Dữ liệu bài báo bị rút / đính chính toàn cầu)\n` +
-    `3. SCImago Journal Rank (SJR Q1 - Q4 Scopus)\n` +
-    `4. Bảng xếp hạng Kinh tế Úc ABDC (Hạng A*, A, B, C)\n` +
-    `5. Danh mục 341 Tạp chí đạt Tiêu chuẩn Khoa học Việt Nam năm 2026\n` +
-    `6. Khung điểm công trình HĐGSNN ngành Kinh tế (Quyết định 26/QĐ-HĐGSNN)\n` +
-    `7. Crossref & OpenAlex (Tra cứu tự động qua DOI & kiểm tra phí APC)\n\n` +
+    greeting +
+    `🤖 CẨM NANG TRA CỨU TẠP CHÍ & BÀI BÁO KHOA HỌC\n` +
+    `───────────────────────────────────────\n` +
+    `Bạn có thể gửi bất kỳ thông tin nào sau đây vào khung chat:\n\n` +
+    `1️⃣ TRA THEO MÃ BÀI BÁO (DOI):\n` +
+    `• Nhắn mã: 10.1016/j.jbusres.2021.08.043\n` +
+    `  ↳ Bot tự tra Tên bài, Tác giả, Phí APC & Thẩm định tạp chí mẹ\n\n` +
+    `2️⃣ TRA THEO TÊN VIẾT TẮT:\n` +
+    `• Nhắn: VJCS (Tạp chí ĐH Nguyễn Tất Thành)\n` +
+    `• Nhắn: JABES, JED, JSAMD, JBR, JCR, JBE...\n\n` +
+    `3️⃣ TRA THEO MÃ ISSN HOẶC TÊN TẠP CHÍ:\n` +
+    `• Nhắn mã ISSN: 0148-2963 hoặc 2196-8896\n` +
+    `• Nhắn tên tiếng Việt: Kinh tế và Quản lý, Tạp chí Cộng sản, Kinh tế và Phát triển...\n\n` +
     `⌨️ PHÍM TẮT NHANH:\n` +
-    `• Gõ 1 : Xem hướng dẫn tra cứu\n` +
+    `• Gõ 1 : Mở lại bảng hướng dẫn này\n` +
     `• Gõ 2 : Xem các tạp chí Kinh tế bị loại khỏi Scopus\n` +
-    `• Gõ 3 : Xem phiên bản dữ liệu & trạng thái kết nối\n` +
-    `• Gõ 4 : Đăng ký nhận thông báo định kỳ (Gõ 'huy' để tắt)\n` +
+    `• Gõ 3 : Xem thông tin phiên bản CSDL\n` +
+    `• Gõ 4 : Bật/tắt nhận thông báo định kỳ (Gõ 'huy' để tắt)\n` +
     `• Gõ 5 : Xem 16 Tạp chí Việt Nam trong Scopus / WoS quốc tế\n\n` +
-    `👉 Hãy thử nhắn ngay: VJCS hoặc JABES hoặc 10.1016/j.jbusres.2021.08.043`
+    `👉 Hãy thử nhắn ngay: VJCS hoặc 10.1016/j.jbusres.2021.08.043`
   );
 }
 
@@ -494,12 +492,14 @@ function searchJournal(query, lookupDb) {
 
     const lines = [
       `🔍 KẾT QUẢ TRA CỨU: "${q}"`,
-      `\n❓ KHÔNG TÌM THẤY TRONG CSDL KHOA HỌC (SCOPUS / ABDC / CHUẨN VN 2026 / HĐGSNN)`,
+      `\n❓ KHÔNG TÌM THẤY TRONG CSDL KHOA HỌC`,
       `Hệ thống không tìm thấy tạp chí nào khớp với từ khóa bạn vừa nhập.`,
-      `\n💡 GỢI Ý CHO BẠN:`,
-      `1. Nhắn mã ISSN chính xác (ví dụ: 0148-2963 hoặc 2515-964X).`,
-      `2. Nhập tên tạp chí tiếng Việt (ví dụ: "Kinh tế và Phát triển", "Tạp chí Cộng sản", "Kinh tế và Quản lý").`,
-      `3. Nhập từ viết tắt chuẩn (ví dụ: JABES, JED, JBR, JCR, JBE...).`
+      `\n💡 MẸO TRA CỨU CHÍNH XÁC:`,
+      `1. Nhắn mã ISSN chính xác (ví dụ: 0148-2963 hoặc 2196-8896).`,
+      `2. Nhắn mã DOI bài báo (ví dụ: 10.1016/j.jbusres.2021.08.043) để tra tự động.`,
+      `3. Nhắn từ viết tắt chuẩn (VJCS, JABES, JED, JSAMD, JBR, JCR...).`,
+      `4. Gõ '5' (hoặc 'vn') để xem 16 tạp chí Việt Nam trong Scopus/WoS quốc tế.`,
+      `5. Gõ '1' để xem lại toàn bộ hướng dẫn tra cứu.`
     ];
 
     if (suggestions.length > 0) {
@@ -653,8 +653,21 @@ function searchJournal(query, lookupDb) {
     lines.push(`✅ ĐỦ CHUẨN QUỐC GIA: Đạt chuẩn khoa học Việt Nam 2026, tính điểm HĐGSNN và nghiệm thu đề tài NCKH trong nước.`);
   }
 
-  lines.push(`\n💡 Nhắn mã ISSN hoặc tên tạp chí khác để tiếp tục tra cứu.`);
+  lines.push(`\n` + getRandomFooterTip());
   return lines.join("\n").slice(0, 1950);
+}
+
+const FOOTER_TIPS = [
+  "💡 MẸO HAY: Dán mã DOI (vd: 10.1016/j.jbusres.2021.08.043) để xem tên bài, tác giả & phí đăng bài (APC)!",
+  "💡 MẸO HAY: Gõ '5' (hoặc 'vn') để xem 16 Tạp chí Việt Nam trong Scopus/WoS (có VJCS của NTTU, JABES, JED...)!",
+  "💡 MẸO HAY: Gõ '2' để xem các tạp chí khối Kinh tế - Quản trị vừa bị Scopus loại bỏ gần đây.",
+  "💡 MẸO HAY: Bạn có thể gõ từ viết tắt chuẩn như VJCS, JABES, JED, JSAMD, JBR, JCR... để tra cứu nhanh!",
+  "💡 MẸO HAY: Hệ thống hỗ trợ tra cứu toàn bộ 341 tạp chí đạt Tiêu chuẩn Khoa học Việt Nam năm 2026."
+];
+
+function getRandomFooterTip() {
+  const tip = FOOTER_TIPS[Math.floor(Math.random() * FOOTER_TIPS.length)];
+  return `${tip}\n(Gõ '1' để mở bảng hướng dẫn | Nhắn mã ISSN/tên để tra tiếp).`;
 }
 
 const SAFE_DOMAIN_ALTERNATIVES = {
@@ -970,7 +983,24 @@ async function processZaloIncomingMessage(env, botToken, update) {
 
     let replyText = "";
 
-    if (!text || helpTriggers.includes(cmd)) {
+    const isHelpIntent =
+      !text ||
+      helpTriggers.includes(cmd) ||
+      cmd.includes("hướng dẫn") ||
+      cmd.includes("huong dan") ||
+      cmd.includes("cách dùng") ||
+      cmd.includes("cach dung") ||
+      cmd.includes("làm sao") ||
+      cmd.includes("lam sao") ||
+      cmd.includes("tính năng") ||
+      cmd.includes("tinh nang") ||
+      cmd.includes("chức năng") ||
+      cmd.includes("trợ giúp") ||
+      cmd.includes("tro giup") ||
+      cmd.includes("bạn là ai") ||
+      cmd.includes("bot là gì");
+
+    if (isHelpIntent) {
       replyText = buildUserGuideMessage(displayName, isNewUser);
     } else if (["2", "kinhte", "kinh tế", "ds", "danh sách"].includes(cmd)) {
       const db = await getLookupDatabase();
