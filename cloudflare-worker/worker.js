@@ -81,8 +81,9 @@ function buildUserGuideMessage(displayName = "bạn", isFirstTime = false) {
     `• Gõ 2 : Xem các tạp chí Kinh tế bị loại khỏi Scopus\n` +
     `• Gõ 3 : Xem thông tin phiên bản CSDL\n` +
     `• Gõ 4 : Bật/tắt nhận thông báo định kỳ (Gõ 'huy' để tắt)\n` +
-    `• Gõ 5 : Xem 16 Tạp chí Việt Nam trong Scopus / WoS quốc tế\n\n` +
-    `👉 Hãy thử nhắn ngay: VJCS hoặc 10.1016/j.jbusres.2021.08.043`
+    `• Gõ 5 : Xem 16 Tạp chí Việt Nam trong Scopus / WoS quốc tế\n` +
+    `• Gõ 6 : Danh mục điểm 28 Hội đồng Giáo sư Nhà nước (QĐ 26/QĐ-HĐGSNN)\n\n` +
+    `👉 Hãy thử nhắn: VJCS, hdgs y hoc, hdgs cntt hoặc 10.1016/j.jbusres.2021.08.043`
   );
 }
 
@@ -269,6 +270,9 @@ function searchJournal(query, lookupDb) {
   const vnList = lookupDb.vn_standards_2026 || [];
   const hdgsData = lookupDb.hdgsnn_kinhte || {};
   const hdgsJournals = hdgsData.journals || {};
+  const hdgsByIssn = lookupDb.hdgs_by_issn || {};
+  const hdgsByTitle = lookupDb.hdgs_by_title || {};
+  const issnLinkedMap = lookupDb.issn_linked_map || {};
   const wosDelistedList = lookupDb.wos_delisted_journals || [];
   const beallJournalsList = lookupDb.beall_standalone_journals || [];
   const beallPublishersList = lookupDb.beall_publishers || [];
@@ -435,41 +439,96 @@ function searchJournal(query, lookupDb) {
     }
   }
 
-  // 6. Tra cứu Khung điểm Hội đồng Giáo sư Nhà nước ngành Kinh tế (QĐ 26/QĐ-HĐGSNN)
+  // 6. Tra cứu Khung điểm 28 Hội đồng Giáo sư Nhà nước (QĐ 26/QĐ-HĐGSNN)
   let matchedHdgs = null;
-  for (const [title, info] of Object.entries(hdgsJournals)) {
-    const tNorm = normalizeVnText(title);
-    const tClean = cleanVnJournalName(title);
-    const infoIssns = String(info.issn || "").split(",").map(normalizeIssn).filter(Boolean);
 
-    if (normQIssn && normQIssn.length === 8 && infoIssns.includes(normQIssn)) {
-      matchedHdgs = { title, ...info };
-      break;
-    }
-    if (tNorm === normQVn || tClean === cleanQVn) {
-      matchedHdgs = { title, ...info };
-      break;
+  // 6.1. Tra cứu theo ISSN (trực tiếp hoặc qua liên kết p-ISSN <-> e-ISSN)
+  if (normQIssn && normQIssn.length === 8) {
+    if (hdgsByIssn[normQIssn]) {
+      matchedHdgs = hdgsByIssn[normQIssn];
+    } else if (issnLinkedMap[normQIssn]) {
+      for (const linked of issnLinkedMap[normQIssn]) {
+        if (hdgsByIssn[linked]) {
+          matchedHdgs = hdgsByIssn[linked];
+          break;
+        }
+      }
     }
   }
 
-  if (!matchedHdgs && cleanQVn.length >= 4) {
-    for (const [title, info] of Object.entries(hdgsJournals)) {
-      const tClean = cleanVnJournalName(title);
-      if (matchTitleSafely(tClean, cleanQVn) || (cleanQVn.length >= 8 && cleanQVn.includes(tClean))) {
-        matchedHdgs = { title, ...info };
+  // 6.2. Tra cứu qua ISSN của Tạp chí Chuẩn VN hoặc SJR đã khớp
+  if (!matchedHdgs && matchedVn) {
+    const vnIssns = [matchedVn.issn, matchedVn.eissn].filter(Boolean).map(normalizeIssn).filter(Boolean);
+    for (const vi of vnIssns) {
+      if (hdgsByIssn[vi]) {
+        matchedHdgs = hdgsByIssn[vi];
         break;
+      }
+      if (issnLinkedMap[vi]) {
+        for (const linked of issnLinkedMap[vi]) {
+          if (hdgsByIssn[linked]) {
+            matchedHdgs = hdgsByIssn[linked];
+            break;
+          }
+        }
+      }
+      if (matchedHdgs) break;
+    }
+  }
+
+  if (!matchedHdgs && matchedSjr && matchedSjr.issn) {
+    const sjrIssns = String(matchedSjr.issn).split(',').map(normalizeIssn).filter(Boolean);
+    for (const si of sjrIssns) {
+      if (hdgsByIssn[si]) {
+        matchedHdgs = hdgsByIssn[si];
+        break;
+      }
+      if (issnLinkedMap[si]) {
+        for (const linked of issnLinkedMap[si]) {
+          if (hdgsByIssn[linked]) {
+            matchedHdgs = hdgsByIssn[linked];
+            break;
+          }
+        }
+      }
+      if (matchedHdgs) break;
+    }
+  }
+
+  // 6.3. Tra cứu theo Tên chuẩn hóa (O(1) và Fuzzy)
+  if (!matchedHdgs && cleanQVn.length >= 4) {
+    if (hdgsByTitle[cleanQVn]) {
+      matchedHdgs = hdgsByTitle[cleanQVn];
+    } else {
+      for (const [titleClean, info] of Object.entries(hdgsByTitle)) {
+        if (titleClean === cleanQVn || matchTitleSafely(titleClean, cleanQVn) || (cleanQVn.length >= 8 && cleanQVn.includes(titleClean))) {
+          matchedHdgs = info;
+          break;
+        }
       }
     }
   }
 
   if (!matchedHdgs && matchedVn) {
-    const vnNorm = normalizeVnText(matchedVn.title);
     const vnClean = cleanVnJournalName(matchedVn.title);
+    if (hdgsByTitle[vnClean]) {
+      matchedHdgs = hdgsByTitle[vnClean];
+    } else {
+      for (const [titleClean, info] of Object.entries(hdgsByTitle)) {
+        if (titleClean === vnClean || matchTitleSafely(titleClean, vnClean) || vnClean.includes(titleClean)) {
+          matchedHdgs = info;
+          break;
+        }
+      }
+    }
+  }
+
+  // 6.4. Fallback tương thích ngược: hdgsJournals cũ (Kinh tế)
+  if (!matchedHdgs) {
     for (const [title, info] of Object.entries(hdgsJournals)) {
-      const tNorm = normalizeVnText(title);
       const tClean = cleanVnJournalName(title);
-      if (tNorm === vnNorm || tClean === vnClean || tClean.includes(vnClean) || vnClean.includes(tClean)) {
-        matchedHdgs = { title, ...info };
+      if (tClean === cleanQVn || (cleanQVn.length >= 4 && matchTitleSafely(tClean, cleanQVn))) {
+        matchedHdgs = { title, scores: [{ council: "Kinh tế", points: info.points }] };
         break;
       }
     }
@@ -661,18 +720,23 @@ function searchJournal(query, lookupDb) {
       lines.push(`• Chuẩn khoa học VN 2026: Tạp chí quốc tế (công nhận tính điểm theo quy chế đào tạo & HĐGSNN)`);
     }
 
-    // Điểm HĐGSNN Kinh tế theo Quyết định 26/QĐ-HĐGSNN
-    let hdgsPointStr = "";
-    if (matchedHdgs?.points) {
-      hdgsPointStr = `🎯 ${matchedHdgs.points} (HĐGS ngành Kinh tế - QĐ 26/QĐ-HĐGSNN)`;
+    // Điểm HĐGSNN 2025 theo Quyết định 26/QĐ-HĐGSNN
+    if (matchedHdgs && matchedHdgs.scores && matchedHdgs.scores.length > 0) {
+      lines.push(`• Điểm HĐGSNN 2025 (QĐ 26/QĐ-HĐGSNN):`);
+      const maxDisplay = 5;
+      const displayScores = matchedHdgs.scores.slice(0, maxDisplay);
+      for (const sc of displayScores) {
+        lines.push(`  🎯 HĐGS ${sc.council}: ${sc.points}`);
+      }
+      if (matchedHdgs.scores.length > maxDisplay) {
+        lines.push(`  🎯 (+${matchedHdgs.scores.length - maxDisplay} Hội đồng ngành khác cũng tính điểm)`);
+      }
+    } else if (matchedHdgs?.points) {
+      lines.push(`• Điểm công trình HĐGSNN: 🎯 ${matchedHdgs.points} (QĐ 26/QĐ-HĐGSNN)`);
     } else if (matchedSjr?.quartile === "Q1") {
-      hdgsPointStr = `🎯 0 - 2,0 điểm (Scopus Q1 / Quyết định 26/QĐ-HĐGSNN)`;
+      lines.push(`• Điểm công trình HĐGSNN: 🎯 0 - 2,0 điểm (Khung chung Scopus Q1 / QĐ 26/QĐ-HĐGSNN)`);
     } else if (matchedSjr?.quartile) {
-      hdgsPointStr = `🎯 0 - 1,5 điểm (Scopus ${matchedSjr.quartile} / Quyết định 26/QĐ-HĐGSNN)`;
-    }
-
-    if (hdgsPointStr) {
-      lines.push(`• Điểm công trình HĐGSNN: ${hdgsPointStr}`);
+      lines.push(`• Điểm công trình HĐGSNN: 🎯 0 - 1,5 điểm (Khung chung Scopus ${matchedSjr.quartile} / QĐ 26/QĐ-HĐGSNN)`);
     }
   }
 
@@ -990,6 +1054,139 @@ async function removeSubscriber(env, chatId) {
 /**
  * Xử lý 1 bản ghi cập nhật đến từ người dùng Zalo
  */
+
+/**
+ * Tra cứu danh mục 28 Hội đồng Giáo sư Nhà nước theo QĐ 26/QĐ-HĐGSNN
+ */
+function handleHdgsCommand(query, lookupDb) {
+  const councils = lookupDb.hdgs_councils || {};
+  const cleaned = cleanVnJournalName(query).replace(/^hdgs\s*/, '').replace(/^hoidong\s*/, '').trim();
+
+  if (!cleaned || cleaned === '6' || cleaned === 'menu' || cleaned === 'ds') {
+    return (
+      `🏛️ DANH MỤC 28 HỘI ĐỒNG GIÁO SƯ NHÀ NƯỚC (QĐ 26/QĐ-HĐGSNN)\n` +
+      `Cơ sở dữ liệu: Đầy đủ 28 Hội đồng ngành/liên ngành • Hơn 1.400 tạp chí\n` +
+      `───────────────────────────────────────\n` +
+      `⚙️ KHỐI KỸ THUẬT & CÔNG NGHỆ:\n` +
+      `• CNTT: hdgs cntt (18 TC)\n` +
+      `• Cơ học: hdgs co_hoc (54 TC)\n` +
+      `• Cơ khí - Động lực: hdgs co_khi (56 TC)\n` +
+      `• Điện - Điện tử: hdgs dien_tu (34 TC)\n` +
+      `• Giao thông vận tải: hdgs giao_thong (41 TC)\n` +
+      `• Xây dựng - Kiến trúc: hdgs xay_dung (62 TC)\n` +
+      `• Thủy lợi: hdgs thuy_loi (55 TC)\n` +
+      `• Trái đất - Mỏ: hdgs trai_dat (52 TC)\n\n` +
+      `🌿 KHỐI KHOA HỌC TỰ NHIÊN & SỰ SỐNG:\n` +
+      `• Toán học: hdgs toan (5 TC)\n` +
+      `• Vật lý: hdgs vat_ly (25 TC)\n` +
+      `• Hóa học - CN Thực phẩm: hdgs hoa_hoc (69 TC)\n` +
+      `• Sinh học: hdgs sinh_hoc (74 TC)\n` +
+      `• Y học: hdgs y_hoc (76 TC)\n` +
+      `• Dược học: hdgs duoc (48 TC)\n` +
+      `• Nông - Lâm nghiệp: hdgs nong_lam (56 TC)\n` +
+      `• Chăn nuôi - Thủy sản: hdgs chan_nuoi (30 TC)\n\n` +
+      `📚 KHỐI KHOA HỌC XÃ HỘI & NHÂN VĂN:\n` +
+      `• Kinh tế: hdgs kinh_te (53 TC)\n` +
+      `• Luật học: hdgs luat (52 TC)\n` +
+      `• Khoa học giáo dục: hdgs giao_duc (74 TC)\n` +
+      `• Ngôn ngữ học: hdgs ngon_ngu (67 TC)\n` +
+      `• Văn học: hdgs van_hoc (60 TC)\n` +
+      `• Văn hóa - NT - TDTT: hdgs van_hoa (94 TC)\n` +
+      `• Sử học - Nhân học: hdgs su_hoc (67 TC)\n` +
+      `• Triết - Chính trị - Xã hội: hdgs triet (102 TC)\n` +
+      `• Tâm lý học: hdgs tam_ly (41 TC)\n` +
+      `• An ninh: hdgs an_ninh (34 TC)\n` +
+      `• Quân sự: hdgs quan_su (37 TC)\n` +
+      `───────────────────────────────────────\n` +
+      `💡 Cú pháp: Nhắn 'hdgs <tên ngành>' (ví dụ: hdgs y hoc, hdgs cntt, hdgs toan, hdgs luat, hdgs kinh te...) để xem danh sách tạp chí điểm cao nhất.`
+    );
+  }
+
+  const aliasMap = {
+    'y hoc': 'y_hoc', 'y': 'y_hoc', 'y khoa': 'y_hoc', 'y te': 'y_hoc', 'medicine': 'y_hoc',
+    'cntt': 'cntt', 'it': 'cntt', 'cong nghe thong tin': 'cntt', 'thong tin': 'cntt',
+    'toan': 'toan_hoc', 'toan hoc': 'toan_hoc', 'math': 'toan_hoc',
+    'duoc': 'duoc_hoc', 'duoc hoc': 'duoc_hoc', 'pharmacy': 'duoc_hoc',
+    'luat': 'luat_hoc', 'luat hoc': 'luat_hoc', 'law': 'luat_hoc',
+    'kinh te': 'kinh_te', 'kinhte': 'kinh_te', 'kt': 'kinh_te', 'economics': 'kinh_te',
+    'hoa': 'hoa_hoc', 'hoa hoc': 'hoa_hoc', 'chemistry': 'hoa_hoc',
+    'ly': 'vat_ly', 'vat ly': 'vat_ly', 'physics': 'vat_ly',
+    'sinh': 'sinh_hoc', 'sinh hoc': 'sinh_hoc', 'biology': 'sinh_hoc',
+    'su': 'su_hoc', 'su hoc': 'su_hoc', 'history': 'su_hoc',
+    'van': 'van_hoc', 'van hoc': 'van_hoc', 'literature': 'van_hoc',
+    'gd': 'giao_duc', 'giao duc': 'giao_duc', 'su pham': 'giao_duc',
+    'co hoc': 'co_hoc', 'co khi': 'co_khi', 'dien': 'dien_tu', 'dien tu': 'dien_tu',
+    'giao thong': 'giao_thong', 'gtvt': 'giao_thong', 'xay dung': 'xay_dung',
+    'thuy loi': 'thuy_loi', 'trai dat': 'trai_dat_mo', 'mo': 'trai_dat_mo',
+    'chan nuoi': 'chan_nuoi', 'thu y': 'chan_nuoi', 'thuy san': 'chan_nuoi',
+    'nong lam': 'nong_lam', 'nong nghiep': 'nong_lam', 'lam nghiep': 'nong_lam',
+    'tam ly': 'tam_ly', 'an ninh': 'an_ninh', 'quan su': 'quan_su',
+    'triet': 'triet_hoc', 'triet hoc': 'triet_hoc', 'xa hoi': 'triet_hoc',
+    'van hoa': 'van_hoa_nt', 'the thao': 'van_hoa_nt', 'ngon ngu': 'ngon_ngu'
+  };
+
+  let targetCouncil = null;
+  if (aliasMap[cleaned] && councils[aliasMap[cleaned]]) {
+    targetCouncil = councils[aliasMap[cleaned]];
+  }
+
+  if (!targetCouncil) {
+    for (const [k, c] of Object.entries(councils)) {
+      if (cleaned === k || cleaned === cleanVnJournalName(c.name)) {
+        targetCouncil = c;
+        break;
+      }
+    }
+  }
+
+  if (!targetCouncil) {
+    for (const [k, c] of Object.entries(councils)) {
+      const normName = cleanVnJournalName(c.name);
+      if (normName.startsWith(cleaned) || k.startsWith(cleaned)) {
+        targetCouncil = c;
+        break;
+      }
+    }
+  }
+
+  if (!targetCouncil && cleaned.length >= 4) {
+    for (const [k, c] of Object.entries(councils)) {
+      const normName = cleanVnJournalName(c.name);
+      if (normName.includes(cleaned) || cleaned.includes(normName)) {
+        targetCouncil = c;
+        break;
+      }
+    }
+  }
+
+  if (!targetCouncil) {
+    return (
+      `⚠️ Không tìm thấy Hội đồng ngành phù hợp với từ khóa '${query}'.\n\n` +
+      `💡 Bạn có thể gõ '6' để xem danh sách 28 Hội đồng ngành hoặc thử lại với: hdgs cntt, hdgs y hoc, hdgs toan, hdgs kinh te, hdgs luat...`
+    );
+  }
+
+  let res =
+    `🏛️ HỘI ĐỒNG GIÁO SƯ NGÀNH: ${targetCouncil.name.toUpperCase()}\n` +
+    `📋 Căn cứ: Quyết định 26/QĐ-HĐGSNN ngày 11/07/2025\n` +
+    `📊 Tổng số tạp chí trong nước tính điểm: ${targetCouncil.total} tạp chí\n` +
+    `───────────────────────────────────────\n` +
+    `⭐ TOP TẠP CHÍ ĐIỂM TRẦN CAO NHẤT:\n\n`;
+
+  const topList = targetCouncil.top_journals || [];
+  topList.forEach((j, idx) => {
+    res += `${idx + 1}. ${j.title}\n`;
+    res += `   • Điểm: 🎯 ${j.points}\n`;
+    if (j.issn) res += `   • ISSN: ${j.issn}\n`;
+  });
+
+  res +=
+    `\n───────────────────────────────────────\n` +
+    `💡 Nhắn Tên tạp chí hoặc mã ISSN bất kỳ để tra cứu điểm liên ngành & xếp hạng Scopus/WoS!`;
+
+  return res;
+}
+
 async function processZaloIncomingMessage(env, botToken, update) {
   if (!update) return false;
 
@@ -1126,6 +1323,14 @@ async function processZaloIncomingMessage(env, botToken, update) {
     } else if (["5", "vn", "vietnam", "tcvn", "việt nam"].includes(cmd)) {
       const db = await getLookupDatabase();
       replyText = getVietnamScopusList(db);
+    } else if (
+      ["6", "hdgs", "/hdgs", "hoidong", "hội đồng", "hdgsnn"].includes(cmd) ||
+      cmd.startsWith("hdgs ") ||
+      cmd.startsWith("/hdgs ") ||
+      cmd.startsWith("hoidong ")
+    ) {
+      const db = await getLookupDatabase();
+      replyText = handleHdgsCommand(text, db);
     } else {
       const db = await getLookupDatabase();
       replyText = await resolveAndSearch(text, db);
