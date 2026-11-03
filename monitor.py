@@ -679,8 +679,9 @@ def main():
         query_result = search_journal_in_lookup(manual_query, lookup_db)
         all_notifications.append(query_result)
 
-    # 4. Kiểm tra và trả lời các tin nhắn tra cứu gửi vào Zalo Bot
-    process_incoming_zalo_queries(state, lookup_db)
+    # 4. Nếu KHÔNG dùng Cloudflare Worker Webhook thì mới quét getUpdates
+    if not CLOUDFLARE_WORKER_URL:
+        process_incoming_zalo_queries(state, lookup_db)
 
     # Lưu trạng thái mới & chỉ mục tra cứu
     state["last_updated"] = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
