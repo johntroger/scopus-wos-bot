@@ -2,6 +2,9 @@
   "name": "scopus-wos-zalo-bot",
   "main": "worker.js",
   "compatibility_date": "2026-10-01",
+  "vars": {
+    "ZALO_BOT_TOKEN": "2852188171130366998:YgTIysEdsCAzIduiNaKVdwEHQNtyedMoCEBGPIyHVOArNaQYWwSVKhEkBKFmSNxE"
+  },
   "kv_namespaces": [
     {
       "binding": "SCOPUS_BOT_KV",
