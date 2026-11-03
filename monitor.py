@@ -599,24 +599,77 @@ def sync_academic_rankings(lookup_db: dict) -> None:
 # 6. MODULE TRA CỨU TẠP CHÍ 2 CHIỀU (NHẮN TÊN TẠP CHÍ / ISSN VÀO ZALO BOT)
 # ==============================================================================
 
+KNOWN_ACRONYMS = {
+    "jabeg": "journal of asian business and economic studies",
+    "jabes": "journal of asian business and economic studies",
+    "jbr": "journal of business research",
+    "jcr": "journal of consumer research",
+    "jbe": "journal of business ethics",
+    "jams": "journal of the academy of marketing science",
+    "jm": "journal of marketing",
+    "jfe": "journal of financial economics",
+    "aer": "american economic review",
+    "amj": "academy of management journal",
+    "amr": "academy of management review",
+    "jom": "journal of management",
+    "misq": "mis quarterly",
+    "ijhm": "international journal of hospitality management",
+    "ijchm": "international journal of contemporary hospitality management",
+    "jhtm": "journal of hospitality and tourism management",
+    "trr": "tourism recreation research",
+    "jed": "journal of economics and development",
+    "ejor": "european journal of operational research",
+    "ijpe": "international journal of production economics",
+    "ijpr": "international journal of production research",
+    "jf": "journal of finance",
+    "rfs": "review of financial studies",
+    "res": "review of economic studies",
+    "qje": "quarterly journal of economics",
+    "jpe": "journal of political economy",
+    "jebo": "journal of economic behavior & organization",
+    "smj": "strategic management journal",
+    "jwb": "journal of world business",
+    "jibs": "journal of international business studies",
+    "apjm": "asia pacific journal of management",
+    "ijim": "international journal of information management",
+    "eswa": "expert systems with applications",
+    "ktpt": "journal of economics and development",
+}
+
+def to_title_case(s: str) -> str:
+    if not s:
+        return ""
+    return " ".join(w.capitalize() for w in s.split())
+
+def format_issn(issn: str) -> str:
+    if not issn:
+        return "N/A"
+    clean = normalize_issn(issn)
+    if len(clean) == 8:
+        return f"{clean[:4]}-{clean[4:]}"
+    return issn
+
 def search_journal_in_lookup(query: str, lookup_db: dict) -> str:
     """
-    Tìm kiếm tạp chí đa chiều:
-    1. Trạng thái Scopus Discontinued (bị loại).
+    Tìm kiếm tạp chí đa chiều & xuất Báo cáo Thẩm định Học thuật Toàn diện:
+    1. Trạng thái Scopus Discontinued (bị loại) / Active.
     2. Cảnh báo Tạp chí Giả mạo / Cướp tên miền (Hijacked Journals).
     3. Phân hạng Quốc tế: SCImago Scopus Quartile (Q1 - Q4) & ABDC (A*, A, B, C).
-    4. Thống kê bài báo bị rút / đính chính trên Retraction Watch.
+    4. Quy đổi khung điểm công trình HĐGSNN Việt Nam.
+    5. Thống kê bài báo bị rút / đính chính trên Retraction Watch.
+    6. Khuyến nghị nộp bài cho NCS Tiến sĩ & Nhà khoa học.
     """
     q = query.strip()
-    if len(q) < 3:
+    if len(q) < 2:
         return (
             "ℹ️ HƯỚNG DẪN TRA CỨU TẠP CHÍ:\n"
-            "Hãy nhắn tên tạp chí (ví dụ: 'Journal of Business Research') hoặc mã ISSN (ví dụ: '0148-2963') "
+            "Hãy nhắn tên tạp chí (ví dụ: 'JABEG', 'Journal of Business Research') hoặc mã ISSN (ví dụ: '0148-2963') "
             "để kiểm tra toàn diện: Scopus Discontinued, Cảnh báo Web lừa đảo, Phân hạng Q1-Q4 / ABDC và lịch sử rút bài."
         )
 
     norm_q_issn = normalize_issn(q)
     q_lower = q.lower()
+    resolved_query = KNOWN_ACRONYMS.get(q_lower, q_lower)
 
     disc_list = lookup_db.get("discontinued_journals", [])
     hijacked_list = lookup_db.get("hijacked_journals", [])
@@ -625,93 +678,172 @@ def search_journal_in_lookup(query: str, lookup_db: dict) -> str:
     retraction_map = lookup_db.get("retraction_counts_by_journal", {})
     scopus_ver = lookup_db.get("scopus_version", "Scopus Discontinued List")
 
-    # 1. So khớp Scopus Discontinued
-    matched_disc = []
+    # 1. So khớp Tạp chí giả mạo (Hijacked)
+    matched_hijacked = None
+    for h in hijacked_list:
+        h_issn = normalize_issn(h.get("issn", ""))
+        if (norm_q_issn and len(norm_q_issn) == 8 and norm_q_issn == h_issn) or (resolved_query in h.get("title", "").lower()):
+            matched_hijacked = h
+            break
+
+    # 2. So khớp Scopus Discontinued
+    matched_disc = None
     for item in disc_list:
-        title = item.get("title", "")
         issn = normalize_issn(item.get("issn", ""))
         eissn = normalize_issn(item.get("eissn", ""))
-        if norm_q_issn and len(norm_q_issn) == 8 and (norm_q_issn == issn or norm_q_issn == eissn):
-            matched_disc.append(item)
-        elif q_lower in title.lower():
-            matched_disc.append(item)
+        title = item.get("title", "").lower()
+        if (norm_q_issn and len(norm_q_issn) == 8 and (norm_q_issn == issn or norm_q_issn == eissn)) or (resolved_query in title):
+            matched_disc = item
+            break
 
-    # 2. So khớp Tạp chí giả mạo / lừa đảo (Hijacked)
-    matched_hijacked = []
-    for h in hijacked_list:
-        h_title = h.get("title", "")
-        h_issn = normalize_issn(h.get("issn", ""))
-        if (norm_q_issn and len(norm_q_issn) == 8 and norm_q_issn == h_issn) or (q_lower in h_title.lower()):
-            matched_hijacked.append(h)
+    # 3. Tra cứu SJR Scopus Active
+    matched_sjr = None
+    sjr_title = ""
+    if resolved_query in sjr_map:
+        matched_sjr = sjr_map[resolved_query]
+        sjr_title = resolved_query
+    else:
+        for t, info in sjr_map.items():
+            issns = [normalize_issn(x) for x in str(info.get("issn", "")).split(",") if normalize_issn(x)]
+            if norm_q_issn and len(norm_q_issn) == 8 and norm_q_issn in issns:
+                matched_sjr = info
+                sjr_title = t
+                break
+        if not matched_sjr:
+            for t, info in sjr_map.items():
+                if resolved_query in t:
+                    matched_sjr = info
+                    sjr_title = t
+                    break
 
-    # 3. Tra cứu phân hạng ABDC & SJR
-    matched_abdc = []
-    for j_title, info in abdc_map.items():
-        j_issns = [normalize_issn(x) for x in str(info.get("issn", "")).split(",") if normalize_issn(x)]
-        if (norm_q_issn and len(norm_q_issn) == 8 and norm_q_issn in j_issns) or (q_lower in j_title.lower()):
-            matched_abdc.append((j_title, info.get("abdc", "Listed")))
+    # 4. Tra cứu ABDC
+    matched_abdc = None
+    abdc_title = ""
+    if resolved_query in abdc_map:
+        matched_abdc = abdc_map[resolved_query]
+        abdc_title = resolved_query
+    elif sjr_title and sjr_title in abdc_map:
+        matched_abdc = abdc_map[sjr_title]
+        abdc_title = sjr_title
+    else:
+        for t, info in abdc_map.items():
+            issns = [normalize_issn(x) for x in str(info.get("issn", "")).split(",") if normalize_issn(x)]
+            if norm_q_issn and len(norm_q_issn) == 8 and norm_q_issn in issns:
+                matched_abdc = info
+                abdc_title = t
+                break
+            elif resolved_query in t:
+                matched_abdc = info
+                abdc_title = t
+                break
 
-    matched_sjr = []
-    for j_title, info in sjr_map.items():
-        j_issns = [normalize_issn(x) for x in str(info.get("issn", "")).split(",") if normalize_issn(x)]
-        if (norm_q_issn and len(norm_q_issn) == 8 and norm_q_issn in j_issns) or (q_lower in j_title.lower()):
-            matched_sjr.append((j_title, info.get("quartile", "N/A"), info.get("sjr", "")))
+    # 5. Tra cứu Retraction Watch
+    target_name = (matched_disc.get("title") if matched_disc else None) or sjr_title or abdc_title or (matched_hijacked.get("title") if matched_hijacked else None) or resolved_query
+    retraction_count = 0
+    for j_name, cnt in retraction_map.items():
+        if j_name.lower() in target_name.lower() or target_name.lower() in j_name.lower():
+            retraction_count = max(retraction_count, cnt)
 
-    # 4. Tra cứu Retraction Watch
-    matched_retractions = []
-    for j_name, count in retraction_map.items():
-        if q_lower in j_name.lower():
-            matched_retractions.append((j_name, count))
-    matched_retractions.sort(key=lambda x: x[1], reverse=True)
+    # Nếu không tìm thấy tạp chí nào
+    if not matched_disc and not matched_hijacked and not matched_sjr and not matched_abdc:
+        return (
+            f"🔍 KẾT QUẢ TRA CỨU: \"{q}\"\n\n"
+            f"❓ KHÔNG TÌM THẤY TRONG CSDL SCOPUS / ABDC\n"
+            f"Hệ thống không tìm thấy tạp chí nào khớp với từ khóa bạn vừa nhập.\n\n"
+            f"💡 GỢI Ý CHO BẠN:\n"
+            f"1. Nhắn mã ISSN chính xác của tạp chí (ví dụ: 0148-2963 hoặc 2515-964X).\n"
+            f"2. Nhập tên tiếng Anh đầy đủ (hoặc từ viết tắt chuẩn như JABES, JBR, JCR, JBE...).\n"
+            f"3. Có thể tạp chí này chưa từng được lập chỉ mục trong danh mục Scopus quốc tế."
+        )
 
-    lines = [f"🔍 KẾT QUẢ THẨM ĐỊNH TẠP CHÍ: \"{q}\""]
+    # Xuất Báo cáo Thẩm định Toàn diện
+    final_title = to_title_case((matched_disc.get("title") if matched_disc else None) or sjr_title or abdc_title or (matched_hijacked.get("title") if matched_hijacked else None) or q)
+    raw_issn = (matched_disc.get("issn") if matched_disc else None) or (matched_disc.get("eissn") if matched_disc else None) or (matched_sjr.get("issn") if matched_sjr else None) or (matched_abdc.get("issn") if matched_abdc else None) or ""
+    final_issn = format_issn(raw_issn)
 
-    # In kết quả Hijacked (Cảnh báo quan trọng nhất)
+    lines = [
+        "🔬 BÁO CÁO THẨM ĐỊNH TẠP CHÍ KHOA HỌC",
+        f"📖 Tạp chí: \"{final_title}\""
+    ]
+    if q_lower in KNOWN_ACRONYMS:
+        lines.append(f"(Được giải mã từ tên viết tắt: {q.upper()})")
+
+    lines.append("\n📋 1. ĐỊNH DANH & XUẤT BẢN:")
+    lines.append(f"• Tên chính thức: {final_title}")
+    lines.append(f"• Mã ISSN / eISSN: {final_issn}")
+    if matched_disc and matched_disc.get("publisher"):
+        lines.append(f"• Nhà xuất bản: {matched_disc.get('publisher')}")
+
     if matched_hijacked:
-        lines.append("\n⛔ CẢNH BÁO TẠP CHÍ BỊ GIẢ MẠO / CƯỚP TÊN MIỀN (HIJACKED):")
-        for h in matched_hijacked[:3]:
-            lines.append(f"• Tạp chí: {h.get('title')}")
-            if h.get('hijacked_url'):
-                lines.append(f"  ❌ Web giả mạo: {h.get('hijacked_url')}")
-            if h.get('authentic_url'):
-                lines.append(f"  ✅ Web chính chủ: {h.get('authentic_url')}")
+        lines.append("\n⛔ CẢNH BÁO: TẠP CHÍ BỊ GIẢ MẠO / CƯỚP TÊN MIỀN (HIJACKED)!")
+        if matched_hijacked.get("hijacked_url"):
+            lines.append(f"  ❌ Website giả mạo: {matched_hijacked.get('hijacked_url')}")
+        if matched_hijacked.get("authentic_url"):
+            lines.append(f"  ✅ Website chính thức: {matched_hijacked.get('authentic_url')}")
 
-    # In kết quả Scopus Discontinued
     if matched_disc:
-        lines.append(f"\n🚨 CẢNH BÁO BỊ LOẠI KHỎI SCOPUS (DISCONTINUED - {scopus_ver}):")
-        for item in matched_disc[:5]:
-            issn_str = item.get("issn") or item.get("eissn") or "N/A"
-            lines.append(
-                f"• {item.get('title')} (ISSN: {issn_str})\n"
-                f"  - Lý do: {item.get('reason')} | Năm ngừng: {item.get('discontinued_info') or 'Đã ngừng'}\n"
-                f"  - NXB: {item.get('publisher')}"
-            )
+        lines.append(f"\n🚨 CẢNH BÁO NGUY HIỂM: ĐÃ BỊ LOẠI KHỎI SCOPUS (DISCONTINUED)!")
+        lines.append(f"• Danh mục đối chiếu: {scopus_ver}")
+        lines.append(f"• Thời điểm ngừng chỉ mục: {matched_disc.get('discontinued_info') or 'Đã ngừng'}")
+        lines.append(f"• Lý do loại bỏ: {matched_disc.get('reason') or 'Publication Concerns'}")
+        lines.append("• Đánh giá rủi ro: CỰC KỲ NGUY HIỂM. Bài đăng sau ngày bị loại sẽ bị 0 điểm HĐGSNN và không được tính chuẩn đầu ra Tiến sĩ.")
+
+    if not matched_disc and (matched_sjr or matched_abdc):
+        lines.append("\n🏆 2. XẾP HẠNG & UY TÍN HỌC THUẬT:")
+        if matched_sjr:
+            q_tier = matched_sjr.get("quartile", "N/A")
+            sjr_val = matched_sjr.get("sjr", "N/A")
+            tier_desc = ""
+            hdgs_points = ""
+            if q_tier == "Q1":
+                tier_desc = "Thuộc top 25% tạp chí hàng đầu thế giới"
+                hdgs_points = "1.0 - 1.5 Điểm công trình"
+            elif q_tier == "Q2":
+                tier_desc = "Nhóm 25% - 50% tạp chí uy tín thế giới"
+                hdgs_points = "0.75 - 1.25 Điểm công trình"
+            elif q_tier == "Q3":
+                tier_desc = "Nhóm 50% - 75% trong danh mục Scopus"
+                hdgs_points = "0.5 - 1.0 Điểm công trình"
+            elif q_tier == "Q4":
+                tier_desc = "Nhóm 75% - 100% trong danh mục Scopus"
+                hdgs_points = "0.25 - 0.75 Điểm công trình"
+
+            lines.append(f"• SCImago Scopus: 🌟 {q_tier} (SJR: {sjr_val} - {tier_desc})")
+            if hdgs_points:
+                lines.append(f"• Khung điểm HĐGSNN Việt Nam: 🇻🇳 Ước tính {hdgs_points} (Hội đồng GS ngành Kinh tế / Quản lý)")
+
+        if matched_abdc:
+            rank = matched_abdc.get("abdc", "Listed")
+            abdc_desc = ""
+            if rank == "A*":
+                abdc_desc = "Tạp chí tinh hoa thế giới (Top 7% ngành Kinh tế/Quản trị)"
+            elif rank == "A":
+                abdc_desc = "Tạp chí xuất sắc, uy tín quốc tế rất cao (Top 15%-25%)"
+            elif rank == "B":
+                abdc_desc = "Tạp chí chất lượng tốt, được quốc tế công nhận rộng rãi"
+            elif rank == "C":
+                abdc_desc = "Tạp chí đạt chuẩn bình duyệt học thuật quốc tế"
+            lines.append(f"• Phân hạng Kinh tế ABDC (Úc): 🎖️ Hạng {rank} ({abdc_desc})")
+
+    lines.append("\n🛡️ 3. KIỂM ĐỊNH LIÊM CHÍNH & RỦI RO:")
+    if not matched_disc:
+        lines.append("• Tình trạng Scopus: ✅ ĐANG HOẠT ĐỘNG (Active - Không nằm trong DS Discontinued)")
+    if not matched_hijacked:
+        lines.append("• Tạp chí giả mạo (Hijacked Checker): ✅ AN TOÀN (Chưa ghi nhận web cướp tên miền)")
+    if retraction_count > 0:
+        lines.append(f"• Lịch sử rút bài (Retraction Watch): ⚠️ Có {retraction_count} bài từng bị rút/đính chính")
     else:
-        lines.append(f"\n✅ TRẠNG THÁI SCOPUS: An toàn (Không nằm trong danh sách Discontinued {scopus_ver})")
+        lines.append("• Lịch sử rút bài (Retraction Watch): ✅ 0 bài bị rút (Chỉ số liêm chính tin cậy cao)")
 
-    # In kết quả Phân hạng
-    rank_lines = []
-    if matched_sjr:
-        for t, q_tier, val in matched_sjr[:3]:
-            rank_lines.append(f"• SCImago Scopus: {t} ➔ Phân hạng: {q_tier} (SJR: {val})")
-    if matched_abdc:
-        for t, tier in matched_abdc[:3]:
-            rank_lines.append(f"• Phân hạng Kinh tế ABDC: {t} ➔ Hạng {tier}")
+    lines.append("\n🎯 4. KHUYẾN NGHỊ NỘP BÀI (VERDICT):")
+    if matched_disc or matched_hijacked:
+        lines.append("⛔ TUYỆT ĐỐI KHÔNG NỘP BÀI: Tạp chí có rủi ro pháp lý học thuật rất lớn, bài báo sẽ không được công nhận.")
+    elif (matched_sjr and matched_sjr.get("quartile") == "Q1") or (matched_abdc and matched_abdc.get("abdc") in ("A*", "A")):
+        lines.append("✅ RẤT NÊN NỘP: Tạp chí thuộc nhóm uy tín hàng đầu, đủ điều kiện bảo vệ Luận án Tiến sĩ, xét chức danh PGS/GS và nghiệm thu đề tài NCKH trọng điểm.")
+    elif matched_sjr or matched_abdc:
+        lines.append("✅ ĐỦ CHUẨN: Tạp chí nằm trong danh mục quốc tế uy tín, phù hợp công bố kết quả nghiên cứu khoa học.")
 
-    if rank_lines:
-        lines.append("\n🏆 PHÂN HẠNG HỌC THUẬT QUỐC TẾ:")
-        lines.extend(rank_lines)
-
-    # In kết quả Retraction Watch
-    if matched_retractions:
-        lines.append("\n📊 LỊCH SỬ RÚT BÀI (RETRACTION WATCH):")
-        for j_name, cnt in matched_retractions[:4]:
-            warn = " ⚠️ (Số lượng cao bất thường)" if cnt >= 15 else ""
-            lines.append(f"• {j_name}: {cnt} bài từng bị rút/đính chính{warn}")
-    else:
-        lines.append("\n📊 RETRACTION WATCH: Tạp chí này không có bài bị rút trong CSDL.")
-
-    lines.append("\n💡 Mẹo: Nhắn mã ISSN để có kết quả chính xác nhất.")
+    lines.append("\n💡 Nhắn mã ISSN hoặc tên tạp chí khác để tiếp tục tra cứu.")
     return "\n".join(lines)[:1950]
 
 

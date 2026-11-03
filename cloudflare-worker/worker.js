@@ -110,27 +110,97 @@ function getBusinessDiscontinuedSamples(lookupDb) {
   return lines.join("\n").slice(0, 1950);
 }
 
+const KNOWN_ACRONYMS = {
+  jabeg: "journal of asian business and economic studies",
+  jabes: "journal of asian business and economic studies",
+  jbr: "journal of business research",
+  jcr: "journal of consumer research",
+  jbe: "journal of business ethics",
+  jams: "journal of the academy of marketing science",
+  jm: "journal of marketing",
+  jfe: "journal of financial economics",
+  aer: "american economic review",
+  amj: "academy of management journal",
+  amr: "academy of management review",
+  jom: "journal of management",
+  misq: "mis quarterly",
+  ijhm: "international journal of hospitality management",
+  ijchm: "international journal of contemporary hospitality management",
+  jhtm: "journal of hospitality and tourism management",
+  trr: "tourism recreation research",
+  jed: "journal of economics and development",
+  ejor: "european journal of operational research",
+  ijpe: "international journal of production economics",
+  ijpr: "international journal of production research",
+  jf: "journal of finance",
+  rfs: "review of financial studies",
+  res: "review of economic studies",
+  qje: "quarterly journal of economics",
+  jpe: "journal of political economy",
+  jebo: "journal of economic behavior & organization",
+  smj: "strategic management journal",
+  jwb: "journal of world business",
+  jibs: "journal of international business studies",
+  apjm: "asia pacific journal of management",
+  ijim: "international journal of information management",
+  eswa: "expert systems with applications",
+  ktpt: "journal of economics and development"
+};
+
+const STOPWORDS = new Set(["of", "and", "the", "in", "for", "on", "with", "at", "by", "to", "a", "an", "&"]);
+
+function toTitleCase(str) {
+  if (!str) return "";
+  return str
+    .split(" ")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+}
+
+function formatIssn(issn) {
+  if (!issn) return "N/A";
+  const clean = normalizeIssn(issn);
+  if (clean.length === 8) return clean.slice(0, 4) + "-" + clean.slice(4);
+  return issn;
+}
+
 /**
- * Tra cứu tạp chí đa nguồn (Scopus Discontinued, Hijacked/Lừa đảo, Phân hạng ABDC/SJR, Retraction Watch)
+ * Tra cứu tạp chí đa nguồn chuyên sâu (Scopus Discontinued, Hijacked/Lừa đảo, Phân hạng ABDC/SJR, HĐGSNN, Retraction Watch)
  */
 function searchJournal(query, lookupDb) {
   const q = (query || "").trim();
-  if (q.length < 3) {
+  if (q.length < 2) {
     return buildUserGuideMessage("bạn", false);
   }
 
   const normQIssn = normalizeIssn(q);
   const qLower = q.toLowerCase();
+  const scopusVer = lookupDb.scopus_version || "Scopus Discontinued List";
+
+  // Giải mã từ viết tắt nếu có
+  const resolvedQuery = KNOWN_ACRONYMS[qLower] || qLower;
 
   const discList = lookupDb.discontinued_journals || [];
   const hijackedList = lookupDb.hijacked_journals || [];
   const abdcMap = lookupDb.abdc_rankings || {};
   const sjrMap = lookupDb.sjr_rankings || {};
   const retractionMap = lookupDb.retraction_counts_by_journal || {};
-  const scopusVer = lookupDb.scopus_version || "Scopus Discontinued List";
 
-  // 1. So khớp Scopus Discontinued
-  const matchedDisc = [];
+  // 1. So khớp Tạp chí Giả mạo / Cướp tên miền (Hijacked)
+  let matchedHijacked = null;
+  for (const h of hijackedList) {
+    const hIssn = normalizeIssn(h.issn || "");
+    if (
+      (normQIssn && normQIssn.length === 8 && normQIssn === hIssn) ||
+      h.title.toLowerCase().includes(resolvedQuery)
+    ) {
+      matchedHijacked = h;
+      break;
+    }
+  }
+
+  // 2. So khớp Scopus Discontinued (Tạp chí bị loại)
+  let matchedDisc = null;
   for (const item of discList) {
     const title = item.title || "";
     const issn = normalizeIssn(item.issn || "");
@@ -141,126 +211,211 @@ function searchJournal(query, lookupDb) {
       normQIssn.length === 8 &&
       (normQIssn === issn || normQIssn === eissn)
     ) {
-      matchedDisc.push(item);
-    } else if (title.toLowerCase().includes(qLower)) {
-      matchedDisc.push(item);
+      matchedDisc = item;
+      break;
+    } else if (title.toLowerCase().includes(resolvedQuery)) {
+      matchedDisc = item;
+      break;
     }
   }
 
-  // 2. So khớp Tạp chí Giả mạo / Cướp tên miền (Hijacked)
-  const matchedHijacked = [];
-  for (const h of hijackedList) {
-    const hTitle = h.title || "";
-    const hIssn = normalizeIssn(h.issn || "");
-    if (
-      (normQIssn && normQIssn.length === 8 && normQIssn === hIssn) ||
-      hTitle.toLowerCase().includes(qLower)
-    ) {
-      matchedHijacked.push(h);
-    }
-  }
-
-  // 3. Tra cứu Phân hạng ABDC & SCImago SJR (Q1-Q4)
-  const matchedAbdc = [];
-  for (const [jTitle, info] of Object.entries(abdcMap)) {
-    const jIssns = String(info.issn || "")
-      .split(",")
-      .map(normalizeIssn)
-      .filter(Boolean);
-    if (
-      (normQIssn && normQIssn.length === 8 && jIssns.includes(normQIssn)) ||
-      jTitle.toLowerCase().includes(qLower)
-    ) {
-      matchedAbdc.push([jTitle, info.abdc || "Listed"]);
-    }
-  }
-
-  const matchedSjr = [];
-  for (const [jTitle, info] of Object.entries(sjrMap)) {
-    const jIssns = String(info.issn || "")
-      .split(",")
-      .map(normalizeIssn)
-      .filter(Boolean);
-    if (
-      (normQIssn && normQIssn.length === 8 && jIssns.includes(normQIssn)) ||
-      jTitle.toLowerCase().includes(qLower)
-    ) {
-      matchedSjr.push([jTitle, info.quartile || "N/A", info.sjr || ""]);
-    }
-  }
-
-  // 4. Tra cứu Retraction Watch
-  const matchedRetractions = [];
-  for (const [jName, count] of Object.entries(retractionMap)) {
-    if (jName.toLowerCase().includes(qLower)) {
-      matchedRetractions.push([jName, count]);
-    }
-  }
-  matchedRetractions.sort((a, b) => b[1] - a[1]);
-
-  const lines = [`🔍 KẾT QUẢ THẨM ĐỊNH TẠP CHÍ: "${q}"`];
-
-  // In cảnh báo Hijacked (Quan trọng nhất)
-  if (matchedHijacked.length > 0) {
-    lines.push("\n⛔ CẢNH BÁO TẠP CHÍ BỊ GIẢ MẠO / CƯỚP TÊN MIỀN (HIJACKED):");
-    for (const h of matchedHijacked.slice(0, 3)) {
-      lines.push(`• Tạp chí: ${h.title}`);
-      if (h.hijacked_url) lines.push(`  ❌ Web giả mạo: ${h.hijacked_url}`);
-      if (h.authentic_url) lines.push(`  ✅ Web chính chủ: ${h.authentic_url}`);
-    }
-  }
-
-  // In Scopus Discontinued
-  if (matchedDisc.length > 0) {
-    lines.push(
-      `\n🚨 CẢNH BÁO: BỊ LOẠI KHỎI SCOPUS (DISCONTINUED - ${scopusVer}):`
-    );
-    for (const item of matchedDisc.slice(0, 5)) {
-      const issnStr = item.issn || item.eissn || "N/A";
-      lines.push(
-        `• ${item.title} (ISSN: ${issnStr})\n` +
-          `  - Lý do: ${item.reason || "Discontinued"} | Năm ngừng: ${item.discontinued_info || "Đã ngừng"}\n` +
-          `  - NXB: ${item.publisher || "N/A"}`
-      );
-    }
+  // 3. Tra cứu SCImago SJR Scopus Active
+  let matchedSjr = null;
+  let sjrTitle = "";
+  if (sjrMap[resolvedQuery]) {
+    matchedSjr = sjrMap[resolvedQuery];
+    sjrTitle = resolvedQuery;
   } else {
-    lines.push(
-      `\n✅ TRẠNG THÁI SCOPUS: An toàn (Không nằm trong danh sách Discontinued ${scopusVer})`
-    );
-  }
-
-  // In Phân hạng
-  const rankLines = [];
-  if (matchedSjr.length > 0) {
-    for (const [t, qTier, val] of matchedSjr.slice(0, 3)) {
-      rankLines.push(`• SCImago Scopus: ${t} ➔ Phân hạng: ${qTier} (SJR: ${val})`);
+    for (const [title, info] of Object.entries(sjrMap)) {
+      const issns = String(info.issn || "").split(",").map(normalizeIssn).filter(Boolean);
+      if (normQIssn && normQIssn.length === 8 && issns.includes(normQIssn)) {
+        matchedSjr = info;
+        sjrTitle = title;
+        break;
+      }
+    }
+    if (!matchedSjr) {
+      for (const [title, info] of Object.entries(sjrMap)) {
+        if (title.includes(resolvedQuery)) {
+          matchedSjr = info;
+          sjrTitle = title;
+          break;
+        }
+      }
     }
   }
-  if (matchedAbdc.length > 0) {
-    for (const [t, tier] of matchedAbdc.slice(0, 3)) {
-      rankLines.push(`• Phân hạng Kinh tế ABDC: ${t} ➔ Hạng ${tier}`);
-    }
-  }
 
-  if (rankLines.length > 0) {
-    lines.push("\n🏆 PHÂN HẠNG HỌC THUẬT QUỐC TẾ:");
-    lines.push(...rankLines);
-  }
-
-  // In Retraction Watch
-  if (matchedRetractions.length > 0) {
-    lines.push("\n📊 LỊCH SỬ RÚT BÀI (RETRACTION WATCH):");
-    for (const [jName, cnt] of matchedRetractions.slice(0, 4)) {
-      const warn = cnt >= 15 ? " ⚠️ (Số lượng cao bất thường)" : "";
-      lines.push(`• ${jName}: ${cnt} bài từng bị rút/đính chính${warn}`);
-    }
+  // 4. Tra cứu Phân hạng ABDC (Úc)
+  let matchedAbdc = null;
+  let abdcTitle = "";
+  if (abdcMap[resolvedQuery]) {
+    matchedAbdc = abdcMap[resolvedQuery];
+    abdcTitle = resolvedQuery;
+  } else if (sjrTitle && abdcMap[sjrTitle]) {
+    matchedAbdc = abdcMap[sjrTitle];
+    abdcTitle = sjrTitle;
   } else {
-    lines.push(
-      "\n📊 RETRACTION WATCH: Tạp chí này không có bài bị rút trong CSDL."
-    );
+    for (const [title, info] of Object.entries(abdcMap)) {
+      const issns = String(info.issn || "").split(",").map(normalizeIssn).filter(Boolean);
+      if (normQIssn && normQIssn.length === 8 && issns.includes(normQIssn)) {
+        matchedAbdc = info;
+        abdcTitle = title;
+        break;
+      } else if (title.includes(resolvedQuery)) {
+        matchedAbdc = info;
+        abdcTitle = title;
+        break;
+      }
+    }
   }
 
-  lines.push("\n💡 Mẹo: Gõ '1' xem hướng dẫn | Nhắn mã ISSN để kết quả chính xác nhất.");
+  // 5. Tra cứu Retraction Watch
+  const targetJournalName = matchedDisc?.title || sjrTitle || abdcTitle || matchedHijacked?.title || resolvedQuery;
+  let retractionCount = 0;
+  for (const [jName, cnt] of Object.entries(retractionMap)) {
+    if (
+      jName.toLowerCase().includes(targetJournalName.toLowerCase()) ||
+      targetJournalName.toLowerCase().includes(jName.toLowerCase())
+    ) {
+      retractionCount = Math.max(retractionCount, cnt);
+    }
+  }
+
+  // TRƯỜNG HỢP: KHÔNG TÌM THẤY TẠP CHÍ NÀO KHỚP
+  if (!matchedDisc && !matchedHijacked && !matchedSjr && !matchedAbdc) {
+    // Tìm các gợi ý gần nhất
+    const suggestions = [];
+    const queryTokens = qLower.split(/[\s\-:,/]+/).filter((t) => t.length >= 3 && !STOPWORDS.has(t));
+    if (queryTokens.length > 0) {
+      for (const [t, info] of Object.entries(sjrMap)) {
+        if (queryTokens.some((tok) => t.includes(tok))) {
+          suggestions.push(`• ${toTitleCase(t)} (ISSN: ${formatIssn(info.issn)})`);
+          if (suggestions.length >= 3) break;
+        }
+      }
+    }
+
+    const lines = [
+      `🔍 KẾT QUẢ TRA CỨU: "${q}"`,
+      `\n❓ KHÔNG TÌM THẤY TRONG CSDL SCOPUS / ABDC`,
+      `Hệ thống không tìm thấy tạp chí nào khớp với từ khóa bạn vừa nhập.`,
+      `\n💡 GỢI Ý CHO BẠN:`,
+      `1. Nhắn mã ISSN chính xác của tạp chí (ví dụ: 0148-2963 hoặc 2515-964X).`,
+      `2. Nhập tên tiếng Anh đầy đủ (hoặc từ viết tắt chuẩn như JABES, JBR, JCR, JBE...).`,
+      `3. Có thể tạp chí này chưa từng được lập chỉ mục trong danh mục Scopus quốc tế.`
+    ];
+
+    if (suggestions.length > 0) {
+      lines.push(`\n👉 CÓ THỂ BẠN ĐANG TÌM:`);
+      lines.push(...suggestions);
+    }
+
+    return lines.join("\n").slice(0, 1950);
+  }
+
+  // TRƯỜNG HỢP: TÌM THẤY TẠP CHÍ -> XUẤT BÁO CÁO THẨM ĐỊNH HỌC THUẬT TOÀN DIỆN
+  const finalTitle = toTitleCase(matchedDisc?.title || sjrTitle || abdcTitle || matchedHijacked?.title || q);
+  const finalIssn = formatIssn(
+    matchedDisc?.issn ||
+    matchedDisc?.eissn ||
+    matchedSjr?.issn ||
+    matchedAbdc?.issn ||
+    matchedHijacked?.issn ||
+    "Đang cập nhật"
+  );
+
+  const lines = [`🔬 BÁO CÁO THẨM ĐỊNH TẠP CHÍ KHOA HỌC`];
+  lines.push(`📖 Tạp chí: "${finalTitle}"`);
+  if (KNOWN_ACRONYMS[qLower]) {
+    lines.push(`(Được giải mã từ tên viết tắt: ${q.toUpperCase()})`);
+  }
+
+  // PHẦN 1: ĐỊNH DANH
+  lines.push(`\n📋 1. ĐỊNH DANH & XUẤT BẢN:`);
+  lines.push(`• Tên chính thức: ${finalTitle}`);
+  lines.push(`• Mã ISSN / eISSN: ${finalIssn}`);
+  if (matchedDisc?.publisher) {
+    lines.push(`• Nhà xuất bản: ${matchedDisc.publisher}`);
+  }
+
+  // PHẦN 2: CẢNH BÁO NGUY HIỂM (NẾU CÓ)
+  if (matchedHijacked) {
+    lines.push(`\n⛔ CẢNH BÁO: TẠP CHÍ BỊ GIẢ MẠO / CƯỚP TÊN MIỀN (HIJACKED)!`);
+    if (matchedHijacked.hijacked_url) lines.push(`  ❌ Website giả mạo: ${matchedHijacked.hijacked_url}`);
+    if (matchedHijacked.authentic_url) lines.push(`  ✅ Website chính thức: ${matchedHijacked.authentic_url}`);
+  }
+
+  if (matchedDisc) {
+    lines.push(`\n🚨 CẢNH BÁO NGUY HIỂM: ĐÃ BỊ LOẠI KHỎI SCOPUS (DISCONTINUED)!`);
+    lines.push(`• Danh mục đối chiếu: ${scopusVer}`);
+    lines.push(`• Thời điểm ngừng chỉ mục: ${matchedDisc.discontinued_info || "Đã ngừng"}`);
+    lines.push(`• Lý do loại bỏ: ${matchedDisc.reason || "Publication Concerns (Nghi vấn biên tập)"}`);
+    lines.push(`• Đánh giá rủi ro: CỰC KỲ NGUY HIỂM. Bài đăng sau ngày bị loại sẽ bị 0 điểm HĐGSNN và không được tính chuẩn đầu ra Tiến sĩ.`);
+  }
+
+  // PHẦN 3: XẾP HẠNG & UY TÍN
+  if (!matchedDisc && (matchedSjr || matchedAbdc)) {
+    lines.push(`\n🏆 2. XẾP HẠNG & UY TÍN HỌC THUẬT:`);
+    if (matchedSjr) {
+      const qTier = matchedSjr.quartile || "N/A";
+      const sjrVal = matchedSjr.sjr || "N/A";
+      let tierDesc = "";
+      let hdgsPoints = "";
+      if (qTier === "Q1") {
+        tierDesc = "Thuộc top 25% tạp chí hàng đầu thế giới";
+        hdgsPoints = "1.0 - 1.5 Điểm công trình";
+      } else if (qTier === "Q2") {
+        tierDesc = "Nhóm 25% - 50% tạp chí uy tín thế giới";
+        hdgsPoints = "0.75 - 1.25 Điểm công trình";
+      } else if (qTier === "Q3") {
+        tierDesc = "Nhóm 50% - 75% trong danh mục Scopus";
+        hdgsPoints = "0.5 - 1.0 Điểm công trình";
+      } else if (qTier === "Q4") {
+        tierDesc = "Nhóm 75% - 100% trong danh mục Scopus";
+        hdgsPoints = "0.25 - 0.75 Điểm công trình";
+      }
+      lines.push(`• SCImago Scopus: 🌟 ${qTier} (SJR: ${sjrVal} - ${tierDesc})`);
+      if (hdgsPoints) {
+        lines.push(`• Khung điểm HĐGSNN Việt Nam: 🇻🇳 Ước tính ${hdgsPoints} (Hội đồng GS ngành Kinh tế / Quản lý)`);
+      }
+    }
+
+    if (matchedAbdc) {
+      const rank = matchedAbdc.abdc || "Listed";
+      let abdcDesc = "";
+      if (rank === "A*") abdcDesc = "Tạp chí tinh hoa thế giới (Top 7% ngành Kinh tế/Quản trị)";
+      else if (rank === "A") abdcDesc = "Tạp chí xuất sắc, uy tín quốc tế rất cao (Top 15%-25%)";
+      else if (rank === "B") abdcDesc = "Tạp chí chất lượng tốt, được quốc tế công nhận rộng rãi";
+      else if (rank === "C") abdcDesc = "Tạp chí đạt chuẩn bình duyệt học thuật quốc tế";
+      lines.push(`• Phân hạng Kinh tế ABDC (Úc): 🎖️ Hạng ${rank} (${abdcDesc})`);
+    }
+  }
+
+  // PHẦN 4: LIÊM CHÍNH & AN TOÀN
+  lines.push(`\n🛡️ 3. KIỂM ĐỊNH LIÊM CHÍNH & RỦI RO:`);
+  if (!matchedDisc) {
+    lines.push(`• Tình trạng Scopus: ✅ ĐANG HOẠT ĐỘNG (Active - Không nằm trong DS Discontinued)`);
+  }
+  if (!matchedHijacked) {
+    lines.push(`• Tạp chí giả mạo (Hijacked Checker): ✅ AN TOÀN (Chưa ghi nhận web cướp tên miền)`);
+  }
+  if (retractionCount > 0) {
+    lines.push(`• Lịch sử rút bài (Retraction Watch): ⚠️ Có ${retractionCount} bài từng bị rút/đính chính`);
+  } else {
+    lines.push(`• Lịch sử rút bài (Retraction Watch): ✅ 0 bài bị rút (Chỉ số liêm chính tin cậy cao)`);
+  }
+
+  // PHẦN 5: KẾT LUẬN & KHUYẾN NGHỊ NỘP BÀI
+  lines.push(`\n🎯 4. KHUYẾN NGHỊ NỘP BÀI (VERDICT):`);
+  if (matchedDisc || matchedHijacked) {
+    lines.push(`⛔ TUYỆT ĐỐI KHÔNG NỘP BÀI: Tạp chí có rủi ro pháp lý học thuật rất lớn, bài báo sẽ không được công nhận.`);
+  } else if (matchedSjr?.quartile === "Q1" || matchedAbdc?.abdc === "A*" || matchedAbdc?.abdc === "A") {
+    lines.push(`✅ RẤT NÊN NỘP: Tạp chí thuộc nhóm uy tín hàng đầu, đủ điều kiện bảo vệ Luận án Tiến sĩ, xét chức danh PGS/GS và nghiệm thu đề tài NCKH trọng điểm.`);
+  } else if (matchedSjr || matchedAbdc) {
+    lines.push(`✅ ĐỦ CHUẨN: Tạp chí nằm trong danh mục quốc tế uy tín, phù hợp công bố kết quả nghiên cứu khoa học.`);
+  }
+
+  lines.push(`\n💡 Nhắn mã ISSN hoặc tên tạp chí khác để tiếp tục tra cứu.`);
   return lines.join("\n").slice(0, 1950);
 }
 
