@@ -34,7 +34,7 @@ let memoryCache = {
  */
 async function getLookupDatabase() {
   const now = Date.now();
-  if (memoryCache.data && now - memoryCache.fetchedAt < 15 * 60 * 1000) {
+  if (memoryCache.data && now - memoryCache.fetchedAt < 60 * 60 * 1000) {
     return memoryCache.data;
   }
 
@@ -249,6 +249,69 @@ function formatIssn(issn) {
  * - Khung điểm Hội đồng Giáo sư Nhà nước ngành Kinh tế (Quyết định 26/QĐ-HĐGSNN)
  * - Retraction Watch (Lịch sử rút bài)
  */
+
+/**
+ * Thuật toán Gợi ý Tên Tạp chí gần đúng (Did you mean / Fuzzy suggestion)
+ * khi người dùng gõ sai chính tả hoặc không nhớ chính xác toàn bộ tên dài.
+ */
+function findClosestSuggestions(rawQuery, lookupDb, maxResults = 3) {
+  const qClean = cleanVnJournalName(rawQuery);
+  if (qClean.length < 3) return [];
+  const qWords = qClean.split(' ').filter(w => w.length >= 2);
+  if (qWords.length === 0) return [];
+
+  const pool = new Map();
+
+  if (lookupDb.hdgs_by_title) {
+    for (const [k, v] of Object.entries(lookupDb.hdgs_by_title)) {
+      if (v.title && !pool.has(v.title)) pool.set(v.title, cleanVnJournalName(v.title));
+    }
+  }
+
+  if (lookupDb.vn_standards_2026) {
+    for (const item of lookupDb.vn_standards_2026) {
+      if (item.title && !pool.has(item.title)) pool.set(item.title, cleanVnJournalName(item.title));
+    }
+  }
+
+  if (lookupDb.aci_journals && lookupDb.aci_journals.raw_list) {
+    for (const item of lookupDb.aci_journals.raw_list) {
+      if (item.title && !pool.has(item.title)) pool.set(item.title, cleanVnJournalName(item.title));
+    }
+  }
+
+  const matches = [];
+  for (const [originalTitle, candClean] of pool.entries()) {
+    const candWords = candClean.split(' ').filter(w => w.length >= 2);
+    if (candWords.length === 0) continue;
+
+    let matchCount = 0;
+    for (const qw of qWords) {
+      if (candClean.includes(qw)) matchCount += 1;
+    }
+
+    if (matchCount > 0) {
+      const union = new Set([...qWords, ...candWords]).size;
+      const score = matchCount / union;
+      if (score >= 0.25 || (qWords.length === 1 && candClean.includes(qWords[0]))) {
+        matches.push({ title: originalTitle, score });
+      }
+    }
+  }
+
+  matches.sort((a, b) => b.score - a.score);
+  const seenClean = new Set();
+  const uniqueMatches = [];
+  for (const m of matches) {
+    const c = cleanVnJournalName(m.title);
+    if (!seenClean.has(c)) {
+      seenClean.add(c);
+      uniqueMatches.push(m.title);
+    }
+  }
+  return uniqueMatches.slice(0, maxResults);
+}
+
 function searchJournal(query, lookupDb) {
   const q = (query || "").trim();
   if (q.length < 2) {
@@ -663,42 +726,28 @@ function searchJournal(query, lookupDb) {
 
   // TRƯỜNG HỢP: KHÔNG TÌM THẤY TẠP CHÍ NÀO TRONG MỌI NGUỒN DỮ LIỆU
   if (!matchedDisc && !matchedHijacked && !matchedSjr && !matchedAbdc && !matchedVn && !matchedHdgs && !matchedWosDelisted && !matchedBeallJournal && !matchedBeallPublisher) {
-    const suggestions = [];
-    const queryTokens = qLower.split(/[\s\-:,/]+/).filter((t) => t.length >= 3 && !STOPWORDS.has(t));
-    if (queryTokens.length > 0) {
-      for (const [t, info] of Object.entries(sjrMap)) {
-        if (queryTokens.some((tok) => t.includes(tok))) {
-          suggestions.push(`• ${toTitleCase(t)} (ISSN: ${formatIssn(info.issn)})`);
-          if (suggestions.length >= 3) break;
-        }
-      }
-      if (suggestions.length < 3) {
-        for (const item of vnList) {
-          const tClean = cleanVnJournalName(item.title);
-          if (queryTokens.some((tok) => tClean.includes(tok))) {
-            suggestions.push(`• ${toTitleCase(item.title)} (Chuẩn VN 2026 STT: ${item.stt})`);
-            if (suggestions.length >= 3) break;
-          }
-        }
-      }
-    }
-
+    const suggestions = findClosestSuggestions(q, lookupDb, 3);
     const lines = [
       `🔍 KẾT QUẢ TRA CỨU: "${q}"`,
-      `\n❓ KHÔNG TÌM THẤY TRONG CSDL KHOA HỌC`,
-      `Hệ thống không tìm thấy tạp chí nào khớp với từ khóa bạn vừa nhập.`,
-      `\n💡 MẸO TRA CỨU CHÍNH XÁC:`,
-      `1. Nhắn mã ISSN chính xác (ví dụ: 0148-2963 hoặc 2196-8896).`,
-      `2. Nhắn mã DOI bài báo (ví dụ: 10.1016/j.jbusres.2021.08.043) để tra tự động.`,
-      `3. Nhắn từ viết tắt chuẩn (VJCS, JABES, JED, JSAMD, JBR, JCR...).`,
-      `4. Gõ '5' (hoặc 'vn') để xem 16 tạp chí Việt Nam trong Scopus/WoS quốc tế.`,
-      `5. Gõ '1' để xem lại toàn bộ hướng dẫn tra cứu.`
+      `\n❓ KHÔNG TÌM THẤY TRONG CSDL KHOA HỌC (SCOPUS / ABDC / CHUẨN VN 2026 / HĐGSNN / ACI)`,
+      `Hệ thống không tìm thấy tạp chí nào khớp hoàn toàn với từ khóa bạn vừa nhập.`,
     ];
 
     if (suggestions.length > 0) {
-      lines.push(`\n👉 CÓ THỂ BẠN ĐANG TÌM:`);
-      lines.push(...suggestions);
+      lines.push(`\n💡 CÓ PHẢI BẠN MUỐN TÌM:`);
+      suggestions.forEach((s, idx) => lines.push(`${idx + 1}. ${s}`));
+      lines.push(`\n👉 Bạn chỉ cần copy và gửi lại tên tạp chí ở trên để tra cứu ngay!`);
     }
+
+    lines.push(
+      `\n───────────────────────────────────────`,
+      `💡 MẸO TRA CỨU CHÍNH XÁC:`,
+      `• Nhắn mã ISSN (ví dụ: 0148-2963 hoặc 2515-964X)`,
+      `• Nhắn mã DOI bài báo (ví dụ: 10.1016/j.jbusres.2021.08.043) để tra tự động`,
+      `• Nhắn từ viết tắt chuẩn (VJCS, JABES, JED, JSAMD, JBR, JCR...)`,
+      `• Gõ '6' để xem 28 Hội đồng GSNN | Gõ 'aci' xem ACI | Gõ 'nafosted' xem NAFOSTED`,
+      `• Gõ '1' để xem lại toàn bộ hướng dẫn tra cứu.`
+    );
 
     return lines.join("\n").slice(0, 1950);
   }
@@ -1005,6 +1054,8 @@ async function resolveDoiMetadata(doi) {
         .filter(Boolean)
         .join(", ");
       const apc = data.apc_list ? `${data.apc_list.value} ${data.apc_list.currency}` : null;
+      const citations = data.cited_by_count !== undefined ? data.cited_by_count : null;
+      const oaUrl = data.open_access?.is_oa ? data.open_access?.oa_url : null;
       return {
         doi,
         title,
@@ -1013,6 +1064,8 @@ async function resolveDoiMetadata(doi) {
         year,
         authors: authors + ((data.authorships || []).length > 3 ? " et al." : ""),
         apc,
+        citations,
+        oa_url: oaUrl,
       };
     }
   } catch (e) {
@@ -1077,6 +1130,8 @@ async function resolveAndSearch(query, lookupDb) {
         meta.year ? `• Năm công bố: ${meta.year}` : null,
         `• Mã DOI: https://doi.org/${meta.doi}`,
         `• Tạp chí đăng: ${meta.journal || "Không xác định"}`,
+        meta.citations !== null && meta.citations !== undefined ? `• Trích dẫn học thuật: 📈 ${meta.citations.toLocaleString()} lượt (OpenAlex Index)` : null,
+        meta.oa_url ? `• Toàn văn miễn phí (Open Access): 🔓 ${meta.oa_url}` : null,
         meta.apc ? `• Phí đăng bài tham khảo (APC): 💰 ${meta.apc}` : null,
         `───────────────────────────────────────`,
         journalReport,
@@ -1954,6 +2009,10 @@ export default {
 
   // 6. Cloudflare Cron Trigger chạy tự động mỗi 60 giây (* * * * *) để nhận tin nhắn Zalo
   async scheduled(event, env, ctx) {
+    // Tự động giữ RAM ấm (Pre-warm In-Memory Cache) để người dùng nhắn tin không bị độ trễ Cold-Start
+    if (!memoryCache.data) {
+      ctx.waitUntil(getLookupDatabase().catch(() => {}));
+    }
     ctx.waitUntil(pollZaloUpdatesLoop(env));
   },
 };
