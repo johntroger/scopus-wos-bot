@@ -205,15 +205,22 @@ function searchJournal(query, lookupDb) {
 async function sendZaloMessage(botToken, chatId, text) {
   if (!botToken || !chatId) return { ok: false, error: "Missing token/chatId" };
   const url = `https://bot-api.zaloplatforms.com/bot${botToken}/sendMessage`;
-  const resp = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      chat_id: String(chatId),
-      text: String(text).slice(0, 1980),
-    }),
-  });
-  return await resp.json().catch(() => ({ ok: false }));
+  try {
+    const resp = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: String(chatId),
+        text: String(text).slice(0, 1980),
+      }),
+    });
+    const result = await resp.json().catch(() => ({ ok: false }));
+    console.log(`[sendZaloMessage to ${chatId}] result:`, JSON.stringify(result));
+    return result;
+  } catch (e) {
+    console.error(`[sendZaloMessage error]:`, e);
+    return { ok: false, error: e.message };
+  }
 }
 
 /**
@@ -247,14 +254,47 @@ async function removeSubscriber(env, chatId) {
 }
 
 /**
- * Xử lý 1 tin nhắn đến từ người dùng Zalo
+ * Xử lý 1 bản ghi cập nhật đến từ người dùng Zalo
  */
-async function processZaloIncomingMessage(env, botToken, msg) {
-  const chatId = msg?.chat?.id || msg?.from?.id;
-  if (!chatId) return false;
+async function processZaloIncomingMessage(env, botToken, update) {
+  if (!update) return false;
 
-  const displayName = msg?.from?.display_name || "bạn";
-  const text = (msg?.text || "").trim();
+  const msgObj = update.message || update;
+  const senderObj = update.sender || update.from || {};
+  const chatObj = update.chat || update.message?.chat || {};
+
+  const chatId =
+    senderObj.id ||
+    chatObj.id ||
+    msgObj.chat?.id ||
+    msgObj.from?.id ||
+    update.chat_id ||
+    update.sender_id;
+
+  const displayName =
+    senderObj.display_name ||
+    senderObj.name ||
+    msgObj.from?.display_name ||
+    "bạn";
+
+  const text = (msgObj.text || update.text || "").trim();
+
+  // Lưu log sự kiện gần nhất nhận được để debug
+  await env.SCOPUS_BOT_KV.put(
+    "LAST_PROCESSED_MESSAGE",
+    JSON.stringify({
+      time: new Date().toISOString(),
+      chatId,
+      displayName,
+      text,
+      rawUpdate: update,
+    })
+  );
+
+  if (!chatId) {
+    console.error("Không tìm thấy chatId trong update:", update);
+    return false;
+  }
 
   try {
     const subs = await getSubscribers(env);
@@ -379,9 +419,8 @@ async function pollZaloUpdatesLoop(env) {
       if (data && data.ok && data.result) {
         const items = Array.isArray(data.result) ? data.result : [data.result];
         for (const item of items) {
-          const msg = item.message || item;
-          if (msg && (msg.chat || msg.from)) {
-            await processZaloIncomingMessage(env, botToken, msg);
+          if (item) {
+            await processZaloIncomingMessage(env, botToken, item);
             processedCount++;
           }
         }
