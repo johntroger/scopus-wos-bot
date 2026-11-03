@@ -649,33 +649,55 @@ def format_issn(issn: str) -> str:
         return f"{clean[:4]}-{clean[4:]}"
     return issn
 
+import unicodedata
+
+def normalize_vn_text(s: str) -> str:
+    if not s:
+        return ""
+    norm = unicodedata.normalize("NFD", s)
+    norm = "".join(ch for ch in norm if unicodedata.category(ch) != "Mn")
+    norm = norm.replace("đ", "d").replace("Đ", "D").lower()
+    norm = re.sub(r"[^a-z0-9\s]", " ", norm)
+    return " ".join(norm.split())
+
+def clean_vn_journal_name(s: str) -> str:
+    norm = normalize_vn_text(s)
+    return re.sub(r"^(tap chi|tap chi dien tu|the journal of|journal of)\s+", "", norm)
+
 def search_journal_in_lookup(query: str, lookup_db: dict) -> str:
     """
     Tìm kiếm tạp chí đa chiều & xuất Báo cáo Thẩm định Học thuật Toàn diện:
     1. Trạng thái Scopus Discontinued (bị loại) / Active.
     2. Cảnh báo Tạp chí Giả mạo / Cướp tên miền (Hijacked Journals).
     3. Phân hạng Quốc tế: SCImago Scopus Quartile (Q1 - Q4) & ABDC (A*, A, B, C).
-    4. Quy đổi khung điểm công trình HĐGSNN Việt Nam.
-    5. Thống kê bài báo bị rút / đính chính trên Retraction Watch.
-    6. Khuyến nghị nộp bài cho NCS Tiến sĩ & Nhà khoa học.
+    4. Tiêu chuẩn Khoa học Việt Nam năm 2026 (341 tạp chí chuẩn Quốc gia).
+    5. Khung điểm công trình Hội đồng Giáo sư Nhà nước ngành Kinh tế (QĐ 26/QĐ-HĐGSNN).
+    6. Thống kê bài báo bị rút / đính chính trên Retraction Watch.
+    7. Khuyến nghị nộp bài cho NCS Tiến sĩ & Nhà khoa học.
     """
     q = query.strip()
     if len(q) < 2:
         return (
-            "ℹ️ HƯỚNG DẪN TRA CỨU TẠP CHÍ:\n"
-            "Hãy nhắn tên tạp chí (ví dụ: 'JABEG', 'Journal of Business Research') hoặc mã ISSN (ví dụ: '0148-2963') "
-            "để kiểm tra toàn diện: Scopus Discontinued, Cảnh báo Web lừa đảo, Phân hạng Q1-Q4 / ABDC và lịch sử rút bài."
+            "📖 CẨM NANG TRA CỨU TẠP CHÍ KHOA HỌC (SCOPUS, WOS, ABDC & CHUẨN VIỆT NAM)\n\n"
+            "Hãy nhắn tên tạp chí (ví dụ: 'JABES', 'Kinh tế và Quản lý', 'Journal of Business Research') "
+            "hoặc mã ISSN (ví dụ: '0148-2963') để kiểm tra toàn diện: Scopus Discontinued, Cảnh báo Web lừa đảo, "
+            "Chuẩn Quốc gia 2026, Điểm HĐGSNN Kinh tế, Phân hạng Q1-Q4 / ABDC và lịch sử rút bài."
         )
 
     norm_q_issn = normalize_issn(q)
     q_lower = q.lower()
     resolved_query = KNOWN_ACRONYMS.get(q_lower, q_lower)
+    norm_q_vn = normalize_vn_text(resolved_query)
+    clean_q_vn = clean_vn_journal_name(resolved_query)
 
     disc_list = lookup_db.get("discontinued_journals", [])
     hijacked_list = lookup_db.get("hijacked_journals", [])
     abdc_map = lookup_db.get("abdc_rankings", {})
     sjr_map = lookup_db.get("sjr_rankings", {})
     retraction_map = lookup_db.get("retraction_counts_by_journal", {})
+    vn_list = lookup_db.get("vn_standards_2026", [])
+    hdgs_data = lookup_db.get("hdgsnn_kinhte", {})
+    hdgs_journals = hdgs_data.get("journals", {})
     scopus_ver = lookup_db.get("scopus_version", "Scopus Discontinued List")
 
     # 1. So khớp Tạp chí giả mạo (Hijacked)
@@ -737,29 +759,113 @@ def search_journal_in_lookup(query: str, lookup_db: dict) -> str:
                 abdc_title = t
                 break
 
-    # 5. Tra cứu Retraction Watch
-    target_name = (matched_disc.get("title") if matched_disc else None) or sjr_title or abdc_title or (matched_hijacked.get("title") if matched_hijacked else None) or resolved_query
+    # 5. Tra cứu Danh mục Tiêu chuẩn Khoa học Việt Nam năm 2026 (341 tạp chí)
+    matched_vn = None
+    for item in vn_list:
+        t_norm = normalize_vn_text(item.get("title", ""))
+        t_clean = clean_vn_journal_name(item.get("title", ""))
+        if t_norm == norm_q_vn or t_clean == clean_q_vn:
+            matched_vn = item
+            break
+        aliases = item.get("aliases", [])
+        if any(normalize_vn_text(a) == norm_q_vn or clean_vn_journal_name(a) == clean_q_vn for a in aliases):
+            matched_vn = item
+            break
+
+    if not matched_vn and len(clean_q_vn) >= 4:
+        for item in vn_list:
+            t_clean = clean_vn_journal_name(item.get("title", ""))
+            if t_clean in clean_q_vn or (len(clean_q_vn) >= 8 and clean_q_vn in t_clean):
+                matched_vn = item
+                break
+            aliases = item.get("aliases", [])
+            if any(clean_vn_journal_name(a) in clean_q_vn or (len(clean_q_vn) >= 8 and clean_q_vn in clean_vn_journal_name(a)) for a in aliases):
+                matched_vn = item
+                break
+
+    # 6. Tra cứu Khung điểm HĐGSNN ngành Kinh tế (QĐ 26/QĐ-HĐGSNN)
+    matched_hdgs = None
+    for title, info in hdgs_journals.items():
+        t_norm = normalize_vn_text(title)
+        t_clean = clean_vn_journal_name(title)
+        info_issns = [normalize_issn(x) for x in str(info.get("issn", "")).split(",") if normalize_issn(x)]
+        if norm_q_issn and len(norm_q_issn) == 8 and norm_q_issn in info_issns:
+            matched_hdgs = {"title": title, **info}
+            break
+        if t_norm == norm_q_vn or t_clean == clean_q_vn:
+            matched_hdgs = {"title": title, **info}
+            break
+
+    if not matched_hdgs and len(clean_q_vn) >= 4:
+        for title, info in hdgs_journals.items():
+            t_clean = clean_vn_journal_name(title)
+            if t_clean in clean_q_vn or (len(clean_q_vn) >= 8 and clean_q_vn in t_clean):
+                matched_hdgs = {"title": title, **info}
+                break
+
+    if not matched_hdgs and matched_vn:
+        vn_norm = normalize_vn_text(matched_vn.get("title", ""))
+        vn_clean = clean_vn_journal_name(matched_vn.get("title", ""))
+        for title, info in hdgs_journals.items():
+            t_norm = normalize_vn_text(title)
+            t_clean = clean_vn_journal_name(title)
+            if t_norm == vn_norm or t_clean == vn_clean or t_clean in vn_clean or vn_clean in t_clean:
+                matched_hdgs = {"title": title, **info}
+                break
+
+    # 7. Tra cứu Retraction Watch
+    target_name = (
+        (matched_vn.get("title") if matched_vn else None)
+        or (matched_hdgs.get("title") if matched_hdgs else None)
+        or (matched_disc.get("title") if matched_disc else None)
+        or sjr_title
+        or abdc_title
+        or (matched_hijacked.get("title") if matched_hijacked else None)
+        or resolved_query
+    )
     retraction_count = 0
     for j_name, cnt in retraction_map.items():
         if j_name.lower() in target_name.lower() or target_name.lower() in j_name.lower():
             retraction_count = max(retraction_count, cnt)
 
-    # Nếu không tìm thấy tạp chí nào
-    if not matched_disc and not matched_hijacked and not matched_sjr and not matched_abdc:
+    # Nếu không tìm thấy tạp chí nào trong mọi nguồn
+    if not matched_disc and not matched_hijacked and not matched_sjr and not matched_abdc and not matched_vn and not matched_hdgs:
         return (
             f"🔍 KẾT QUẢ TRA CỨU: \"{q}\"\n\n"
-            f"❓ KHÔNG TÌM THẤY TRONG CSDL SCOPUS / ABDC\n"
+            f"❓ KHÔNG TÌM THẤY TRONG CSDL KHOA HỌC (SCOPUS / ABDC / CHUẨN VN 2026 / HĐGSNN)\n"
             f"Hệ thống không tìm thấy tạp chí nào khớp với từ khóa bạn vừa nhập.\n\n"
             f"💡 GỢI Ý CHO BẠN:\n"
             f"1. Nhắn mã ISSN chính xác của tạp chí (ví dụ: 0148-2963 hoặc 2515-964X).\n"
-            f"2. Nhập tên tiếng Anh đầy đủ (hoặc từ viết tắt chuẩn như JABES, JBR, JCR, JBE...).\n"
-            f"3. Có thể tạp chí này chưa từng được lập chỉ mục trong danh mục Scopus quốc tế."
+            f"2. Nhập tên tạp chí tiếng Việt (ví dụ: 'Kinh tế và Quản lý', 'Tạp chí Cộng sản', 'Kinh tế và Phát triển').\n"
+            f"3. Nhập từ viết tắt chuẩn (ví dụ: JABES, JED, JBR, JCR, JBE...)."
         )
 
     # Xuất Báo cáo Thẩm định Toàn diện
-    final_title = to_title_case((matched_disc.get("title") if matched_disc else None) or sjr_title or abdc_title or (matched_hijacked.get("title") if matched_hijacked else None) or q)
-    raw_issn = (matched_disc.get("issn") if matched_disc else None) or (matched_disc.get("eissn") if matched_disc else None) or (matched_sjr.get("issn") if matched_sjr else None) or (matched_abdc.get("issn") if matched_abdc else None) or ""
+    final_title = to_title_case(
+        (matched_vn.get("title") if matched_vn else None)
+        or (matched_hdgs.get("title") if matched_hdgs else None)
+        or (matched_disc.get("title") if matched_disc else None)
+        or sjr_title
+        or abdc_title
+        or (matched_hijacked.get("title") if matched_hijacked else None)
+        or q
+    )
+
+    raw_issn = (
+        (matched_hdgs.get("issn") if matched_hdgs else None)
+        or (matched_disc.get("issn") if matched_disc else None)
+        or (matched_disc.get("eissn") if matched_disc else None)
+        or (matched_sjr.get("issn") if matched_sjr else None)
+        or (matched_abdc.get("issn") if matched_abdc else None)
+        or ""
+    )
     final_issn = format_issn(raw_issn)
+    org_publisher = (
+        (matched_vn.get("org") if matched_vn else None)
+        or (matched_hdgs.get("org") if matched_hdgs else None)
+        or (matched_disc.get("publisher") if matched_disc else None)
+        or ""
+    )
 
     lines = [
         "🔬 BÁO CÁO THẨM ĐỊNH TẠP CHÍ KHOA HỌC",
@@ -768,12 +874,14 @@ def search_journal_in_lookup(query: str, lookup_db: dict) -> str:
     if q_lower in KNOWN_ACRONYMS:
         lines.append(f"(Được giải mã từ tên viết tắt: {q.upper()})")
 
-    lines.append("\n📋 1. ĐỊNH DANH & XUẤT BẢN:")
+    # PHẦN 1: ĐỊNH DANH
+    lines.append("\n📋 1. ĐỊNH DANH & CƠ QUAN CHỦ QUẢN:")
     lines.append(f"• Tên chính thức: {final_title}")
     lines.append(f"• Mã ISSN / eISSN: {final_issn}")
-    if matched_disc and matched_disc.get("publisher"):
-        lines.append(f"• Nhà xuất bản: {matched_disc.get('publisher')}")
+    if org_publisher:
+        lines.append(f"• Cơ quan chủ quản / NXB: {org_publisher}")
 
+    # PHẦN 2: CẢNH BÁO NGUY HIỂM
     if matched_hijacked:
         lines.append("\n⛔ CẢNH BÁO: TẠP CHÍ BỊ GIẢ MẠO / CƯỚP TÊN MIỀN (HIJACKED)!")
         if matched_hijacked.get("hijacked_url"):
@@ -782,70 +890,92 @@ def search_journal_in_lookup(query: str, lookup_db: dict) -> str:
             lines.append(f"  ✅ Website chính thức: {matched_hijacked.get('authentic_url')}")
 
     if matched_disc:
-        lines.append(f"\n🚨 CẢNH BÁO NGUY HIỂM: ĐÃ BỊ LOẠI KHỎI SCOPUS (DISCONTINUED)!")
+        lines.append("\n🚨 CẢNH BÁO NGUY HIỂM: ĐÃ BỊ LOẠI KHỎI SCOPUS (DISCONTINUED)!")
         lines.append(f"• Danh mục đối chiếu: {scopus_ver}")
-        lines.append(f"• Thời điểm ngừng chỉ mục: {matched_disc.get('discontinued_info') or 'Đã ngừng'}")
-        lines.append(f"• Lý do loại bỏ: {matched_disc.get('reason') or 'Publication Concerns'}")
+        lines.append(f"• Thời điểm ngừng chỉ mục: {matched_disc.get('discontinued_info', 'Đã ngừng')}")
+        lines.append(f"• Lý do loại bỏ: {matched_disc.get('reason', 'Publication Concerns (Nghi vấn biên tập)')}")
         lines.append("• Đánh giá rủi ro: CỰC KỲ NGUY HIỂM. Bài đăng sau ngày bị loại sẽ bị 0 điểm HĐGSNN và không được tính chuẩn đầu ra Tiến sĩ.")
 
+    # PHẦN 3: TIÊU CHUẨN VIỆT NAM & ĐIỂM HĐGSNN
+    if matched_vn or matched_hdgs or matched_sjr:
+        lines.append("\n🇻🇳 2. TIÊU CHUẨN VIỆT NAM & ĐIỂM HĐGSNN:")
+        if matched_vn:
+            lines.append(f"• Chuẩn khoa học VN 2026: ✅ ĐẠT TIÊU CHUẨN QUỐC GIA (STT: {matched_vn.get('stt')} / 341)")
+            lines.append(f"• Phân nhóm: {matched_vn.get('cat')}")
+        elif matched_sjr or matched_abdc:
+            lines.append("• Chuẩn khoa học VN 2026: Tạp chí quốc tế (công nhận tính điểm theo quy chế đào tạo & HĐGSNN)")
+
+        hdgs_point_str = ""
+        if matched_hdgs and matched_hdgs.get("points"):
+            hdgs_point_str = f"🎯 {matched_hdgs.get('points')} (HĐGS ngành Kinh tế - QĐ 26/QĐ-HĐGSNN)"
+        elif matched_sjr and matched_sjr.get("quartile") == "Q1":
+            hdgs_point_str = "🎯 0 - 2,0 điểm (Scopus Q1 / Quyết định 26/QĐ-HĐGSNN)"
+        elif matched_sjr and matched_sjr.get("quartile"):
+            hdgs_point_str = f"🎯 0 - 1,5 điểm (Scopus {matched_sjr.get('quartile')} / Quyết định 26/QĐ-HĐGSNN)"
+
+        if hdgs_point_str:
+            lines.append(f"• Điểm công trình HĐGSNN: {hdgs_point_str}")
+
+    # PHẦN 4: PHÂN HẠNG QUỐC TẾ
     if not matched_disc and (matched_sjr or matched_abdc):
-        lines.append("\n🏆 2. XẾP HẠNG & UY TÍN HỌC THUẬT:")
+        lines.append("\n🏆 3. XẾP HẠNG QUỐC TẾ (SCOPUS / ABDC):")
         if matched_sjr:
             q_tier = matched_sjr.get("quartile", "N/A")
             sjr_val = matched_sjr.get("sjr", "N/A")
             tier_desc = ""
-            hdgs_points = ""
             if q_tier == "Q1":
-                tier_desc = "Thuộc top 25% tạp chí hàng đầu thế giới"
-                hdgs_points = "1.0 - 1.5 Điểm công trình"
+                tier_desc = "Top 25% tạp chí hàng đầu thế giới"
             elif q_tier == "Q2":
-                tier_desc = "Nhóm 25% - 50% tạp chí uy tín thế giới"
-                hdgs_points = "0.75 - 1.25 Điểm công trình"
+                tier_desc = "Nhóm 25% - 50% thế giới"
             elif q_tier == "Q3":
-                tier_desc = "Nhóm 50% - 75% trong danh mục Scopus"
-                hdgs_points = "0.5 - 1.0 Điểm công trình"
+                tier_desc = "Nhóm 50% - 75% danh mục"
             elif q_tier == "Q4":
-                tier_desc = "Nhóm 75% - 100% trong danh mục Scopus"
-                hdgs_points = "0.25 - 0.75 Điểm công trình"
-
+                tier_desc = "Nhóm 75% - 100% danh mục"
             lines.append(f"• SCImago Scopus: 🌟 {q_tier} (SJR: {sjr_val} - {tier_desc})")
-            if hdgs_points:
-                lines.append(f"• Khung điểm HĐGSNN Việt Nam: 🇻🇳 Ước tính {hdgs_points} (Hội đồng GS ngành Kinh tế / Quản lý)")
 
         if matched_abdc:
             rank = matched_abdc.get("abdc", "Listed")
             abdc_desc = ""
             if rank == "A*":
-                abdc_desc = "Tạp chí tinh hoa thế giới (Top 7% ngành Kinh tế/Quản trị)"
+                abdc_desc = "Tạp chí tinh hoa quốc tế (Top 7% Kinh tế/Quản trị)"
             elif rank == "A":
-                abdc_desc = "Tạp chí xuất sắc, uy tín quốc tế rất cao (Top 15%-25%)"
+                abdc_desc = "Tạp chí xuất sắc, uy tín quốc tế rất cao"
             elif rank == "B":
-                abdc_desc = "Tạp chí chất lượng tốt, được quốc tế công nhận rộng rãi"
+                abdc_desc = "Tạp chí chất lượng tốt, quốc tế công nhận"
             elif rank == "C":
-                abdc_desc = "Tạp chí đạt chuẩn bình duyệt học thuật quốc tế"
-            lines.append(f"• Phân hạng Kinh tế ABDC (Úc): 🎖️ Hạng {rank} ({abdc_desc})")
+                abdc_desc = "Tạp chí đạt chuẩn bình duyệt quốc tế"
+            lines.append(f"• Phân hạng ABDC (Úc): 🎖️ Hạng {rank} ({abdc_desc})")
+    elif not matched_disc and matched_vn and not matched_sjr and not matched_abdc:
+        lines.append("\n🌐 3. CHỈ MỤC QUỐC TẾ:")
+        lines.append("• Tình trạng: Tạp chí khoa học uy tín trong nước (Chưa nằm trong CSDL Scopus/WoS quốc tế).")
 
-    lines.append("\n🛡️ 3. KIỂM ĐỊNH LIÊM CHÍNH & RỦI RO:")
+    # PHẦN 5: LIÊM CHÍNH & RỦI RO
+    lines.append("\n🛡️ 4. KIỂM ĐỊNH LIÊM CHÍNH & RỦI RO:")
     if not matched_disc:
-        lines.append("• Tình trạng Scopus: ✅ ĐANG HOẠT ĐỘNG (Active - Không nằm trong DS Discontinued)")
+        if matched_sjr:
+            lines.append("• Tình trạng Scopus: ✅ ĐANG HOẠT ĐỘNG (Active - An toàn)")
+        else:
+            lines.append("• Scopus Discontinued: ✅ Không nằm trong danh mục bị loại")
     if not matched_hijacked:
-        lines.append("• Tạp chí giả mạo (Hijacked Checker): ✅ AN TOÀN (Chưa ghi nhận web cướp tên miền)")
+        lines.append("• Tạp chí giả mạo: ✅ AN TOÀN (Chưa ghi nhận website cướp tên miền)")
     if retraction_count > 0:
         lines.append(f"• Lịch sử rút bài (Retraction Watch): ⚠️ Có {retraction_count} bài từng bị rút/đính chính")
     else:
-        lines.append("• Lịch sử rút bài (Retraction Watch): ✅ 0 bài bị rút (Chỉ số liêm chính tin cậy cao)")
+        lines.append("• Lịch sử rút bài (Retraction Watch): ✅ 0 bài bị rút (Chỉ số liêm chính cao)")
 
-    lines.append("\n🎯 4. KHUYẾN NGHỊ NỘP BÀI (VERDICT):")
+    # PHẦN 6: KHUYẾN NGHỊ NỘP BÀI
+    lines.append("\n🎯 5. KHUYẾN NGHỊ NỘP BÀI (VERDICT):")
     if matched_disc or matched_hijacked:
         lines.append("⛔ TUYỆT ĐỐI KHÔNG NỘP BÀI: Tạp chí có rủi ro pháp lý học thuật rất lớn, bài báo sẽ không được công nhận.")
     elif (matched_sjr and matched_sjr.get("quartile") == "Q1") or (matched_abdc and matched_abdc.get("abdc") in ("A*", "A")):
-        lines.append("✅ RẤT NÊN NỘP: Tạp chí thuộc nhóm uy tín hàng đầu, đủ điều kiện bảo vệ Luận án Tiến sĩ, xét chức danh PGS/GS và nghiệm thu đề tài NCKH trọng điểm.")
+        lines.append("✅ RẤT NÊN NỘP: Tạp chí quốc tế hàng đầu, đủ điều kiện bảo vệ Luận án Tiến sĩ, xét PGS/GS và nghiệm thu đề tài NCKH trọng điểm.")
     elif matched_sjr or matched_abdc:
-        lines.append("✅ ĐỦ CHUẨN: Tạp chí nằm trong danh mục quốc tế uy tín, phù hợp công bố kết quả nghiên cứu khoa học.")
+        lines.append("✅ ĐỦ CHUẨN: Tạp chí quốc tế uy tín, phù hợp công bố kết quả nghiên cứu khoa học.")
+    elif matched_vn or matched_hdgs:
+        lines.append("✅ ĐỦ CHUẨN QUỐC GIA: Đạt chuẩn khoa học Việt Nam 2026, tính điểm HĐGSNN và nghiệm thu đề tài NCKH trong nước.")
 
     lines.append("\n💡 Nhắn mã ISSN hoặc tên tạp chí khác để tiếp tục tra cứu.")
     return "\n".join(lines)[:1950]
-
 
 def process_incoming_zalo_queries(state: dict, lookup_db: dict) -> None:
     """Đọc các tin nhắn người dùng gửi tới Zalo Bot qua getUpdates và tự động trả lời kết quả tra cứu."""

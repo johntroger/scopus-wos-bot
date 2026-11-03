@@ -35493,7 +35493,7 @@
       "issn": "25729241"
     },
     "materials research letters": {
-      "sjr": 2.0,
+      "sjr": 2,
       "quartile": "Q1",
       "issn": "21663831"
     },
@@ -52763,47 +52763,47 @@
       "issn": "02544962,1423033X"
     },
     "american journal of industrial medicine": {
-      "sjr": 1.0,
+      "sjr": 1,
       "quartile": "Q1",
       "issn": "02713586,10970274"
     },
     "british journal of clinical pharmacology": {
-      "sjr": 1.0,
+      "sjr": 1,
       "quartile": "Q1",
       "issn": "13652125,03065251"
     },
     "chemical research in toxicology": {
-      "sjr": 1.0,
+      "sjr": 1,
       "quartile": "Q1",
       "issn": "15205010,0893228X"
     },
     "housing, theory and society": {
-      "sjr": 1.0,
+      "sjr": 1,
       "quartile": "Q1",
       "issn": "16512278,14036096"
     },
     "journal of endourology": {
-      "sjr": 1.0,
+      "sjr": 1,
       "quartile": "Q1",
       "issn": "1557900X,08927790"
     },
     "journal of philosophy": {
-      "sjr": 1.0,
+      "sjr": 1,
       "quartile": "Q1",
       "issn": "0022362X,19398549"
     },
     "mathematics and computers in simulation": {
-      "sjr": 1.0,
+      "sjr": 1,
       "quartile": "Q1",
       "issn": "03784754"
     },
     "ppar research": {
-      "sjr": 1.0,
+      "sjr": 1,
       "quartile": "Q1",
       "issn": "16874757,16874765"
     },
     "world economy": {
-      "sjr": 1.0,
+      "sjr": 1,
       "quartile": "Q1",
       "issn": "03785920,14679701"
     },
@@ -187006,6 +187006,3003 @@
       "sjr": 0.1,
       "quartile": "-",
       "issn": "26895382,26895366"
+    }
+  },
+  "vn_standards_2026": [
+    {
+      "stt": 1,
+      "title": "VIETNAM JOURNAL OF MATHEMATICS",
+      "aliases": [
+        "VJM"
+      ],
+      "cat": "Tạp chí chỉ mục quốc tế (Scopus, WoS)",
+      "org": "VIỆN HÀN LÂM KHOA HỌC VÀ CÔNG NGHỆ VIỆT NAM",
+      "intl": true
+    },
+    {
+      "stt": 2,
+      "title": "VIETNAM JOURNAL OF EARTH SCIENCES",
+      "aliases": [
+        "VJES"
+      ],
+      "cat": "Tạp chí chỉ mục quốc tế (Scopus, WoS)",
+      "org": "VIỆN HÀN LÂM KHOA HỌC VÀ CÔNG NGHỆ VIỆT NAM",
+      "intl": true
+    },
+    {
+      "stt": 3,
+      "title": "VIETNAM JOURNAL OF CHEMISTRY",
+      "aliases": [
+        "VJC"
+      ],
+      "cat": "Tạp chí chỉ mục quốc tế (Scopus, WoS)",
+      "org": "VIỆN HÀN LÂM KHOA HỌC VÀ CÔNG NGHỆ VIỆT NAM",
+      "intl": true
+    },
+    {
+      "stt": 4,
+      "title": "VIETNAM JOURNAL OF SCIENCE AND TECHNOLOGY",
+      "aliases": [
+        "VJST"
+      ],
+      "cat": "Tạp chí chỉ mục quốc tế (Scopus, WoS)",
+      "org": "VIỆN HÀN LÂM KHOA HỌC VÀ CÔNG NGHỆ VIỆT NAM",
+      "intl": true
+    },
+    {
+      "stt": 5,
+      "title": "ADVANCES IN NATURAL SCIENCES: NANOSCIENCE AND NANOTECHNOLOGY",
+      "aliases": [
+        "ANSN"
+      ],
+      "cat": "Tạp chí chỉ mục quốc tế (Scopus, WoS)",
+      "org": "VIỆN HÀN LÂM KHOA HỌC VÀ CÔNG NGHỆ VIỆT NAM",
+      "intl": true
+    },
+    {
+      "stt": 6,
+      "title": "ACTA MATHEMATICA VIETNAMICA",
+      "aliases": [
+        "AMV"
+      ],
+      "cat": "Tạp chí chỉ mục quốc tế (Scopus, WoS)",
+      "org": "VIỆN HÀN LÂM KHOA HỌC VÀ CÔNG NGHỆ VIỆT NAM",
+      "intl": true
+    },
+    {
+      "stt": 7,
+      "title": "JOURNAL OF SCIENCE: ADVANCED MATERIALS AND DEVICES",
+      "aliases": [
+        "JSAMD"
+      ],
+      "cat": "Tạp chí chỉ mục quốc tế (Scopus, WoS)",
+      "org": "ĐẠI HỌC QUỐC GIA HÀ NỘI",
+      "intl": true
+    },
+    {
+      "stt": 8,
+      "title": "BIOMEDICAL RESEARCH AND THERAPY",
+      "aliases": [
+        "BMRAT"
+      ],
+      "cat": "Tạp chí chỉ mục quốc tế (Scopus, WoS)",
+      "org": "ĐẠI HỌC QUỐC GIA THÀNH PHỐ HỒ CHÍ MINH",
+      "intl": true
+    },
+    {
+      "stt": 9,
+      "title": "JOURNAL OF INNOVATION AND SUSTAINABLE DEVELOPMENT",
+      "aliases": [
+        "JISD"
+      ],
+      "cat": "Tạp chí chỉ mục quốc tế (Scopus, WoS)",
+      "org": "ĐẠI HỌC CẦN THƠ",
+      "intl": true
+    },
+    {
+      "stt": 10,
+      "title": "INTERNATIONAL JOURNAL OF KNOWLEDGE AND SYSTEM SCIENCE",
+      "aliases": [
+        "IJKSS"
+      ],
+      "cat": "Tạp chí chỉ mục quốc tế (Scopus, WoS)",
+      "org": "ĐẠI HỌC DUY TÂN",
+      "intl": true
+    },
+    {
+      "stt": 11,
+      "title": "EAI ENDORSED TRANSACTION ON INDUSTRIAL NETWORKS AND INTELLIGENT SYSTEMS",
+      "aliases": [
+        "EAI INIS"
+      ],
+      "cat": "Tạp chí chỉ mục quốc tế (Scopus, WoS)",
+      "org": "ĐẠI HỌC DUY TÂN",
+      "intl": true
+    },
+    {
+      "stt": 12,
+      "title": "JOURNAL OF ECONOMICS AND DEVELOPMENT",
+      "aliases": [
+        "JED",
+        "TẠP CHÍ KINH TẾ VÀ PHÁT TRIỂN"
+      ],
+      "cat": "Tạp chí chỉ mục quốc tế (Scopus, WoS)",
+      "org": "ĐẠI HỌC KINH TẾ QUỐC DÂN",
+      "intl": true
+    },
+    {
+      "stt": 13,
+      "title": "JOURNAL OF ASIAN BUSINESS AND ECONOMIC STUDIES",
+      "aliases": [
+        "JABES",
+        "JABEG",
+        "TẠP CHÍ NGHIÊN CỨU KINH TẾ VÀ KINH DOANH CHÂU Á"
+      ],
+      "cat": "Tạp chí chỉ mục quốc tế (Scopus, WoS)",
+      "org": "ĐẠI HỌC KINH TẾ THÀNH PHỐ HỒ CHÍ MINH",
+      "intl": true
+    },
+    {
+      "stt": 14,
+      "title": "JOURNAL OF SCIENCE AND TRANSPORT TECHNOLOGY",
+      "aliases": [
+        "JSTT"
+      ],
+      "cat": "Tạp chí chỉ mục quốc tế (Scopus, WoS)",
+      "org": "TRƯỜNG ĐẠI HỌC CÔNG NGHỆ GIAO THÔNG VẬN TẢI",
+      "intl": true
+    },
+    {
+      "stt": 15,
+      "title": "VIETNAM JOURNAL OF COMPUTER SCIENCE",
+      "aliases": [
+        "VJCS"
+      ],
+      "cat": "Tạp chí chỉ mục quốc tế (Scopus, WoS)",
+      "org": "TRƯỜNG ĐẠI HỌC NGUYỄN TẤT THÀNH",
+      "intl": true
+    },
+    {
+      "stt": 16,
+      "title": "JOURNAL OF INFORMATION AND TELECOMMUNICATION",
+      "aliases": [
+        "JIT"
+      ],
+      "cat": "Tạp chí chỉ mục quốc tế (Scopus, WoS)",
+      "org": "TRƯỜNG ĐẠI HỌC TÔN ĐỨC THẮNG",
+      "intl": true
+    },
+    {
+      "stt": 17,
+      "title": "TẠP CHÍ CỘNG SẢN",
+      "aliases": [
+        "TẠP CHÍ CỘNG SẢN - CHUYÊN ĐỀ",
+        "XÂY DỰNG ĐẢNG"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "BAN CHẤP HÀNH TRUNG ƯƠNG ĐẢNG CỘNG SẢN VIỆT NAM"
+    },
+    {
+      "stt": 18,
+      "title": "TẠP CHÍ CỘNG SẢN ĐIỆN TỬ",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "BAN CHẤP HÀNH TRUNG ƯƠNG ĐẢNG CỘNG SẢN VIỆT NAM"
+    },
+    {
+      "stt": 19,
+      "title": "TẠP CHÍ LÝ LUẬN, PHÊ BÌNH VĂN HỌC, NGHỆ THUẬT",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỘI ĐỒNG LÝ LUẬN TRUNG ƯƠNG"
+    },
+    {
+      "stt": 20,
+      "title": "TẠP CHÍ LÝ LUẬN CHÍNH TRỊ",
+      "aliases": [
+        "POLITICAL THEORY"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỌC VIỆN CHÍNH TRỊ QUỐC GIA HỒ CHÍ MINH"
+    },
+    {
+      "stt": 21,
+      "title": "TẠP CHÍ ĐIỆN TỬ LÝ LUẬN CHÍNH TRỊ",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỌC VIỆN CHÍNH TRỊ QUỐC GIA HỒ CHÍ MINH"
+    },
+    {
+      "stt": 22,
+      "title": "TẠP CHÍ KINH TẾ VÀ QUẢN LÝ",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỌC VIỆN CHÍNH TRỊ QUỐC GIA HỒ CHÍ MINH"
+    },
+    {
+      "stt": 23,
+      "title": "TẠP CHÍ LÝ LUẬN CHÍNH TRỊ VÀ TRUYỀN THÔNG",
+      "aliases": [
+        "LÝ LUẬN CHÍNH TRỊ VÀ TRUYỀN THÔNG TIẾNG ANH"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỌC VIỆN BÁO CHÍ VÀ TUYÊN TRUYỀN, HỌC VIỆN CHÍNH TRỊ QUỐC GIA HỒ CHÍ MINH"
+    },
+    {
+      "stt": 24,
+      "title": "TẠP CHÍ ĐIỆN TỬ LÝ LUẬN CHÍNH TRỊ VÀ TRUYỀN THÔNG",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỌC VIỆN BÁO CHÍ VÀ TUYÊN TRUYỀN, HỌC VIỆN CHÍNH TRỊ QUỐC GIA HỒ CHÍ MINH"
+    },
+    {
+      "stt": 25,
+      "title": "TẠP CHÍ GIÁO DỤC LÝ LUẬN",
+      "aliases": [
+        "JOURNAL OF THEORETICAL EDUCATION"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỌC VIỆN BÁO CHÍ VÀ TUYÊN TRUYỀN, HỌC VIỆN CHÍNH TRỊ QUỐC GIA HỒ CHÍ MINH"
+    },
+    {
+      "stt": 26,
+      "title": "TẠP CHÍ KHOA HỌC CHÍNH TRỊ",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỌC VIỆN CHÍNH TRỊ KHU VỰC II, HỌC VIỆN CHÍNH TRỊ QUỐC GIA HỒ CHÍ MINH"
+    },
+    {
+      "stt": 27,
+      "title": "TẠP CHÍ SINH HOẠT LÝ LUẬN",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỌC VIỆN CHÍNH TRỊ KHU VỰC III, HỌC VIỆN CHÍNH TRỊ QUỐC GIA HỒ CHÍ MINH"
+    },
+    {
+      "stt": 28,
+      "title": "TẠP CHÍ THÔNG TIN KHOA HỌC CHÍNH TRỊ",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỌC VIỆN CHÍNH TRỊ KHU VỰC IV, HỌC VIỆN CHÍNH TRỊ QUỐC GIA HỒ CHÍ MINH"
+    },
+    {
+      "stt": 29,
+      "title": "TẠP CHÍ QUẢN LÝ NHÀ NƯỚC",
+      "aliases": [
+        "STATE MANAGEMENT REVIEW"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỌC VIỆN HÀNH CHÍNH VÀ QUẢN TRỊ CÔNG, HỌC VIỆN CHÍNH TRỊ QUỐC GIA HỒ CHÍ MINH"
+    },
+    {
+      "stt": 30,
+      "title": "TẠP CHÍ ĐIỆN TỬ QUẢN LÝ NHÀ NƯỚC",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỌC VIỆN HÀNH CHÍNH VÀ QUẢN TRỊ CÔNG, HỌC VIỆN CHÍNH TRỊ QUỐC GIA HỒ CHÍ MINH"
+    },
+    {
+      "stt": 31,
+      "title": "TẠP CHÍ CHỦ NGHĨA XÃ HỘI - LÝ LUẬN VÀ THỰC TIỄN",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN CHỦ NGHĨA XÃ HỘI KHOA HỌC, HỌC VIỆN CHÍNH TRỊ QUỐC GIA HỒ CHÍ MINH"
+    },
+    {
+      "stt": 32,
+      "title": "TẠP CHÍ NGHIÊN CỨU HỒ CHÍ MINH",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN HỒ CHÍ MINH VÀ CÁC LÃNH TỤ CỦA ĐẢNG, HỌC VIỆN CHÍNH TRỊ QUỐC GIA HỒ CHÍ MINH"
+    },
+    {
+      "stt": 33,
+      "title": "TẠP CHÍ LÃNH ĐẠO VÀ CHÍNH SÁCH",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN LÃNH ĐẠO HỌC VÀ CHÍNH SÁCH CÔNG, HỌC VIỆN CHÍNH TRỊ QUỐC GIA HỒ CHÍ MINH"
+    },
+    {
+      "stt": 34,
+      "title": "TẠP CHÍ LỊCH SỬ ĐẢNG",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN LỊCH SỬ ĐẢNG, HỌC VIỆN CHÍNH TRỊ QUỐC GIA HỒ CHÍ MINH"
+    },
+    {
+      "stt": 35,
+      "title": "TẠP CHÍ ĐIỆN TỬ LỊCH SỬ ĐẢNG",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN LỊCH SỬ ĐẢNG, HỌC VIỆN CHÍNH TRỊ QUỐC GIA HỒ CHÍ MINH"
+    },
+    {
+      "stt": 36,
+      "title": "TẠP CHÍ PHÁP LUẬT VỀ QUYỀN CON NGƯỜI",
+      "aliases": [
+        "VIETNAM JOURNAL OF HUMAN RIGHT LAW"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN QUYỀN CON NGƯỜI, HỌC VIỆN CHÍNH TRỊ QUỐC GIA HỒ CHÍ MINH"
+    },
+    {
+      "stt": 37,
+      "title": "TẠP CHÍ THÔNG TIN KHOA HỌC LÝ LUẬN CHÍNH TRỊ",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN THÔNG TIN KHOA HỌC XÃ HỘI, HỌC VIỆN CHÍNH TRỊ QUỐC GIA HỒ CHÍ MINH"
+    },
+    {
+      "stt": 38,
+      "title": "TẠP CHÍ TRIẾT HỌC VÀ ĐỜI SỐNG",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN TRIẾT HỌC, HỌC VIỆN CHÍNH TRỊ QUỐC GIA HỒ CHÍ MINH"
+    },
+    {
+      "stt": 39,
+      "title": "TẠP CHÍ NGHIÊN CỨU VĂN HÓA VÀ PHÁT TRIỂN",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN VĂN HÓA VÀ PHÁT TRIỂN, HỌC VIỆN CHÍNH TRỊ QUỐC GIA HỒ CHÍ MINH"
+    },
+    {
+      "stt": 40,
+      "title": "VIETNAM JOURNAL OF MECHANICS",
+      "aliases": [
+        "TẠP CHÍ CƠ HỌC VIỆT NAM"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN CƠ HỌC, VIỆN HÀN LÂM KHOA HỌC VÀ CÔNG NGHỆ VIỆT NAM"
+    },
+    {
+      "stt": 41,
+      "title": "VIETNAM JOURNAL OF BIOTECHNOLOGY",
+      "aliases": [
+        "TẠP CHÍ CÔNG NGHỆ SINH HỌC"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN CÔNG NGHỆ SINH HỌC, VIỆN HÀN LÂM KHOA HỌC VÀ CÔNG NGHỆ VIỆT NAM"
+    },
+    {
+      "stt": 42,
+      "title": "JOURNAL OF COMPUTER SCIENCE AND CYBERNETICS",
+      "aliases": [
+        "TẠP CHÍ TIN HỌC VÀ ĐIỀU KHIỂN HỌC"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN CÔNG NGHỆ THÔNG TIN, VIỆN HÀN LÂM KHOA HỌC VÀ CÔNG NGHỆ VIỆT NAM"
+    },
+    {
+      "stt": 43,
+      "title": "VIETNAM JOURNAL OF MARINE SCIENCE AND TECHNOLOGY",
+      "aliases": [
+        "TẠP CHÍ KHOA HỌC VÀ CÔNG NGHỆ BIỂN"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN HẢI DƯƠNG HỌC, VIỆN HÀN LÂM KHOA HỌC VÀ CÔNG NGHỆ VIỆT NAM"
+    },
+    {
+      "stt": 44,
+      "title": "ACADEMIA JOURNAL OF BIOLOGY",
+      "aliases": [
+        "TẠP CHÍ SINH HỌC"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN KHOA HỌC SỰ SỐNG, VIỆN HÀN LÂM KHOA HỌC VÀ CÔNG NGHỆ VIỆT NAM"
+    },
+    {
+      "stt": 45,
+      "title": "COMMUNICATIONS IN PHYSICS",
+      "aliases": [
+        "CIP JOURNAL",
+        "TẠP CHÍ VẬT LÝ"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN VẬT LÝ, VIỆN HÀN LÂM KHOA HỌC VÀ CÔNG NGHỆ VIỆT NAM"
+    },
+    {
+      "stt": 46,
+      "title": "TẠP CHÍ KHOA HỌC XÃ HỘI VIỆT NAM",
+      "aliases": [
+        "VIETNAM SOCIAL SCIENCES REVIEW"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN HÀN LÂM KHOA HỌC XÃ HỘI VIỆT NAM"
+    },
+    {
+      "stt": 47,
+      "title": "TẠP CHÍ NHÂN LỰC KHOA HỌC XÃ HỘI",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỌC VIỆN KHOA HỌC XÃ HỘI, VIỆN HÀN LÂM KHOA HỌC XÃ HỘI VIỆT NAM"
+    },
+    {
+      "stt": 48,
+      "title": "TẠP CHÍ DÂN TỘC HỌC VÀ TÔN GIÁO HỌC",
+      "aliases": [
+        "JOURNAL OF ANTHROPOLOGY AND RELIGIOUS STUDIES"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN DÂN TỘC HỌC VÀ TÔN GIÁO HỌC, VIỆN HÀN LÂM KHOA HỌC XÃ HỘI VIỆT NAM"
+    },
+    {
+      "stt": 49,
+      "title": "TẠP CHÍ ĐỊA LÝ NHÂN VĂN VÀ PHÁT TRIỂN BỀN VỮNG",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN ĐỊA LÝ NHÂN VĂN VÀ PHÁT TRIỂN BỀN VỮNG, VIỆN HÀN LÂM KHOA HỌC XÃ HỘI VIỆT NAM"
+    },
+    {
+      "stt": 50,
+      "title": "TẠP CHÍ KHẢO CỔ HỌC",
+      "aliases": [
+        "VIETNAM ARCHAEOLOGY REVIEW"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN KHẢO CỔ HỌC, VIỆN HÀN LÂM KHOA HỌC XÃ HỘI VIỆT NAM"
+    },
+    {
+      "stt": 51,
+      "title": "TẠP CHÍ KHOA HỌC XÃ HỘI THÀNH PHỐ HỒ CHÍ MINH",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN KHOA HỌC XÃ HỘI VÙNG NAM BỘ, VIỆN HÀN LÂM KHOA HỌC XÃ HỘI VIỆT NAM"
+    },
+    {
+      "stt": 52,
+      "title": "TẠP CHÍ KHOA HỌC XÃ HỘI MIỀN TRUNG",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN KHOA HỌC XÃ HỘI VÙNG TRUNG BỘ VÀ TÂY NGUYÊN, VIỆN HÀN LÂM KHOA HỌC XÃ HỘI VIỆT NAM"
+    },
+    {
+      "stt": 53,
+      "title": "TẠP CHÍ NGHIÊN CỨU KINH TẾ",
+      "aliases": [
+        "VIETNAM'S SOCIO-ECONOMIC DEVELOPMENT",
+        "KINH TẾ VÀ CHÍNH TRỊ THẾ GIỚI"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN KINH TẾ VIỆT NAM VÀ THẾ GIỚI, VIỆN HÀN LÂM KHOA HỌC XÃ HỘI VIỆT NAM"
+    },
+    {
+      "stt": 54,
+      "title": "TẠP CHÍ NGHIÊN CỨU CHÂU Á - THÁI BÌNH DƯƠNG",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN NGHIÊN CỨU CHÂU Á - THÁI BÌNH DƯƠNG, VIỆN HÀN LÂM KHOA HỌC XÃ HỘI VIỆT NAM"
+    },
+    {
+      "stt": 55,
+      "title": "TẠP CHÍ NGHIÊN CỨU CHÂU ÂU VÀ CHÂU MỸ",
+      "aliases": [
+        "JOURNAL OF EUROPEAN AND AMERICAN STUDIES"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN NGHIÊN CỨU CHÂU ÂU VÀ CHÂU MỸ, VIỆN HÀN LÂM KHOA HỌC XÃ HỘI VIỆT NAM"
+    },
+    {
+      "stt": 56,
+      "title": "TẠP CHÍ NGHIÊN CỨU CON NGƯỜI, GIA ĐÌNH VÀ GIỚI",
+      "aliases": [
+        "JOURNAL OF HUMAN FAMILY AND GENDER STUDIES"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN NGHIÊN CỨU CON NGƯỜI, GIA ĐÌNH VÀ GIỚI, VIỆN HÀN LÂM KHOA HỌC XÃ HỘI VIỆT NAM"
+    },
+    {
+      "stt": 57,
+      "title": "TẠP CHÍ HÁN NÔM",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN NGHIÊN CỨU HÁN NÔM, VIỆN HÀN LÂM KHOA HỌC XÃ HỘI VIỆT NAM"
+    },
+    {
+      "stt": 58,
+      "title": "TẠP CHÍ NGHIÊN CỨU Á - PHI",
+      "aliases": [
+        "VIETNAM JOURNAL OF ASIAN - AFRICAN STUDIES"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN NGHIÊN CỨU NAM Á, TÂY Á VÀ CHÂU PHI, VIỆN HÀN LÂM KHOA HỌC XÃ HỘI VIỆT NAM"
+    },
+    {
+      "stt": 59,
+      "title": "TẠP CHÍ NGHIÊN CỨU VĂN HOÁ VIỆT NAM",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN NGHIÊN CỨU VĂN HOÁ, VIỆN HÀN LÂM KHOA HỌC XÃ HỘI VIỆT NAM"
+    },
+    {
+      "stt": 60,
+      "title": "TẠP CHÍ NGÔN NGỮ",
+      "aliases": [
+        "TỪ ĐIỂN HỌC VÀ BÁCH KHOA THƯ"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN NGÔN NGỮ HỌC, VIỆN HÀN LÂM KHOA HỌC XÃ HỘI VIỆT NAM"
+    },
+    {
+      "stt": 61,
+      "title": "TẠP CHÍ NHÀ NƯỚC VÀ PHÁP LUẬT",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN NHÀ NƯỚC VÀ PHÁP LUẬT, VIỆN HÀN LÂM KHOA HỌC XÃ HỘI VIỆT NAM"
+    },
+    {
+      "stt": 62,
+      "title": "TẠP CHÍ NGHIÊN CỨU LỊCH SỬ",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN SỬ HỌC, VIỆN HÀN LÂM KHOA HỌC XÃ HỘI VIỆT NAM"
+    },
+    {
+      "stt": 63,
+      "title": "TẠP CHÍ THÔNG TIN KHOA HỌC XÃ HỘI",
+      "aliases": [
+        "SOCIAL SCIENCES INFORMATION REVIEW"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN THÔNG TIN KHOA HỌC XÃ HỘI, VIỆN HÀN LÂM KHOA HỌC XÃ HỘI VIỆT NAM"
+    },
+    {
+      "stt": 64,
+      "title": "TẠP CHÍ TRIẾT HỌC",
+      "aliases": [
+        "VIETNAMESE JOURNAL OF PHILOSOPHY"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN TRIẾT HỌC, VIỆN HÀN LÂM KHOA HỌC XÃ HỘI VIỆT NAM"
+    },
+    {
+      "stt": 65,
+      "title": "TẠP CHÍ NGHIÊN CỨU VĂN HỌC",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN VĂN HỌC, VIỆN HÀN LÂM KHOA HỌC XÃ HỘI VIỆT NAM"
+    },
+    {
+      "stt": 66,
+      "title": "TẠP CHÍ XÃ HỘI HỌC VÀ TÂM LÝ HỌC",
+      "aliases": [
+        "VIETNAM JOURNAL OF SOCIOLOGY AND PSYCHOLOGY"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN XÃ HỘI HỌC VÀ TÂM LÝ HỌC, VIỆN HÀN LÂM KHOA HỌC XÃ HỘI VIỆT NAM"
+    },
+    {
+      "stt": 67,
+      "title": "TẠP CHÍ CHÍNH TRỊ VÀ PHÁT TRIỂN",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "NHÀ XUẤT BẢN CHÍNH TRỊ QUỐC GIA SỰ THẬT"
+    },
+    {
+      "stt": 68,
+      "title": "TẠP CHÍ THANH NIÊN: NGHIÊN CỨU KHOA HỌC THANH NIÊN",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRUNG ƯƠNG ĐOÀN THANH NIÊN CỘNG SẢN HỒ CHÍ MINH"
+    },
+    {
+      "stt": 69,
+      "title": "TẠP CHÍ KHOA HỌC, HỌC VIỆN PHỤ NỮ VIỆT NAM",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỌC VIỆN PHỤ NỮ VIỆT NAM, TRUNG ƯƠNG HỘI LIÊN HIỆP PHỤ NỮ VIỆT NAM"
+    },
+    {
+      "stt": 70,
+      "title": "TẠP CHÍ KHOA HỌC KIỂM SÁT",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC KIỂM SÁT, VIỆN KIỂM SÁT NHÂN DÂN TỐI CAO"
+    },
+    {
+      "stt": 71,
+      "title": "TẠP CHÍ TÒA ÁN NHÂN DÂN",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TÒA ÁN NHÂN DÂN TỐI CAO"
+    },
+    {
+      "stt": 72,
+      "title": "TẠP CHÍ NGHIÊN CỨU LẬP PHÁP",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VĂN PHÒNG QUỐC HỘI"
+    },
+    {
+      "stt": 73,
+      "title": "TẠP CHÍ NGHIÊN CỨU KHOA HỌC KIỂM TOÁN",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "KIỂM TOÁN NHÀ NƯỚC"
+    },
+    {
+      "stt": 74,
+      "title": "TẠP CHÍ NGÂN HÀNG",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "NGÂN HÀNG NHÀ NƯỚC VIỆT NAM"
+    },
+    {
+      "stt": 75,
+      "title": "TẠP CHÍ KINH TẾ - LUẬT VÀ NGÂN HÀNG",
+      "aliases": [
+        "JOURNAL OF ECONOMIC AND BANKING STUDIES",
+        "JEBS"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỌC VIỆN NGÂN HÀNG, NGÂN HÀNG NHÀ NƯỚC VIỆT NAM"
+    },
+    {
+      "stt": 76,
+      "title": "TẠP CHÍ KINH TẾ VÀ NGÂN HÀNG CHÂU Á",
+      "aliases": [
+        "ASIAN JOURNAL OF ECONOMICS AND BANKING",
+        "AJEB"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC NGÂN HÀNG THÀNH PHỐ HỒ CHÍ MINH, NGÂN HÀNG NHÀ NƯỚC VIỆT NAM"
+    },
+    {
+      "stt": 77,
+      "title": "TẠP CHÍ NGHỆ THUẬT QUÂN SỰ VIỆT NAM",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỌC VIỆN KHOA HỌC, BỘ QUỐC PHÒNG"
+    },
+    {
+      "stt": 78,
+      "title": "TẠP CHÍ KHOA HỌC VÀ CÔNG NGHỆ TRONG LĨNH VỰC AN TOÀN THÔNG TIN",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "BAN CƠ YẾU CHÍNH PHỦ, BỘ QUỐC PHÒNG"
+    },
+    {
+      "stt": 79,
+      "title": "TẠP CHÍ Y DƯỢC THỰC HÀNH 175",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "BỆNH VIỆN QUÂN Y 175, BỘ QUỐC PHÒNG"
+    },
+    {
+      "stt": 80,
+      "title": "TẠP CHÍ QUÂN SỰ QUỐC PHÒNG",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "BỘ TỔNG THAM MƯU QUÂN ĐỘI NHÂN DÂN VIỆT NAM, BỘ QUỐC PHÒNG"
+    },
+    {
+      "stt": 81,
+      "title": "GIÁO DỤC LÝ LUẬN CHÍNH TRỊ QUÂN SỰ",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỌC VIỆN CHÍNH TRỊ, BỘ QUỐC PHÒNG"
+    },
+    {
+      "stt": 82,
+      "title": "TẠP CHÍ NGHIÊN CỨU KHOA HỌC HẬU CẦN QUÂN SỰ",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỌC VIỆN HẬU CẦN, BỘ QUỐC PHÒNG"
+    },
+    {
+      "stt": 83,
+      "title": "TẠP CHÍ KHOA HỌC VÀ KỸ THUẬT",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỌC VIỆN KỸ THUẬT QUÂN SỰ, BỘ QUỐC PHÒNG"
+    },
+    {
+      "stt": 84,
+      "title": "TẠP CHÍ NGHIÊN CỨU CHIẾN THUẬT - CHIẾN DỊCH",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỌC VIỆN LỤC QUÂN, BỘ QUỐC PHÒNG"
+    },
+    {
+      "stt": 85,
+      "title": "TẠP CHÍ Y DƯỢC HỌC QUÂN SỰ",
+      "aliases": [
+        "JOURNAL OF MILITARY PHARMACO-MEDICINE"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỌC VIỆN QUÂN Y, BỘ QUỐC PHÒNG"
+    },
+    {
+      "stt": 86,
+      "title": "TẠP CHÍ QUỐC PHÒNG TOÀN DÂN",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TỔNG CỤC CHÍNH TRỊ QUÂN ĐỘI NHÂN DÂN VIỆT NAM, BỘ QUỐC PHÒNG"
+    },
+    {
+      "stt": 87,
+      "title": "TẠP CHÍ CÔNG NGHIỆP QUỐC PHÒNG VÀ KINH TẾ",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TỔNG CỤC CÔNG NGHIỆP QUỐC PHÒNG, BỘ QUỐC PHÒNG"
+    },
+    {
+      "stt": 88,
+      "title": "TẠP CHÍ HẬU CẦN - KỸ THUẬT",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TỔNG CỤC HẬU CẦN - KỸ THUẬT, BỘ QUỐC PHÒNG"
+    },
+    {
+      "stt": 89,
+      "title": "TẠP CHÍ KHOA HỌC VÀ CÔNG NGHỆ NHIỆT ĐỚI",
+      "aliases": [
+        "JOURNAL OF TROPICAL SCIENCE AND ENGINEERING"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRUNG TÂM NHIỆT ĐỚI VIỆT - NGA, BỘ QUỐC PHÒNG"
+    },
+    {
+      "stt": 90,
+      "title": "TẠP CHÍ LỊCH SỬ QUÂN SỰ",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN CHIẾN LƯỢC VÀ LỊCH SỬ QUỐC PHÒNG VIỆT NAM, BỘ QUỐC PHÒNG"
+    },
+    {
+      "stt": 91,
+      "title": "TẠP CHÍ NGHIÊN CỨU KHOA HỌC VÀ CÔNG NGHỆ QUÂN SỰ",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN KHOA HỌC VÀ CÔNG NGHỆ QUÂN SỰ, BỘ QUỐC PHÒNG"
+    },
+    {
+      "stt": 92,
+      "title": "KHOA HỌC TÌNH BÁO QUỐC PHÒNG",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN NGHIÊN CỨU KHOA HỌC TÌNH BÁO, HỌC VIỆN KHOA HỌC QUÂN SỰ"
+    },
+    {
+      "stt": 93,
+      "title": "TẠP CHÍ Y DƯỢC LÂM SÀNG 108",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN NGHIÊN CỨU KHOA HỌC Y DƯỢC LÂM SÀNG 108, BỘ QUỐC PHÒNG"
+    },
+    {
+      "stt": 94,
+      "title": "TẠP CHÍ QUAN HỆ QUỐC PHÒNG",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN QUAN HỆ QUỐC TẾ VỀ QUỐC PHÒNG, BỘ QUỐC PHÒNG"
+    },
+    {
+      "stt": 95,
+      "title": "TẠP CHÍ Y HỌC QUÂN SỰ",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN Y HỌC DỰ PHÒNG QUÂN ĐỘI, BỘ QUỐC PHÒNG"
+    },
+    {
+      "stt": 96,
+      "title": "TẠP CHÍ Y HỌC THẢM HỌA VÀ BỎNG",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "BỆNH VIỆN BỎNG QUỐC GIA LÊ HỮU TRÁC, BỘ QUỐC PHÒNG"
+    },
+    {
+      "stt": 97,
+      "title": "TẠP CHÍ CÔNG AN NHÂN DÂN",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "BỘ CÔNG AN"
+    },
+    {
+      "stt": 98,
+      "title": "TẠP CHÍ ĐIỆN TỬ CÔNG AN NHÂN DÂN",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "BỘ CÔNG AN"
+    },
+    {
+      "stt": 99,
+      "title": "TẠP CHÍ CẢNH SÁT NHÂN DÂN",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỌC VIỆN CẢNH SÁT NHÂN DÂN, BỘ CÔNG AN"
+    },
+    {
+      "stt": 100,
+      "title": "TẠP CHÍ AN NINH NHÂN DÂN",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC AN NINH NHÂN DÂN, BỘ CÔNG AN"
+    },
+    {
+      "stt": 101,
+      "title": "JOURNAL OF PEOPLE'S SECURITY",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC AN NINH NHÂN DÂN, BỘ CÔNG AN"
+    },
+    {
+      "stt": 102,
+      "title": "TẠP CHÍ KHOA HỌC GIÁO DỤC CẢNH SÁT NHÂN DÂN",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC CẢNH SÁT NHÂN DÂN, BỘ CÔNG AN"
+    },
+    {
+      "stt": 103,
+      "title": "TẠP CHÍ LÝ LUẬN CHÍNH TRỊ CÔNG AN NHÂN DÂN",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỌC VIỆN CHÍNH TRỊ CÔNG AN NHÂN DÂN, BỘ CÔNG AN"
+    },
+    {
+      "stt": 104,
+      "title": "TẠP CHÍ KHOA HỌC VÀ GIÁO DỤC AN NINH",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỌC VIỆN AN NINH NHÂN DÂN, BỘ CÔNG AN"
+    },
+    {
+      "stt": 105,
+      "title": "TẠP CHÍ KHOA HỌC VÀ HUẤN LUYỆN TÌNH BÁO",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỌC VIỆN QUỐC TẾ, BỘ CÔNG AN"
+    },
+    {
+      "stt": 106,
+      "title": "TẠP CHÍ PHÒNG CHÁY VÀ CHỮA CHÁY",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC PHÒNG CHÁY CHỮA CHÁY, BỘ CÔNG AN"
+    },
+    {
+      "stt": 107,
+      "title": "TẠP CHÍ PHÒNG CHÁY VÀ CHỮA CHÁY ĐIỆN TỬ",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC PHÒNG CHÁY CHỮA CHÁY, BỘ CÔNG AN"
+    },
+    {
+      "stt": 108,
+      "title": "TẠP CHÍ KHOA HỌC KỸ THUẬT - HẬU CẦN",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG KỸ THUẬT VÀ CÔNG NGHỆ AN NINH, BỘ CÔNG AN"
+    },
+    {
+      "stt": 109,
+      "title": "TẠP CHÍ NGHIÊN CỨU QUỐC TẾ",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "BỘ NGOẠI GIAO"
+    },
+    {
+      "stt": 110,
+      "title": "TẠP CHÍ TỔ CHỨC NHÀ NƯỚC VÀ LAO ĐỘNG",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "BỘ NỘI VỤ"
+    },
+    {
+      "stt": 111,
+      "title": "TẠP CHÍ NGUỒN NHÂN LỰC VÀ AN SINH XÃ HỘI",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC LAO ĐỘNG - XÃ HỘI, BỘ NỘI VỤ"
+    },
+    {
+      "stt": 112,
+      "title": "TẠP CHÍ DÂN CHỦ VÀ PHÁP LUẬT",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "BỘ TƯ PHÁP"
+    },
+    {
+      "stt": 113,
+      "title": "TẠP CHÍ NGHỀ LUẬT",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỌC VIỆN TƯ PHÁP, BỘ TƯ PHÁP"
+    },
+    {
+      "stt": 114,
+      "title": "TẠP CHÍ LUẬT HỌC",
+      "aliases": [
+        "JOURNAL OF LEGAL STUDIES"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC LUẬT HÀ NỘI, BỘ TƯ PHÁP"
+    },
+    {
+      "stt": 115,
+      "title": "TẠP CHÍ KINH TẾ - TÀI CHÍNH",
+      "aliases": [
+        "VIETNAM ECONOMIC & FINANCE REVIEW"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "BỘ TÀI CHÍNH"
+    },
+    {
+      "stt": 116,
+      "title": "TẠP CHÍ KINH TẾ - TÀI CHÍNH ONLINE",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "BỘ TÀI CHÍNH"
+    },
+    {
+      "stt": 117,
+      "title": "TẠP CHÍ NGHIÊN CỨU TÀI CHÍNH KẾ TOÁN",
+      "aliases": [
+        "JOURNAL OF FINANCE & ACCOUNTING RESEARCH",
+        "JFAR"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỌC VIỆN TÀI CHÍNH, BỘ TÀI CHÍNH"
+    },
+    {
+      "stt": 118,
+      "title": "TẠP CHÍ KHOA HỌC TÀI CHÍNH KẾ TOÁN",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC TÀI CHÍNH - KẾ TOÁN, BỘ TÀI CHÍNH"
+    },
+    {
+      "stt": 119,
+      "title": "TẠP CHÍ NGHIÊN CỨU TÀI CHÍNH - MARKETING",
+      "aliases": [
+        "JOURNAL OF FINANCE - MARKETING RESEARCH",
+        "JFRM"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC TÀI CHÍNH - MARKETING, BỘ TÀI CHÍNH"
+    },
+    {
+      "stt": 120,
+      "title": "TẠP CHÍ TÀI CHÍNH - QUẢN TRỊ KINH DOANH",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC TÀI CHÍNH - QUẢN TRỊ KINH DOANH, BỘ TÀI CHÍNH"
+    },
+    {
+      "stt": 121,
+      "title": "TẠP CHÍ CÔNG THƯƠNG",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "BỘ CÔNG THƯƠNG"
+    },
+    {
+      "stt": 122,
+      "title": "NGHIÊN CỨU CÔNG NGHIỆP VÀ THƯƠNG MẠI",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN NGHIÊN CỨU CHIẾN LƯỢC, CHÍNH SÁCH CÔNG THƯƠNG, BỘ CÔNG THƯƠNG"
+    },
+    {
+      "stt": 123,
+      "title": "TẠP CHÍ KHOA HỌC VÀ CÔNG NGHỆ TRƯỜNG ĐẠI HỌC CÔNG NGHIỆP HÀ NỘI",
+      "aliases": [
+        "HANOI UNIVERSITY OF INDUSTRY JOURNAL OF SCIENCE AND TECHNOLOGY",
+        "HAUI JST"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC CÔNG NGHIỆP HÀ NỘI, BỘ CÔNG THƯƠNG"
+    },
+    {
+      "stt": 124,
+      "title": "TẠP CHÍ KHOA HỌC VÀ CÔNG NGHỆ TRƯỜNG ĐẠI HỌC CÔNG NGHIỆP (ĐIỆN TỬ)",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC CÔNG NGHIỆP HÀ NỘI, BỘ CÔNG THƯƠNG"
+    },
+    {
+      "stt": 125,
+      "title": "TẠP CHÍ ĐIỆN TỬ KHOA HỌC VÀ CÔNG NGHỆ QUI",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC CÔNG NGHIỆP QUẢNG NINH, BỘ CÔNG THƯƠNG"
+    },
+    {
+      "stt": 126,
+      "title": "TẠP CHÍ KHOA HỌC VÀ CÔNG NGHỆ - TRƯỜNG ĐẠI HỌC CÔNG NGHIỆP THÀNH PHỐ HỒ CHÍ MINH",
+      "aliases": [
+        "IUH JOURNAL OF SCIENCE AND TECHNOLOGY"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC CÔNG NGHIỆP THÀNH PHỐ HỒ CHÍ MINH, BỘ CÔNG THƯƠNG"
+    },
+    {
+      "stt": 127,
+      "title": "TẠP CHÍ KHOA HỌC ĐẠI HỌC CÔNG THƯƠNG",
+      "aliases": [
+        "HUIT JOURNAL OF SCIENCE"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC CÔNG THƯƠNG THÀNH PHỐ HỒ CHÍ MINH, BỘ CÔNG THƯƠNG"
+    },
+    {
+      "stt": 128,
+      "title": "TẠP CHÍ KHOA HỌC VÀ CÔNG NGHỆ NĂNG LƯỢNG",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC ĐIỆN LỰC, BỘ CÔNG THƯƠNG"
+    },
+    {
+      "stt": 129,
+      "title": "TẠP CHÍ KHOA HỌC & CÔNG NGHỆ UNETI",
+      "aliases": [
+        "TẠP CHÍ KHOA HỌC & CÔNG NGHỆ TRƯỜNG ĐH KINH TẾ - KỸ THUẬT CÔNG NGHIỆP"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC KINH TẾ - KỸ THUẬT CÔNG NGHIỆP, BỘ CÔNG THƯƠNG"
+    },
+    {
+      "stt": 130,
+      "title": "TẠP CHÍ NGHIÊN CỨU KHOA HỌC - ĐẠI HỌC SAO ĐỎ",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC SAO ĐỎ, BỘ CÔNG THƯƠNG"
+    },
+    {
+      "stt": 131,
+      "title": "TẠP CHÍ NÔNG NGHIỆP VÀ MÔI TRƯỜNG",
+      "aliases": [
+        "VIETNAM JOURNAL OF AGRICULTURE AND ENVIRONMENT"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "BỘ NÔNG NGHIỆP VÀ MÔI TRƯỜNG"
+    },
+    {
+      "stt": 132,
+      "title": "TẠP CHÍ KHOA HỌC NÔNG NGHIỆP VIỆT NAM",
+      "aliases": [
+        "VIETNAM JOURNAL OF AGRICULTURAL SCIENCES",
+        "VJAS"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỌC VIỆN NÔNG NGHIỆP VIỆT NAM, BỘ NÔNG NGHIỆP VÀ MÔI TRƯỜNG"
+    },
+    {
+      "stt": 133,
+      "title": "TẠP CHÍ BẢO VỆ THỰC VẬT",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN BẢO VỆ THỰC VẬT, VIỆN KHOA HỌC NÔNG NGHIỆP VIỆT NAM"
+    },
+    {
+      "stt": 134,
+      "title": "TẠP CHÍ MÔI TRƯỜNG",
+      "aliases": [
+        "JOURNAL OF ENVIRONMENT"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN CHIẾN LƯỢC, CHÍNH SÁCH NÔNG NGHIỆP VÀ MÔI TRƯỜNG, BỘ NÔNG NGHIỆP VÀ MÔI TRƯỜNG"
+    },
+    {
+      "stt": 135,
+      "title": "TẠP CHÍ ĐỊA CHẤT",
+      "aliases": [
+        "JOURNAL OF GEOLOGY"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN KHOA HỌC ĐỊA CHẤT VÀ KHOÁNG SẢN, BỘ NÔNG NGHIỆP VÀ MÔI TRƯỜNG"
+    },
+    {
+      "stt": 136,
+      "title": "TẠP CHÍ KHOA HỌC BIẾN ĐỔI KHÍ HẬU",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN KHOA HỌC KHÍ TƯỢNG THỦY VĂN, MÔI TRƯỜNG VÀ BIỂN, BỘ NÔNG NGHIỆP VÀ MÔI TRƯỜNG"
+    },
+    {
+      "stt": 137,
+      "title": "TẠP CHÍ KHOA HỌC LÂM NGHIỆP",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN KHOA HỌC LÂM NGHIỆP VIỆT NAM, BỘ NÔNG NGHIỆP VÀ MÔI TRƯỜNG"
+    },
+    {
+      "stt": 138,
+      "title": "TẠP CHÍ KHOA HỌC VÀ CÔNG NGHỆ NÔNG NGHIỆP VIỆT NAM",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN KHOA HỌC NÔNG NGHIỆP VIỆT NAM, BỘ NÔNG NGHIỆP VÀ MÔI TRƯỜNG"
+    },
+    {
+      "stt": 139,
+      "title": "TẠP CHÍ KHOA HỌC VÀ CÔNG NGHỆ THỦY LỢI",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN KHOA HỌC THỦY LỢI VIỆT NAM, BỘ NÔNG NGHIỆP VÀ MÔI TRƯỜNG"
+    },
+    {
+      "stt": 140,
+      "title": "TẠP CHÍ NGHỀ CÁ SÔNG CỬU LONG",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN NGHIÊN CỨU NUÔI TRỒNG THỦY SẢN II, BỘ NÔNG NGHIỆP VÀ MÔI TRƯỜNG"
+    },
+    {
+      "stt": 141,
+      "title": "TẠP CHÍ KHOA HỌC VÀ CÔNG NGHỆ LÂM NGHIỆP",
+      "aliases": [
+        "JOURNAL OF FORESTRY SCIENCE AND TECHNOLOGY"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC LÂM NGHIỆP, BỘ NÔNG NGHIỆP VÀ MÔI TRƯỜNG"
+    },
+    {
+      "stt": 142,
+      "title": "TẠP CHÍ KHOA HỌC TÀI NGUYÊN VÀ MÔI TRƯỜNG",
+      "aliases": [
+        "JOURNAL OF SCIENCE ON NATURAL RESOURCES AND ENVIRONMENT"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC TÀI NGUYÊN VÀ MÔI TRƯỜNG HÀ NỘI, BỘ NÔNG NGHIỆP VÀ MÔI TRƯỜNG"
+    },
+    {
+      "stt": 143,
+      "title": "TẠP CHÍ KHOA HỌC KỸ THUẬT THỦY LỢI VÀ MÔI TRƯỜNG",
+      "aliases": [
+        "JOURNAL OF WATER RESOURCES AND ENVIRONMENT ENGINEERING"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC THỦY LỢI, BỘ NÔNG NGHIỆP VÀ MÔI TRƯỜNG"
+    },
+    {
+      "stt": 144,
+      "title": "TẠP CHÍ XÂY DỰNG",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "BỘ XÂY DỰNG"
+    },
+    {
+      "stt": 145,
+      "title": "TẠP CHÍ XÂY DỰNG VÀ ĐÔ THỊ",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỌC VIỆN CHIẾN LƯỢC, BỒI DƯỠNG CÁN BỘ XÂY DỰNG, BỘ XÂY DỰNG"
+    },
+    {
+      "stt": 146,
+      "title": "TẠP CHÍ KHOA HỌC CÔNG NGHỆ HÀNG KHÔNG",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỌC VIỆN HÀNG KHÔNG VIỆT NAM, BỘ XÂY DỰNG"
+    },
+    {
+      "stt": 147,
+      "title": "TẠP CHÍ KIẾN TRÚC VIỆT NAM",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN KIẾN TRÚC QUỐC GIA, BỘ XÂY DỰNG"
+    },
+    {
+      "stt": 148,
+      "title": "TẠP CHÍ KINH TẾ XÂY DỰNG",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN KINH TẾ XÂY DỰNG, BỘ XÂY DỰNG"
+    },
+    {
+      "stt": 149,
+      "title": "TẠP CHÍ QUY HOẠCH XÂY DỰNG",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN QUY HOẠCH ĐÔ THỊ VÀ NÔNG THÔN QUỐC GIA, BỘ XÂY DỰNG"
+    },
+    {
+      "stt": 150,
+      "title": "TẠP CHÍ VẬT LIỆU VÀ XÂY DỰNG",
+      "aliases": [
+        "JOURNAL OF MATERIALS AND CONSTRUCTION"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN VẬT LIỆU XÂY DỰNG, BỘ XÂY DỰNG"
+    },
+    {
+      "stt": 151,
+      "title": "TẠP CHÍ ĐIỆN TỬ KHOA HỌC VÀ CÔNG NGHỆ GIAO THÔNG",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC CÔNG NGHỆ GIAO THÔNG VẬN TẢI, BỘ XÂY DỰNG"
+    },
+    {
+      "stt": 152,
+      "title": "TẠP CHÍ KHOA HỌC CÔNG NGHỆ GIAO THÔNG VẬN TẢI",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC GIAO THÔNG VẬN TẢI THÀNH PHỐ HỒ CHÍ MINH, BỘ XÂY DỰNG"
+    },
+    {
+      "stt": 153,
+      "title": "TẠP CHÍ KHOA HỌC CÔNG NGHỆ HÀNG HẢI",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC HÀNG HẢI VIỆT NAM, BỘ XÂY DỰNG"
+    },
+    {
+      "stt": 154,
+      "title": "TẠP CHÍ KHOA HỌC KIẾN TRÚC VÀ XÂY DỰNG",
+      "aliases": [
+        "SCIENCE JOURNAL OF ARCHITECTURE AND CONSTRUCTION"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC KIẾN TRÚC HÀ NỘI, BỘ XÂY DỰNG"
+    },
+    {
+      "stt": 155,
+      "title": "TẠP CHÍ KHOA HỌC VÀ CÔNG NGHỆ TRƯỜNG ĐẠI HỌC XÂY DỰNG MIỀN TÂY",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC XÂY DỰNG MIỀN TÂY, BỘ XÂY DỰNG"
+    },
+    {
+      "stt": 156,
+      "title": "TẠP CHÍ VĂN HÓA NGHỆ THUẬT",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "BỘ VĂN HÓA, THỂ THAO VÀ DU LỊCH"
+    },
+    {
+      "stt": 157,
+      "title": "TẠP CHÍ VĂN HOÁ, THỂ THAO VÀ DU LỊCH",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN VĂN HOÁ, NGHỆ THUẬT, THỂ THAO VÀ DU LỊCH VIỆT NAM, BỘ VĂN HÓA, THỂ THAO VÀ DU LỊCH"
+    },
+    {
+      "stt": 158,
+      "title": "TẠP CHÍ NGHIÊN CỨU MỸ THUẬT",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC MỸ THUẬT VIỆT NAM, BỘ VĂN HÓA, THỂ THAO VÀ DU LỊCH"
+    },
+    {
+      "stt": 159,
+      "title": "TẠP CHÍ KHOA HỌC VÀ ĐÀO TẠO THỂ THAO",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC THỂ DỤC THỂ THAO ĐÀ NẴNG, BỘ VĂN HÓA, THỂ THAO VÀ DU LỊCH"
+    },
+    {
+      "stt": 160,
+      "title": "TẠP CHÍ KHOA HỌC ĐÀO TẠO VÀ HUẤN LUYỆN THỂ THAO",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC THỂ DỤC THỂ THAO BẮC NINH, BỘ VĂN HÓA, THỂ THAO VÀ DU LỊCH"
+    },
+    {
+      "stt": 161,
+      "title": "TẠP CHÍ KHOA HỌC VÀ ĐÀO TẠO THỂ DỤC THỂ THAO",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC THỂ DỤC THỂ THAO THÀNH PHỐ HỒ CHÍ MINH, BỘ VĂN HÓA, THỂ THAO VÀ DU LỊCH"
+    },
+    {
+      "stt": 162,
+      "title": "TẠP CHÍ NGHIÊN CỨU VĂN HÓA",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC VĂN HÓA HÀ NỘI, BỘ VĂN HÓA, THỂ THAO VÀ DU LỊCH"
+    },
+    {
+      "stt": 163,
+      "title": "TẠP CHÍ VĂN HÓA VÀ NGUỒN LỰC",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC VĂN HÓA THÀNH PHỐ HỒ CHÍ MINH, BỘ VĂN HÓA, THỂ THAO VÀ DU LỊCH"
+    },
+    {
+      "stt": 164,
+      "title": "TẠP CHÍ KHOA HỌC VÀ CÔNG NGHỆ VIỆT NAM",
+      "aliases": [
+        "VIETNAM JOURNAL OF SCIENCE, TECHNOLOGY AND ENGINEERING",
+        "VJSTE",
+        "VMOST JOURNAL OF SOCIAL SCIENCES AND HUMANITIES",
+        "JOURNAL ON INFORMATION TECHNOLOGIES & COMMUNICATIONS"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "BỘ KHOA HỌC VÀ CÔNG NGHỆ"
+    },
+    {
+      "stt": 165,
+      "title": "TẠP CHÍ THÔNG TIN VÀ TƯ LIỆU",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN THỐNG KÊ VÀ ĐÁNH GIÁ KHOA HỌC, CỤC THÔNG TIN, THỐNG KÊ"
+    },
+    {
+      "stt": 166,
+      "title": "TẠP CHÍ GIÁO DỤC",
+      "aliases": [
+        "VIETNAM JOURNAL OF EDUCATION",
+        "VJE"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "BỘ GIÁO DỤC VÀ ĐÀO TẠO"
+    },
+    {
+      "stt": 167,
+      "title": "TẠP CHÍ QUẢN LÝ GIÁO DỤC",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỌC VIỆN QUẢN LÝ GIÁO DỤC, BỘ GIÁO DỤC VÀ ĐÀO TẠO"
+    },
+    {
+      "stt": 168,
+      "title": "TẠP CHÍ KHOA HỌC GIÁO DỤC VIỆT NAM",
+      "aliases": [
+        "VIETNAM JOURNAL OF EDUCATIONAL SCIENCES"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN KHOA HỌC GIÁO DỤC VIỆT NAM, BỘ GIÁO DỤC VÀ ĐÀO TẠO"
+    },
+    {
+      "stt": 169,
+      "title": "TẠP CHÍ KHOA HỌC ĐẠI HỌC QUỐC GIA HÀ NỘI",
+      "aliases": [
+        "VNU JOURNAL OF SCIENCE"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "ĐẠI HỌC QUỐC GIA HÀ NỘI, BỘ GIÁO DỤC VÀ ĐÀO TẠO"
+    },
+    {
+      "stt": 170,
+      "title": "TẠP CHÍ NGHIÊN CỨU NƯỚC NGOÀI",
+      "aliases": [
+        "VNU JOURNAL OF FOREIGN STUDIES"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC NGOẠI NGỮ, ĐẠI HỌC QUỐC GIA HÀ NỘI"
+    },
+    {
+      "stt": 171,
+      "title": "TẠP CHÍ KHOA HỌC XÃ HỘI VÀ NHÂN VĂN",
+      "aliases": [
+        "VNU JOURNAL OF SOCIAL SCIENCES AND HUMANITIES"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC KHOA HỌC XÃ HỘI VÀ NHÂN VĂN, ĐẠI HỌC QUỐC GIA HÀ NỘI"
+    },
+    {
+      "stt": 172,
+      "title": "TẠP CHÍ KINH TẾ VÀ KINH DOANH",
+      "aliases": [
+        "VNU JOURNAL OF ECONOMICS AND BUSINESS",
+        "VNU-JEB"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC KINH TẾ, ĐẠI HỌC QUỐC GIA HÀ NỘI"
+    },
+    {
+      "stt": 173,
+      "title": "TẠP CHÍ ĐẠI HỌC QUỐC GIA THÀNH PHỐ HỒ CHÍ MINH",
+      "aliases": [
+        "VNUHCM JOURNAL OF SCIENCE AND TECHNOLOGY DEVELOPMENT",
+        "STDEV"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "ĐẠI HỌC QUỐC GIA THÀNH PHỐ HỒ CHÍ MINH, BỘ GIÁO DỤC VÀ ĐÀO TẠO"
+    },
+    {
+      "stt": 174,
+      "title": "TẠP CHÍ KHOA HỌC QUỐC TẾ AGU",
+      "aliases": [
+        "AGU INTERNATIONAL JOURNAL OF SCIENCES"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC AN GIANG, ĐẠI HỌC QUỐC GIA THÀNH PHỐ HỒ CHÍ MINH"
+    },
+    {
+      "stt": 175,
+      "title": "TẠP CHÍ KHOA HỌC VÀ CÔNG NGHỆ ĐẠI HỌC THÁI NGUYÊN",
+      "aliases": [
+        "TNU JOURNAL OF SCIENCE AND TECHNOLOGY"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "ĐẠI HỌC THÁI NGUYÊN, BỘ GIÁO DỤC VÀ ĐÀO TẠO"
+    },
+    {
+      "stt": 176,
+      "title": "TẠP CHÍ KINH TẾ VÀ QUẢN TRỊ KINH DOANH",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC KINH TẾ VÀ QUẢN TRỊ KINH DOANH, ĐẠI HỌC THÁI NGUYÊN"
+    },
+    {
+      "stt": 177,
+      "title": "TẠP CHÍ KHOA HỌC VÀ CÔNG NGHỆ Y DƯỢC",
+      "aliases": [
+        "JOURNAL OF SCIENCE AND TECHNOLOGY IN MEDICINE AND PHARMACY"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC Y - DƯỢC, ĐẠI HỌC THÁI NGUYÊN"
+    },
+    {
+      "stt": 178,
+      "title": "TẠP CHÍ KHOA HỌC ĐẠI HỌC HUẾ",
+      "aliases": [
+        "HUE UNIVERSITY JOURNAL OF SCIENCE"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "ĐẠI HỌC HUẾ, BỘ GIÁO DỤC VÀ ĐÀO TẠO"
+    },
+    {
+      "stt": 179,
+      "title": "TẠP CHÍ KHOA HỌC QUẢN LÝ VÀ KINH TẾ",
+      "aliases": [
+        "HUE JOURNAL OF ECONOMICS AND MANAGEMENT",
+        "HJEM"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC KINH TẾ, ĐẠI HỌC HUẾ"
+    },
+    {
+      "stt": 180,
+      "title": "PHÁP LUẬT VÀ THỰC TIỄN",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC LUẬT, ĐẠI HỌC HUẾ"
+    },
+    {
+      "stt": 181,
+      "title": "TẠP CHÍ KHOA HỌC NGÔN NGỮ VÀ VĂN HÓA",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC NGOẠI NGỮ, ĐẠI HỌC HUẾ"
+    },
+    {
+      "stt": 182,
+      "title": "TẠP CHÍ KHOA HỌC VÀ CÔNG NGHỆ NÔNG NGHIỆP",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC NÔNG LÂM, ĐẠI HỌC HUẾ"
+    },
+    {
+      "stt": 183,
+      "title": "TẠP CHÍ KHOA HỌC VÀ CÔNG NGHỆ TRƯỜNG ĐẠI HỌC KHOA HỌC",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC KHOA HỌC, ĐẠI HỌC HUẾ"
+    },
+    {
+      "stt": 184,
+      "title": "TẠP CHÍ KHOA HỌC VÀ GIÁO DỤC",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC SƯ PHẠM, ĐẠI HỌC HUẾ"
+    },
+    {
+      "stt": 185,
+      "title": "TẠP CHÍ Y DƯỢC HUẾ",
+      "aliases": [
+        "HUE JOURNAL OF MEDICINE AND PHARMACY"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC Y - DƯỢC, ĐẠI HỌC HUẾ"
+    },
+    {
+      "stt": 186,
+      "title": "TẠP CHÍ KHOA HỌC VÀ CÔNG NGHỆ ĐẠI HỌC ĐÀ NẴNG",
+      "aliases": [
+        "JST-UD"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "ĐẠI HỌC ĐÀ NẴNG, BỘ GIÁO DỤC VÀ ĐÀO TẠO"
+    },
+    {
+      "stt": 187,
+      "title": "TẠP CHÍ KHOA HỌC KINH TẾ",
+      "aliases": [
+        "JOURNAL OF ECONOMIC STUDIES - UNIVERSITY OF DANANG"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC KINH TẾ, ĐẠI HỌC ĐÀ NẴNG"
+    },
+    {
+      "stt": 188,
+      "title": "TẠP CHÍ KHOA HỌC XÃ HỘI, NHÂN VĂN VÀ GIÁO DỤC",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC SƯ PHẠM, ĐẠI HỌC ĐÀ NẴNG"
+    },
+    {
+      "stt": 189,
+      "title": "TẠP CHÍ KHOA HỌC ĐẠI HỌC CẦN THƠ",
+      "aliases": [
+        "CTU JOURNAL OF INNOVATION AND SUSTAINABLE DEVELOPMENT"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "ĐẠI HỌC CẦN THƠ, BỘ GIÁO DỤC VÀ ĐÀO TẠO"
+    },
+    {
+      "stt": 190,
+      "title": "TẠP CHÍ KHOA HỌC VÀ CÔNG NGHỆ BÁCH KHOA HÀ NỘI",
+      "aliases": [
+        "JOURNAL OF SCIENCES AND TECHNOLOGY – ENGINEERING AND TECHNOLOGY FOR SUSTAINABLE DEVELOPMENT"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "ĐẠI HỌC BÁCH KHOA HÀ NỘI, BỘ GIÁO DỤC VÀ ĐÀO TẠO"
+    },
+    {
+      "stt": 191,
+      "title": "TẠP CHÍ KINH TẾ VÀ PHÁT TRIỂN",
+      "aliases": [
+        "JOURNAL OF ECONOMICS AND DEVELOPMENT",
+        "JED",
+        "KTPT"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "ĐẠI HỌC KINH TẾ QUỐC DÂN, BỘ GIÁO DỤC VÀ ĐÀO TẠO"
+    },
+    {
+      "stt": 192,
+      "title": "TẠP CHÍ NGHIÊN CỨU KINH TẾ VÀ KINH DOANH CHÂU Á",
+      "aliases": [
+        "JABES",
+        "JABEG"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "ĐẠI HỌC KINH TẾ THÀNH PHỐ HỒ CHÍ MINH, BỘ GIÁO DỤC VÀ ĐÀO TẠO"
+    },
+    {
+      "stt": 193,
+      "title": "TẠP CHÍ KHOA HỌC VÀ CÔNG NGHỆ - ĐẠI HỌC NGUYỄN TẤT THÀNH",
+      "aliases": [
+        "NTTU JOURNAL OF SCIENCE AND TECHNOLOGY"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC NGUYỄN TẤT THÀNH, BỘ GIÁO DỤC VÀ ĐÀO TẠO"
+    },
+    {
+      "stt": 194,
+      "title": "TẠP CHÍ KHOA HỌC QUẢN LÝ GIÁO DỤC",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG CÁN BỘ QUẢN LÝ GIÁO DỤC THÀNH PHỐ HỒ CHÍ MINH, BỘ GIÁO DỤC VÀ ĐÀO TẠO"
+    },
+    {
+      "stt": 195,
+      "title": "TẠP CHÍ KHOA HỌC VÀ CÔNG NGHỆ - TRƯỜNG ĐẠI HỌC BÌNH DƯƠNG",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC BÌNH DƯƠNG, BỘ GIÁO DỤC VÀ ĐÀO TẠO"
+    },
+    {
+      "stt": 196,
+      "title": "TẠP CHÍ KHOA HỌC GIÁO DỤC KỸ THUẬT",
+      "aliases": [
+        "JOURNAL OF TECHNICAL EDUCATION SCIENCE",
+        "JTE"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC CÔNG NGHỆ KỸ THUẬT THÀNH PHỐ HỒ CHÍ MINH, BỘ GIÁO DỤC VÀ ĐÀO TẠO"
+    },
+    {
+      "stt": 197,
+      "title": "TẠP CHÍ KHOA HỌC ĐẠI HỌC CỬU LONG",
+      "aliases": [
+        "MEKONG UNIVERSITY SCIENTIFIC JOURNAL"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC CỬU LONG, BỘ GIÁO DỤC VÀ ĐÀO TẠO"
+    },
+    {
+      "stt": 198,
+      "title": "TẠP CHÍ KHOA HỌC ĐẠI HỌC ĐÀ LẠT",
+      "aliases": [
+        "DALAT UNIVERSITY JOURNAL OF SCIENCE",
+        "DLU JOS"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC ĐÀ LẠT, BỘ GIÁO DỤC VÀ ĐÀO TẠO"
+    },
+    {
+      "stt": 199,
+      "title": "TẠP CHÍ KHOA HỌC ĐẠI HỌC ĐÔNG Á",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC ĐÔNG Á, BỘ GIÁO DỤC VÀ ĐÀO TẠO"
+    },
+    {
+      "stt": 200,
+      "title": "TẠP CHÍ KHOA HỌC, CÔNG NGHỆ VÀ PHÁT TRIỂN",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC ĐÔNG ĐÔ, BỘ GIÁO DỤC VÀ ĐÀO TẠO"
+    },
+    {
+      "stt": 201,
+      "title": "TẠP CHÍ KHOA HỌC ĐẠI HỌC ĐỒNG THÁP",
+      "aliases": [
+        "DONG THAP UNIVERSITY JOURNAL OF SCIENCE"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC ĐỒNG THÁP, BỘ GIÁO DỤC VÀ ĐÀO TẠO"
+    },
+    {
+      "stt": 202,
+      "title": "TẠP CHÍ KHOA HỌC GIAO THÔNG VẬN TẢI",
+      "aliases": [
+        "TRANSPORT AND COMMUNICATIONS SCIENCE JOURNAL",
+        "TCSJ"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC GIAO THÔNG VẬN TẢI, BỘ GIÁO DỤC VÀ ĐÀO TẠO"
+    },
+    {
+      "stt": 203,
+      "title": "TẠP CHÍ KHOA HỌC NGOẠI NGỮ",
+      "aliases": [
+        "HANU JOURNAL OF SCIENCE"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC HÀ NỘI, BỘ GIÁO DỤC VÀ ĐÀO TẠO"
+    },
+    {
+      "stt": 204,
+      "title": "TẠP CHÍ KHOA HỌC KINH DOANH VÀ CÔNG NGHỆ",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC KINH DOANH VÀ CÔNG NGHỆ HÀ NỘI, BỘ GIÁO DỤC VÀ ĐÀO TẠO"
+    },
+    {
+      "stt": 205,
+      "title": "TẠP CHÍ KINH TẾ - CÔNG NGHIỆP",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC KINH TẾ CÔNG NGHIỆP LONG AN, BỘ GIÁO DỤC VÀ ĐÀO TẠO"
+    },
+    {
+      "stt": 206,
+      "title": "TẠP CHÍ PHÁT TRIỂN VÀ HỘI NHẬP",
+      "aliases": [
+        "JOURNAL OF DEVELOPMENT AND INTEGRATION",
+        "JDI",
+        "UEF"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC KINH TẾ TÀI CHÍNH THÀNH PHỐ HỒ CHÍ MINH, BỘ GIÁO DỤC VÀ ĐÀO TẠO"
+    },
+    {
+      "stt": 207,
+      "title": "TẠP CHÍ KHOA HỌC LẠC HỒNG",
+      "aliases": [
+        "LHU JOURNAL OF SCIENCE"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC LẠC HỒNG, BỘ GIÁO DỤC VÀ ĐÀO TẠO"
+    },
+    {
+      "stt": 208,
+      "title": "TẠP CHÍ KHOA HỌC PHÁP LÝ VIỆT NAM",
+      "aliases": [
+        "VIETNAMESE JOURNAL OF LEGAL SCIENCES"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC LUẬT THÀNH PHỐ HỒ CHÍ MINH, BỘ GIÁO DỤC VÀ ĐÀO TẠO"
+    },
+    {
+      "stt": 209,
+      "title": "TẠP CHÍ KHOA HỌC KỸ THUẬT MỎ - ĐỊA CHẤT",
+      "aliases": [
+        "JOURNAL OF MINING AND EARTH SCIENCES",
+        "JMES"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC MỎ - ĐỊA CHẤT, BỘ GIÁO DỤC VÀ ĐÀO TẠO"
+    },
+    {
+      "stt": 210,
+      "title": "TẠP CHÍ KHOA HỌC TRƯỜNG ĐẠI HỌC MỞ HÀ NỘI",
+      "aliases": [
+        "HOU JOURNAL OF SCIENCE"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC MỞ HÀ NỘI, BỘ GIÁO DỤC VÀ ĐÀO TẠO"
+    },
+    {
+      "stt": 211,
+      "title": "TẠP CHÍ KHOA HỌC ĐẠI HỌC MỞ THÀNH PHỐ HỒ CHÍ MINH",
+      "aliases": [
+        "HCMCOU JOURNAL OF SCIENCE",
+        "HCMCOU"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC MỞ THÀNH PHỐ HỒ CHÍ MINH, BỘ GIÁO DỤC VÀ ĐÀO TẠO"
+    },
+    {
+      "stt": 212,
+      "title": "TẠP CHÍ KHOA HỌC VÀ KINH TẾ PHÁT TRIỂN",
+      "aliases": [
+        "JOURNAL OF SCIENCE AND DEVELOPMENT ECONOMICS"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC NAM CẦN THƠ, BỘ GIÁO DỤC VÀ ĐÀO TẠO"
+    },
+    {
+      "stt": 213,
+      "title": "TẠP CHÍ KHOA HỌC HUFLIT",
+      "aliases": [
+        "HUFLIT JOURNAL OF SCIENCE"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC NGOẠI NGỮ - TIN HỌC THÀNH PHỐ HỒ CHÍ MINH, BỘ GIÁO DỤC VÀ ĐÀO TẠO"
+    },
+    {
+      "stt": 214,
+      "title": "TẠP CHÍ QUẢN LÝ VÀ KINH TẾ QUỐC TẾ",
+      "aliases": [
+        "JOURNAL OF INTERNATIONAL ECONOMICS AND MANAGEMENT",
+        "JIEM",
+        "FTU"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC NGOẠI THƯƠNG, BỘ GIÁO DỤC VÀ ĐÀO TẠO"
+    },
+    {
+      "stt": 215,
+      "title": "TẠP CHÍ KHOA HỌC - CÔNG NGHỆ THỦY SẢN",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC NHA TRANG, BỘ GIÁO DỤC VÀ ĐÀO TẠO"
+    },
+    {
+      "stt": 216,
+      "title": "TẠP CHÍ NÔNG NGHIỆP VÀ PHÁT TRIỂN",
+      "aliases": [
+        "THE JOURNAL OF AGRICULTURE AND DEVELOPMENT",
+        "JAD"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC NÔNG LÂM THÀNH PHỐ HỒ CHÍ MINH, BỘ GIÁO DỤC VÀ ĐÀO TẠO"
+    },
+    {
+      "stt": 217,
+      "title": "TẠP CHÍ KHOA HỌC TRƯỜNG ĐẠI HỌC PHAN THIẾT",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC PHAN THIẾT, BỘ GIÁO DỤC VÀ ĐÀO TẠO"
+    },
+    {
+      "stt": 218,
+      "title": "TẠP CHÍ KHOA HỌC TRƯỜNG ĐẠI HỌC QUY NHƠN",
+      "aliases": [
+        "QNU JOURNAL OF SCIENCE"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC QUY NHƠN, BỘ GIÁO DỤC VÀ ĐÀO TẠO"
+    },
+    {
+      "stt": 219,
+      "title": "TẠP CHÍ KHOA HỌC TRƯỜNG ĐẠI HỌC SƯ PHẠM HÀ NỘI",
+      "aliases": [
+        "HNUE JOURNAL OF SCIENCE"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC SƯ PHẠM HÀ NỘI, BỘ GIÁO DỤC VÀ ĐÀO TẠO"
+    },
+    {
+      "stt": 220,
+      "title": "TẠP CHÍ KHOA HỌC TRƯỜNG ĐẠI HỌC SƯ PHẠM HÀ NỘI 2",
+      "aliases": [
+        "HPU2 JOURNAL OF SCIENCE"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC SƯ PHẠM HÀ NỘI 2, BỘ GIÁO DỤC VÀ ĐÀO TẠO"
+    },
+    {
+      "stt": 221,
+      "title": "TẠP CHÍ KHOA HỌC VÀ CÔNG NGHỆ ỨNG DỤNG",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC SƯ PHẠM KỸ THUẬT HƯNG YÊN, BỘ GIÁO DỤC VÀ ĐÀO TẠO"
+    },
+    {
+      "stt": 222,
+      "title": "TẠP CHÍ GIÁO DỤC NGHỆ THUẬT",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC SƯ PHẠM NGHỆ THUẬT TRUNG ƯƠNG, BỘ GIÁO DỤC VÀ ĐÀO TẠO"
+    },
+    {
+      "stt": 223,
+      "title": "TẠP CHÍ KHOA HỌC TRƯỜNG ĐẠI HỌC SƯ PHẠM THÀNH PHỐ HỒ CHÍ MINH",
+      "aliases": [
+        "HCMUE JOURNAL OF SCIENCE"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC SƯ PHẠM THÀNH PHỐ HỒ CHÍ MINH, BỘ GIÁO DỤC VÀ ĐÀO TẠO"
+    },
+    {
+      "stt": 224,
+      "title": "TẠP CHÍ KHOA HỌC GIÁO DỤC THỂ CHẤT VÀ THỂ THAO TRƯỜNG HỌC",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC SƯ PHẠM THỂ DỤC THỂ THAO HÀ NỘI, BỘ GIÁO DỤC VÀ ĐÀO TẠO"
+    },
+    {
+      "stt": 225,
+      "title": "TẠP CHÍ KHOA HỌC TÀI CHÍNH - NGÂN HÀNG",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC TÀI CHÍNH - NGÂN HÀNG HÀ NỘI, BỘ GIÁO DỤC VÀ ĐÀO TẠO"
+    },
+    {
+      "stt": 226,
+      "title": "TẠP CHÍ KHOA HỌC TRƯỜNG ĐẠI HỌC TÂY BẮC",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC TÂY BẮC, BỘ GIÁO DỤC VÀ ĐÀO TẠO"
+    },
+    {
+      "stt": 227,
+      "title": "TẠP CHÍ NGHIÊN CỨU KHOA HỌC VÀ PHÁT TRIỂN KINH TẾ",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC TÂY ĐÔ, BỘ GIÁO DỤC VÀ ĐÀO TẠO"
+    },
+    {
+      "stt": 228,
+      "title": "TẠP CHÍ KHOA HỌC TÂY NGUYÊN",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC TÂY NGUYÊN, BỘ GIÁO DỤC VÀ ĐÀO TẠO"
+    },
+    {
+      "stt": 229,
+      "title": "TẠP CHÍ KHOA HỌC THĂNG LONG",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC THĂNG LONG, BỘ GIÁO DỤC VÀ ĐÀO TẠO"
+    },
+    {
+      "stt": 230,
+      "title": "TẠP CHÍ NGHIÊN CỨU KHOA HỌC VÀ PHÁT TRIỂN",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC THÀNH ĐÔ, BỘ GIÁO DỤC VÀ ĐÀO TẠO"
+    },
+    {
+      "stt": 231,
+      "title": "TẠP CHÍ KHOA HỌC VÀ CÔNG NGHỆ TRƯỜNG ĐẠI HỌC THÀNH ĐÔNG",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC THÀNH ĐÔNG, BỘ GIÁO DỤC VÀ ĐÀO TẠO"
+    },
+    {
+      "stt": 232,
+      "title": "TẠP CHÍ KHOA HỌC THƯƠNG MẠI",
+      "aliases": [
+        "JOURNAL OF TRADE SCIENCE",
+        "TMU"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC THƯƠNG MẠI, BỘ GIÁO DỤC VÀ ĐÀO TẠO"
+    },
+    {
+      "stt": 233,
+      "title": "TẠP CHÍ KHOA HỌC CÔNG NGHỆ XÂY DỰNG",
+      "aliases": [
+        "JOURNAL OF SCIENCE AND TECHNOLOGY IN CIVIL ENGINEERING",
+        "JSTCE",
+        "NUCE"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC XÂY DỰNG HÀ NỘI, BỘ GIÁO DỤC VÀ ĐÀO TẠO"
+    },
+    {
+      "stt": 234,
+      "title": "TẠP CHÍ KHOA HỌC TRƯỜNG ĐẠI HỌC VINH",
+      "aliases": [
+        "VINH UNIVERSITY JOURNAL OF SCIENCE"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC VINH, BỘ GIÁO DỤC VÀ ĐÀO TẠO"
+    },
+    {
+      "stt": 235,
+      "title": "TẠP CHÍ Y HỌC LÂM SÀNG",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "BỆNH VIỆN BẠCH MAI, BỘ Y TẾ"
+    },
+    {
+      "stt": 236,
+      "title": "TẠP CHÍ CHÂM CỨU VIỆT NAM",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "BỆNH VIỆN CHÂM CỨU TRUNG ƯƠNG, BỘ Y TẾ"
+    },
+    {
+      "stt": 237,
+      "title": "TẠP CHÍ SỨC KHOẺ VÀ LÃO HOÁ",
+      "aliases": [
+        "JOURNAL OF HEALTH AND AGING"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "BỆNH VIỆN THỐNG NHẤT, BỘ Y TẾ"
+    },
+    {
+      "stt": 238,
+      "title": "TẠP CHÍ Y HỌC LÂM SÀNG BỆNH VIỆN TRUNG ƯƠNG HUẾ",
+      "aliases": [
+        "JOURNAL OF CLINICAL MEDICINE HUE CENTRAL HOSPITAL"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "BỆNH VIỆN TRUNG ƯƠNG HUẾ, BỘ Y TẾ"
+    },
+    {
+      "stt": 239,
+      "title": "TẠP CHÍ Y DƯỢC CỔ TRUYỀN VIỆT NAM",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỌC VIỆN Y - DƯỢC HỌC CỔ TRUYỀN VIỆT NAM, BỘ Y TẾ"
+    },
+    {
+      "stt": 240,
+      "title": "TẠP CHÍ DƯỢC LIỆU",
+      "aliases": [
+        "JOURNAL OF MEDICINAL MATERIALS"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN DƯỢC LIỆU, BỘ Y TẾ"
+    },
+    {
+      "stt": 241,
+      "title": "TẠP CHÍ KHOA HỌC KIỂM ĐỊNH VẮC XIN VÀ SINH PHẨM Y TẾ",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN KIỂM ĐỊNH QUỐC GIA VẮC XIN VÀ SINH PHẨM Y TẾ, BỘ Y TẾ"
+    },
+    {
+      "stt": 242,
+      "title": "TẠP CHÍ KIỂM NGHIỆM VÀ AN TOÀN THỰC PHẨM",
+      "aliases": [
+        "VIETNAM JOURNAL OF FOOD CONTROL",
+        "VJFC"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN KIỂM NGHIỆM AN TOÀN VỆ SINH THỰC PHẨM QUỐC GIA, BỘ Y TẾ"
+    },
+    {
+      "stt": 243,
+      "title": "TẠP CHÍ KIỂM NGHIỆM DƯỢC VÀ MỸ PHẨM",
+      "aliases": [
+        "JOURNAL OF PHARMACEUTICAL AND COSMETIC CONTROL"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN KIỂM NGHIỆM THUỐC TRUNG ƯƠNG, BỘ Y TẾ"
+    },
+    {
+      "stt": 244,
+      "title": "TẠP CHÍ Y HỌC THÀNH PHỐ HỒ CHÍ MINH",
+      "aliases": [
+        "MEDPHARMRES"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "ĐẠI HỌC Y DƯỢC THÀNH PHỐ HỒ CHÍ MINH, BỘ Y TẾ"
+    },
+    {
+      "stt": 245,
+      "title": "TẠP CHÍ KHOA HỌC ĐIỀU DƯỠNG",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC ĐIỀU DƯỠNG NAM ĐỊNH, BỘ Y TẾ"
+    },
+    {
+      "stt": 246,
+      "title": "TẠP CHÍ NGHIÊN CỨU DƯỢC VÀ THÔNG TIN THUỐC",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC DƯỢC HÀ NỘI, BỘ Y TẾ"
+    },
+    {
+      "stt": 247,
+      "title": "TẠP CHÍ Y DƯỢC HỌC CẦN THƠ",
+      "aliases": [
+        "CAN THO JOURNAL OF MEDICINE AND PHARMACY"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC Y DƯỢC CẦN THƠ, BỘ Y TẾ"
+    },
+    {
+      "stt": 248,
+      "title": "TẠP CHÍ KHOA HỌC SỨC KHỎE",
+      "aliases": [
+        "JOURNAL OF HEALTH SCIENCE"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC Y DƯỢC HẢI PHÒNG, BỘ Y TẾ"
+    },
+    {
+      "stt": 249,
+      "title": "TẠP CHÍ Y DƯỢC THÁI BÌNH",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC Y DƯỢC THÁI BÌNH, BỘ Y TẾ"
+    },
+    {
+      "stt": 250,
+      "title": "TẠP CHÍ NGHIÊN CỨU Y HỌC",
+      "aliases": [
+        "JOURNAL OF MEDICAL RESEARCH"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC Y HÀ NỘI, BỘ Y TẾ"
+    },
+    {
+      "stt": 251,
+      "title": "TẠP CHÍ KHOA HỌC NGHIÊN CỨU SỨC KHỎE VÀ PHÁT TRIỂN",
+      "aliases": [
+        "JOURNAL OF HEALTH AND DEVELOPMENT STUDIES",
+        "JHDS"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC Y TẾ CÔNG CỘNG, BỘ Y TẾ"
+    },
+    {
+      "stt": 252,
+      "title": "TẠP CHÍ KHOA HỌC TRƯỜNG ĐẠI HỌC HẢI PHÒNG",
+      "aliases": [
+        "HAIPHONG UNIVERSITY JOURNAL OF SCIENCE"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC HẢI PHÒNG, ỦY BAN NHÂN DÂN THÀNH PHỐ HẢI PHÒNG"
+    },
+    {
+      "stt": 253,
+      "title": "TẠP CHÍ NGHIÊN CỨU VÀ PHÁT TRIỂN",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN NGHIÊN CỨU PHÁT TRIỂN THÀNH PHỐ HUẾ, ỦY BAN NHÂN DÂN THÀNH PHỐ HUẾ"
+    },
+    {
+      "stt": 254,
+      "title": "TẠP CHÍ KHOA HỌC TRƯỜNG ĐẠI HỌC BẠC LIÊU",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC BẠC LIÊU, ỦY BAN NHÂN DÂN TỈNH CÀ MAU"
+    },
+    {
+      "stt": 255,
+      "title": "TẠP CHÍ KHOA HỌC TRƯỜNG ĐẠI HỌC PHÚ YÊN",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC PHÚ YÊN, ỦY BAN NHÂN DÂN TỈNH ĐẮK LẮK"
+    },
+    {
+      "stt": 256,
+      "title": "TẠP CHÍ KHOA HỌC - ĐẠI HỌC ĐỒNG NAI",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC ĐỒNG NAI, ỦY BAN NHÂN DÂN TỈNH ĐỒNG NAI"
+    },
+    {
+      "stt": 257,
+      "title": "TẠP CHÍ KHOA HỌC TRƯỜNG ĐẠI HỌC HÀ TĨNH",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC HÀ TĨNH, ỦY BAN NHÂN DÂN TỈNH HÀ TĨNH"
+    },
+    {
+      "stt": 258,
+      "title": "TẠP CHÍ KHOA HỌC VÀ CÔNG NGHỆ TRƯỜNG ĐẠI HỌC HẢI DƯƠNG",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC HẢI DƯƠNG, ỦY BAN NHÂN DÂN THÀNH PHỐ HẢI DƯƠNG"
+    },
+    {
+      "stt": 259,
+      "title": "TẠP CHÍ KHOA HỌC ĐẠI HỌC KHÁNH HÒA",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC KHÁNH HÒA, ỦY BAN NHÂN DÂN TỈNH KHÁNH HÒA"
+    },
+    {
+      "stt": 260,
+      "title": "TẠP CHÍ KHOA HỌC TRƯỜNG ĐẠI HỌC NGHỆ AN",
+      "aliases": [
+        "TRƯỜNG ĐẠI HỌC KINH TẾ NGHỆ AN"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC KINH TẾ NGHỆ AN, ỦY BAN NHÂN DÂN TỈNH NGHỆ AN"
+    },
+    {
+      "stt": 261,
+      "title": "TẠP CHÍ KHOA HỌC TRƯỜNG ĐẠI HỌC HOA LƯ",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC HOA LƯ, ỦY BAN NHÂN DÂN TỈNH NINH BÌNH"
+    },
+    {
+      "stt": 262,
+      "title": "TẠP CHÍ KHOA HỌC VÀ CÔNG NGHỆ TRƯỜNG ĐẠI HỌC HÙNG VƯƠNG",
+      "aliases": [
+        "HVU JOURNAL OF SCIENCE AND TECHNOLOGY"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC HÙNG VƯƠNG, ỦY BAN NHÂN DÂN TỈNH PHÚ THỌ"
+    },
+    {
+      "stt": 263,
+      "title": "TẠP CHÍ KHOA HỌC VÀ CÔNG NGHỆ TRƯỜNG ĐẠI HỌC PHẠM VĂN ĐỒNG",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC PHẠM VĂN ĐỒNG, ỦY BAN NHÂN DÂN TỈNH QUẢNG NGÃI"
+    },
+    {
+      "stt": 264,
+      "title": "TẠP CHÍ KHOA HỌC ĐẠI HỌC HẠ LONG",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC HẠ LONG, ỦY BAN NHÂN DÂN TỈNH QUẢNG NINH"
+    },
+    {
+      "stt": 265,
+      "title": "TẠP CHÍ KHOA HỌC VÀ CÔNG NGHỆ ĐẠI HỌC QUẢNG BÌNH",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC QUẢNG BÌNH, ỦY BAN NHÂN DÂN TỈNH QUẢNG TRỊ"
+    },
+    {
+      "stt": 266,
+      "title": "TẠP CHÍ KHOA HỌC TRƯỜNG ĐẠI HỌC HỒNG ĐỨC",
+      "aliases": [
+        "HONG DUC UNIVERSITY JOURNAL OF SCIENCE",
+        "HDUJS"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC HỒNG ĐỨC, ỦY BAN NHÂN DÂN TỈNH THANH HÓA"
+    },
+    {
+      "stt": 267,
+      "title": "TẠP CHÍ KHOA HỌC, TRƯỜNG ĐẠI HỌC VĂN HÓA, THỂ THAO VÀ DU LỊCH THANH HÓA",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC VĂN HÓA, THỂ THAO VÀ DU LỊCH THANH HÓA, ỦY BAN NHÂN DÂN TỈNH THANH HÓA"
+    },
+    {
+      "stt": 268,
+      "title": "TẠP CHÍ KHOA HỌC TRƯỜNG ĐẠI HỌC TÂN TRÀO",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC TÂN TRÀO, ỦY BAN NHÂN DÂN TỈNH TUYÊN QUANG"
+    },
+    {
+      "stt": 269,
+      "title": "TẠP CHÍ KHOA HỌC TRƯỜNG ĐẠI HỌC TRÀ VINH",
+      "aliases": [
+        "TVU JOURNAL OF SCIENCE"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC TRÀ VINH, ỦY BAN NHÂN DÂN TỈNH VĨNH LONG"
+    },
+    {
+      "stt": 270,
+      "title": "TẠP CHÍ KHOA HỌC VÀ CÔNG NGHỆ CẦN THƠ",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC KỸ THUẬT VÀ CÔNG NGHỆ CẦN THƠ, ỦY BAN NHÂN DÂN THÀNH PHỐ CẦN THƠ"
+    },
+    {
+      "stt": 271,
+      "title": "TẠP CHÍ KHOA HỌC TRƯỜNG ĐẠI HỌC QUẢNG NAM",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC QUẢNG NAM, ỦY BAN NHÂN DÂN THÀNH PHỐ ĐÀ NẴNG"
+    },
+    {
+      "stt": 272,
+      "title": "TẠP CHÍ KHOA HỌC - TRƯỜNG ĐẠI HỌC THỦ ĐÔ HÀ NỘI",
+      "aliases": [
+        "HNMU JOURNAL OF SCIENCE"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC THỦ ĐÔ HÀ NỘI, ỦY BAN NHÂN DÂN THÀNH PHỐ HÀ NỘI"
+    },
+    {
+      "stt": 273,
+      "title": "TẠP CHÍ KHOA HỌC PHÁT TRIỂN NHÂN LỰC",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỌC VIỆN CÁN BỘ THÀNH PHỐ HỒ CHÍ MINH, ỦY BAN NHÂN DÂN THÀNH PHỐ HỒ CHÍ MINH"
+    },
+    {
+      "stt": 274,
+      "title": "TẠP CHÍ KHOA HỌC TRƯỜNG ĐẠI HỌC SÀI GÒN",
+      "aliases": [
+        "SGU JOURNAL OF SCIENCE"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC SÀI GÒN, ỦY BAN NHÂN DÂN THÀNH PHỐ HỒ CHÍ MINH"
+    },
+    {
+      "stt": 275,
+      "title": "TẠP CHÍ KHOA HỌC ĐẠI HỌC THỦ DẦU MỘT",
+      "aliases": [
+        "TDMU JOURNAL OF SCIENCE"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC THỦ DẦU MỘT, ỦY BAN NHÂN DÂN THÀNH PHỐ HỒ CHÍ MINH"
+    },
+    {
+      "stt": 276,
+      "title": "TẠP CHÍ ĐIỆN TỬ: THU DAU MOT UNIVERSITY JOURNAL OF SCIENCE ONLINE",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC THỦ DẦU MỘT, ỦY BAN NHÂN DÂN THÀNH PHỐ HỒ CHÍ MINH"
+    },
+    {
+      "stt": 277,
+      "title": "TẠP CHÍ Y DƯỢC HỌC PHẠM NGỌC THẠCH",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC Y KHOA PHẠM NGỌC THẠCH, ỦY BAN NHÂN DÂN THÀNH PHỐ HỒ CHÍ MINH"
+    },
+    {
+      "stt": 278,
+      "title": "TẠP CHÍ KHOA HỌC VÀ CÔNG NGHỆ ĐẠI HỌC DUY TÂN",
+      "aliases": [
+        "DTU JOURNAL OF SCIENCE AND TECHNOLOGY"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "ĐẠI HỌC DUY TÂN"
+    },
+    {
+      "stt": 279,
+      "title": "TẠP CHÍ KHOA HỌC VÀ QUẢN LÝ CÔNG NGHỆ",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC CÔNG NGHỆ VÀ QUẢN LÝ HỮU NGHỊ"
+    },
+    {
+      "stt": 280,
+      "title": "TẠP CHÍ KHOA HỌC ĐẠI HỌC GIA ĐỊNH",
+      "aliases": [
+        "GDU JOURNAL OF SCIENCE"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC GIA ĐỊNH"
+    },
+    {
+      "stt": 281,
+      "title": "TẠP CHÍ KHOA HỌC VÀ CÔNG NGHỆ TRƯỜNG ĐẠI HỌC HÒA BÌNH",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC HÒA BÌNH"
+    },
+    {
+      "stt": 282,
+      "title": "TẠP CHÍ KHOA HỌC TRƯỜNG ĐẠI HỌC HOA SEN",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC HOA SEN"
+    },
+    {
+      "stt": 283,
+      "title": "TẠP CHÍ KHOA HỌC TRƯỜNG ĐẠI HỌC QUỐC TẾ HỒNG BÀNG",
+      "aliases": [
+        "HONG BANG INTERNATIONAL UNIVERSITY JOURNAL OF SCIENCE",
+        "HIUJS"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC QUỐC TẾ HỒNG BÀNG"
+    },
+    {
+      "stt": 284,
+      "title": "TẠP CHÍ KHOA HỌC TRƯỜNG ĐẠI HỌC TÂN TẠO",
+      "aliases": [
+        "TTU JOURNAL OF SCIENCE"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC TÂN TẠO"
+    },
+    {
+      "stt": 285,
+      "title": "TẠP CHÍ KHOA HỌC ĐẠI HỌC VĂN HIẾN",
+      "aliases": [
+        "JOURNAL OF SCIENCE VAN HIEN UNIVERSITY",
+        "VHU JOS"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC VĂN HIẾN"
+    },
+    {
+      "stt": 286,
+      "title": "TẠP CHÍ KHOA HỌC ĐẠI HỌC VĂN LANG",
+      "aliases": [
+        "VAN LANG UNIVERSITY JOURNAL OF SCIENCE"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC VĂN LANG"
+    },
+    {
+      "stt": 287,
+      "title": "TẠP CHÍ KHOA HỌC YERSIN",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC YERSIN ĐÀ LẠT"
+    },
+    {
+      "stt": 288,
+      "title": "TẠP CHÍ ĐIỆN TỬ CÔNG NGHỆ TIÊN TIẾN VÀ TÍNH TOÁN",
+      "aliases": [
+        "JOURNAL OF ADVANCED TECHNOLOGY AND COMPUTATION",
+        "TDTU"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC TÔN ĐỨC THẮNG"
+    },
+    {
+      "stt": 289,
+      "title": "TẠP CHÍ LUẬT SƯ VIỆT NAM",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "LIÊN ĐOÀN LUẬT SƯ VIỆT NAM"
+    },
+    {
+      "stt": 290,
+      "title": "TẠP CHÍ GIÁO DỤC VÀ XÃ HỘI",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN NGHIÊN CỨU VÀ ỨNG DỤNG CÔNG NGHỆ GIÁO DỤC ATEC, HIỆP HỘI CÁC TRƯỜNG ĐẠI HỌC, CAO ĐẲNG VIỆT NAM"
+    },
+    {
+      "stt": 291,
+      "title": "TẠP CHÍ CƠ KHÍ VIỆT NAM",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TỔNG HỘI CƠ KHÍ VIỆT NAM"
+    },
+    {
+      "stt": 292,
+      "title": "TẠP CHÍ NGƯỜI XÂY DỰNG",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TỔNG HỘI XÂY DỰNG VIỆT NAM"
+    },
+    {
+      "stt": 293,
+      "title": "TẠP CHÍ Y HỌC CỘNG ĐỒNG",
+      "aliases": [
+        "VIETNAM JOURNAL OF COMMUNITY MEDICINE"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN SỨC KHỎE CỘNG ĐỒNG, TỔNG HỘI Y HỌC VIỆT NAM"
+    },
+    {
+      "stt": 294,
+      "title": "TẠP CHÍ ĐIỆN TỬ VIỆT NAM HỘI NHẬP",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN CHÍNH SÁCH, PHÁP LUẬT VÀ QUẢN LÝ, LIÊN HIỆP CÁC HỘI KHOA HỌC VÀ KỸ THUẬT VIỆT NAM"
+    },
+    {
+      "stt": 295,
+      "title": "TẠP CHÍ TRUYỀN THỐNG VÀ PHÁT TRIỂN",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN NGHIÊN CỨU TRUYỀN THỐNG VÀ PHÁT TRIỂN, LIÊN HIỆP CÁC HỘI KHOA HỌC VÀ KỸ THUẬT VIỆT NAM"
+    },
+    {
+      "stt": 296,
+      "title": "TẠP CHÍ PHÁP LÝ",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN KHOA HỌC PHÁP LÝ VÀ KINH DOANH QUỐC TẾ, HỘI LUẬT GIA VIỆT NAM"
+    },
+    {
+      "stt": 297,
+      "title": "TẠP CHÍ PHÁP LUẬT VÀ PHÁT TRIỂN",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN NGHIÊN CỨU PHÁP LUẬT VÀ KINH TẾ ASEAN, TRUNG ƯƠNG HỘI LUẬT GIA VIỆT NAM"
+    },
+    {
+      "stt": 298,
+      "title": "TẠP CHÍ ĐIỆN TỬ PHÁP LUẬT VÀ PHÁT TRIỂN",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "VIỆN NGHIÊN CỨU PHÁP LUẬT VÀ KINH TẾ ASEAN, TRUNG ƯƠNG HỘI LUẬT GIA VIỆT NAM"
+    },
+    {
+      "stt": 299,
+      "title": "TẠP CHÍ KINH TẾ VÀ LAO ĐỘNG",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRƯỜNG ĐẠI HỌC CÔNG ĐOÀN, TỔNG LIÊN ĐOÀN LAO ĐỘNG VIỆT NAM"
+    },
+    {
+      "stt": 300,
+      "title": "TẠP CHÍ KINH TẾ CHÂU Á - THÁI BÌNH DƯƠNG",
+      "aliases": [
+        "VAPEC"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "TRUNG TÂM KINH TẾ CHÂU Á - THÁI BÌNH DƯƠNG"
+    },
+    {
+      "stt": 301,
+      "title": "TẠP CHÍ ĐIỀU DƯỠNG VIỆT NAM",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HIỆP HỘI ĐIỀU DƯỠNG VIỆT NAM"
+    },
+    {
+      "stt": 302,
+      "title": "TẠP CHÍ KẾ TOÁN VÀ KIỂM TOÁN",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HIỆP HỘI KẾ TOÁN VÀ KIỂM TOÁN VIỆT NAM"
+    },
+    {
+      "stt": 303,
+      "title": "TẠP CHÍ THỊ TRƯỜNG TÀI CHÍNH TIỀN TỆ",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HIỆP HỘI NGÂN HÀNG VIỆT NAM"
+    },
+    {
+      "stt": 304,
+      "title": "TẠP CHÍ THIẾT BỊ GIÁO DỤC",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HIỆP HỘI THIẾT BỊ GIÁO DỤC VIỆT NAM"
+    },
+    {
+      "stt": 305,
+      "title": "TẠP CHÍ KHOA HỌC KỸ THUẬT CHĂN NUÔI",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỘI CHĂN NUÔI VIỆT NAM"
+    },
+    {
+      "stt": 306,
+      "title": "TẠP CHÍ CÔNG NGHIỆP NÔNG THÔN",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỘI CƠ KHÍ NÔNG NGHIỆP VIỆT NAM"
+    },
+    {
+      "stt": 307,
+      "title": "TẠP CHÍ GIÁO CHỨC VIỆT NAM",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỘI CỰU GIÁO CHỨC VIỆT NAM"
+    },
+    {
+      "stt": 308,
+      "title": "TẠP CHÍ DA LIỄU HỌC VIỆT NAM",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỘI DA LIỄU VIỆT NAM"
+    },
+    {
+      "stt": 309,
+      "title": "TẠP CHÍ ĐIỆN QUANG VÀ Y HỌC HẠT NHÂN VIỆT NAM",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỘI ĐIỆN QUANG VÀ Y HỌC HẠT NHÂN VIỆT NAM"
+    },
+    {
+      "stt": 310,
+      "title": "TẠP CHÍ DINH DƯỠNG VÀ THỰC PHẨM",
+      "aliases": [
+        "VIETNAM JOURNAL OF NUTRITION AND FOOD"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỘI DINH DƯỠNG VIỆT NAM"
+    },
+    {
+      "stt": 311,
+      "title": "TẠP CHÍ XÚC TÁC VÀ HẤP PHỤ VIỆT NAM",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỘI KHOA HỌC CÔNG NGHỆ XÚC TÁC VÀ HẤP PHỤ VIỆT NAM"
+    },
+    {
+      "stt": 312,
+      "title": "TẠP CHÍ KHOA HỌC ĐẤT",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỘI KHOA HỌC ĐẤT VIỆT NAM"
+    },
+    {
+      "stt": 313,
+      "title": "TẠP CHÍ CẦU ĐƯỜNG VIỆT NAM",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỘI KHOA HỌC KỸ THUẬT CẦU ĐƯỜNG VIỆT NAM"
+    },
+    {
+      "stt": 314,
+      "title": "TẠP CHÍ LUYỆN KIM VÀ KHOA HỌC VẬT LIỆU",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỘI KHOA HỌC KỸ THUẬT ĐÚC - LUYỆN KIM VIỆT NAM"
+    },
+    {
+      "stt": 315,
+      "title": "TẠP CHÍ PHÂN TÍCH HÓA - LÝ VÀ SINH HỌC",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỘI KHOA HỌC KỸ THUẬT PHÂN TÍCH HÓA - LÝ VÀ SINH HỌC VIỆT NAM"
+    },
+    {
+      "stt": 316,
+      "title": "TẠP CHÍ KHOA HỌC KỸ THUẬT THÚ Y",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỘI KHOA HỌC KỸ THUẬT THÚ Y VIỆT NAM"
+    },
+    {
+      "stt": 317,
+      "title": "TẠP CHÍ KHOA HỌC TIÊU HÓA VIỆT NAM",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỘI KHOA HỌC TIÊU HÓA VIỆT NAM"
+    },
+    {
+      "stt": 318,
+      "title": "TẠP CHÍ CÔNG NGHIỆP MỎ",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỘI KHOA HỌC VÀ CÔNG NGHỆ MỎ VIỆT NAM"
+    },
+    {
+      "stt": 319,
+      "title": "TẠP CHÍ KIẾN TRÚC",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỘI KIẾN TRÚC SƯ VIỆT NAM"
+    },
+    {
+      "stt": 320,
+      "title": "TẠP CHÍ NGOẠI KHOA VÀ PHẪU THUẬT NỘI SOI VIỆT NAM",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỘI NGOẠI KHOA VÀ PHẪU THUẬT NỘI SOI VIỆT NAM"
+    },
+    {
+      "stt": 321,
+      "title": "TẠP CHÍ SỨC KHỎE NỘI TIẾT",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỘI NGƯỜI GIÁO DỤC BỆNH ĐÁI THÁO ĐƯỜNG VIỆT NAM"
+    },
+    {
+      "stt": 322,
+      "title": "TẠP CHÍ NHÃN KHOA VIỆT NAM",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỘI NHÃN KHOA VIỆT NAM"
+    },
+    {
+      "stt": 323,
+      "title": "TẠP CHÍ NHI KHOA",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỘI NHI KHOA VIỆT NAM"
+    },
+    {
+      "stt": 324,
+      "title": "TẠP CHÍ NỘI TIẾT - ĐÁI THÁO ĐƯỜNG",
+      "aliases": [
+        "JOURNAL OF DIABETES AND ENDOCRINOLOGY"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỘI NỘI TIẾT - ĐÁI THÁO ĐƯỜNG VIỆT NAM"
+    },
+    {
+      "stt": 325,
+      "title": "TẠP CHÍ PHẪU THUẬT TIM MẠCH VÀ LỒNG NGỰC VIỆT NAM",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỘI PHẪU THUẬT TIM MẠCH VÀ LỒNG NGỰC VIỆT NAM"
+    },
+    {
+      "stt": 326,
+      "title": "TẠP CHÍ PHỤ SẢN",
+      "aliases": [
+        "VIETNAMESE JOURNAL OF OBSTETRICS AND GYNECOLOGY"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỘI PHỤ SẢN VIỆT NAM"
+    },
+    {
+      "stt": 327,
+      "title": "TẠP CHÍ QUY HOẠCH ĐÔ THỊ",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỘI QUY HOẠCH PHÁT TRIỂN ĐÔ THỊ VIỆT NAM"
+    },
+    {
+      "stt": 328,
+      "title": "TẠP CHÍ RĂNG HÀM MẶT VIỆT NAM",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỘI RĂNG HÀM MẶT VIỆT NAM"
+    },
+    {
+      "stt": 329,
+      "title": "TẠP CHÍ SINH LÝ HỌC VIỆT NAM",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỘI SINH LÝ HỌC VIỆT NAM"
+    },
+    {
+      "stt": 330,
+      "title": "TẠP CHÍ TAI MŨI HỌNG",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỘI TAI MŨI HỌNG VIỆT NAM"
+    },
+    {
+      "stt": 331,
+      "title": "TẠP CHÍ TÂM LÝ HỌC VIỆT NAM",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỘI TÂM LÝ HỌC VIỆT NAM"
+    },
+    {
+      "stt": 332,
+      "title": "TẠP CHÍ THẦN KINH HỌC VIỆT NAM",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỘI THẦN KINH HỌC VIỆT NAM"
+    },
+    {
+      "stt": 333,
+      "title": "TẠP CHÍ TIM MẠCH HỌC VIỆT NAM",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỘI TIM MẠCH HỌC VIỆT NAM"
+    },
+    {
+      "stt": 334,
+      "title": "TẠP CHÍ TRẮC ĐỊA - BẢN ĐỒ",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỘI TRẮC ĐỊA - BẢN ĐỒ - VIỄN THÁM VIỆT NAM"
+    },
+    {
+      "stt": 335,
+      "title": "TẠP CHÍ TRUYỀN NHIỄM VIỆT NAM",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỘI TRUYỀN NHIỄM VIỆT NAM"
+    },
+    {
+      "stt": 336,
+      "title": "TẠP CHÍ ĐO LƯỜNG, ĐIỀU KHIỂN VÀ TỰ ĐỘNG HÓA",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỘI TỰ ĐỘNG HÓA VIỆT NAM"
+    },
+    {
+      "stt": 337,
+      "title": "TẠP CHÍ UNG THƯ HỌC VIỆT NAM",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỘI UNG THƯ VIỆT NAM"
+    },
+    {
+      "stt": 338,
+      "title": "TẠP CHÍ NGUỒN SÁNG DÂN GIAN",
+      "aliases": [],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỘI VĂN NGHỆ DÂN GIAN VIỆT NAM"
+    },
+    {
+      "stt": 339,
+      "title": "REV JOURNAL ON ELECTRONICS AND COMMUNICATIONS",
+      "aliases": [
+        "REV JEC"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỘI VÔ TUYẾN - ĐIỆN TỬ VIỆT NAM"
+    },
+    {
+      "stt": 340,
+      "title": "TẠP CHÍ Y HỌC DỰ PHÒNG",
+      "aliases": [
+        "VIETNAM JOURNAL OF PREVENTIVE MEDICINE"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỘI Y HỌC DỰ PHÒNG VIỆT NAM"
+    },
+    {
+      "stt": 341,
+      "title": "TẠP CHÍ Y TẾ CÔNG CỘNG",
+      "aliases": [
+        "VIETNAM JOURNAL OF PUBLIC HEALTH",
+        "VJPH"
+      ],
+      "cat": "Tạp chí khoa học chuẩn quốc gia 2026",
+      "org": "HỘI Y TẾ CÔNG CỘNG VIỆT NAM"
+    }
+  ],
+  "hdgsnn_kinhte": {
+    "rules": {
+      "scopus_q1_wos": "0 - 2,0 điểm (Scopus Q1 hoặc SCI/SCIE/SSCI có IF < 3)",
+      "wos_high_if": "0 - 3,0 điểm (SCI/SCIE/SSCI có IF >= 3 và A&HCI)",
+      "scopus_q2_q4_esci": "0 - 1,5 điểm (Scopus Q2, Q3, Q4 hoặc ESCI)",
+      "aci": "0 - 1,25 điểm (Danh mục ACI)",
+      "top_publishers": "0 - 1,0 điểm (Các NXB: Springer, Elsevier, Wiley, Taylor & Francis, Sage, Emerald, Oxford UP, Cambridge UP, Edward Elgar, Routledge...)"
+    },
+    "journals": {
+      "journal of asian business and economic studies": {
+        "points": "0 - 2,0 điểm (Scopus Q1 từ 2023) | 0 - 1,5 điểm (Scopus từ 2022)",
+        "issn": "2515-964X, 2615-9112",
+        "org": "Đại học Kinh tế TP. Hồ Chí Minh (UEH)"
+      },
+      "journal of economics and development": {
+        "points": "0 - 2,0 điểm (Scopus Q1 từ 2024) | 0 - 1,5 điểm (Scopus từ 2023)",
+        "issn": "1859-0020, 2632-5330",
+        "org": "Đại học Kinh tế Quốc dân (NEU)"
+      },
+      "kinh tế và phát triển": {
+        "points": "0 - 1,0 điểm",
+        "issn": "1859-0012",
+        "org": "Đại học Kinh tế Quốc dân"
+      },
+      "nghiên cứu kinh tế và kinh doanh châu á": {
+        "points": "0 - 1,0 điểm",
+        "issn": "2615-9104",
+        "org": "Đại học Kinh tế TP. Hồ Chí Minh"
+      },
+      "quản lý và kinh tế quốc tế": {
+        "points": "0 - 1,0 từ 2024 (trước đó 0 - 0,75)",
+        "issn": "2615-9848",
+        "org": "Trường Đại học Ngoại thương (FTU)"
+      },
+      "journal of international economics and management": {
+        "points": "0 - 1,0 từ 2025 (ACI: 0 - 1,25)",
+        "issn": "2615-9856",
+        "org": "Trường Đại học Ngoại thương (FTU)"
+      },
+      "cộng sản": {
+        "points": "0 - 1,0 từ 2022 (trước đó 0 - 0,5)",
+        "issn": "2734-9063, 2734-9071",
+        "org": "Trung ương Đảng Cộng sản Việt Nam"
+      },
+      "nghiên cứu kinh tế": {
+        "points": "0 - 1,0 điểm",
+        "issn": "0545-8986",
+        "org": "Viện Kinh tế Việt Nam, Viện Hàn lâm KHXH Việt Nam"
+      },
+      "kinh tế và kinh doanh": {
+        "points": "0 - 1,0 từ 2023",
+        "issn": "2734-9845",
+        "org": "Trường Đại học Kinh tế, ĐHQG Hà Nội"
+      },
+      "vnu journal of economics and business": {
+        "points": "0 - 1,0 từ 2023",
+        "issn": "2815-5858-E",
+        "org": "Trường Đại học Kinh tế, ĐHQG Hà Nội"
+      },
+      "khoa học kinh tế": {
+        "points": "0 - 1,0 từ 2025",
+        "issn": "0866-7969",
+        "org": "Trường Đại học Kinh tế, Đại học Đà Nẵng"
+      },
+      "khoa học thương mại": {
+        "points": "0 - 1,0 từ 2017",
+        "issn": "1859-3666, 2815-5726",
+        "org": "Trường Đại học Thương mại"
+      },
+      "journal of trade science": {
+        "points": "0 - 1,0 từ 2017",
+        "issn": "2815-5793",
+        "org": "Trường Đại học Thương mại"
+      },
+      "kinh tế - luật và ngân hàng": {
+        "points": "0 - 1,0 từ 2023",
+        "issn": "3030-4199",
+        "org": "Học viện Ngân hàng"
+      },
+      "journal of economic and banking studies": {
+        "points": "0 - 0,75 từ 2025",
+        "issn": "2734-9853",
+        "org": "Học viện Ngân hàng"
+      },
+      "nghiên cứu tài chính kế toán": {
+        "points": "0 - 1,0 từ 2023",
+        "issn": "1859-4093",
+        "org": "Học viện Tài chính"
+      },
+      "journal of finance and accounting research": {
+        "points": "0 - 1,0 từ 2023",
+        "issn": "2588-1493",
+        "org": "Học viện Tài chính"
+      },
+      "tài chính": {
+        "points": "0 - 0,75 từ 2022",
+        "issn": "2615-8973",
+        "org": "Bộ Tài chính"
+      },
+      "review of finance": {
+        "points": "0 - 0,75 từ 2022",
+        "issn": "2615-8981",
+        "org": "Bộ Tài chính"
+      },
+      "kinh tế và dự báo": {
+        "points": "0 - 0,75 từ 2023",
+        "issn": "1859-4972, 2734-9365",
+        "org": "Bộ Tài chính / Bộ KH&ĐT"
+      },
+      "nghiên cứu tài chính - marketing": {
+        "points": "0 - 0,75 từ 2024",
+        "issn": "1859-3690",
+        "org": "Trường Đại học Tài chính - Marketing (UFM)"
+      },
+      "journal of finance - marketing research": {
+        "points": "0 - 0,75 từ 2025",
+        "issn": "3030-4296",
+        "org": "Trường Đại học Tài chính - Marketing (UFM)"
+      },
+      "phát triển và hội nhập": {
+        "points": "0 - 0,75 từ 2024",
+        "issn": "1859-428X",
+        "org": "Trường Đại học Kinh tế - Tài chính TP.HCM (UEF)"
+      },
+      "kinh tế và quản lý": {
+        "points": "0 - 0,75 từ 2025",
+        "issn": "1859-4565",
+        "org": "Học viện Chính trị Quốc gia Hồ Chí Minh"
+      },
+      "lý luận chính trị": {
+        "points": "0 - 0,75 từ 2023",
+        "issn": "2525-2585",
+        "org": "Học viện Chính trị Quốc gia Hồ Chí Minh"
+      },
+      "khoa học đại học mở tp.hcm": {
+        "points": "0 - 1,0 từ 2023",
+        "issn": "2734-9306",
+        "org": "Trường Đại học Mở TP. Hồ Chí Minh"
+      },
+      "ho chi minh city open university journal of science": {
+        "points": "0 - 1,0 từ 2025 (ACI: 0 - 1,25)",
+        "issn": "2734-9314",
+        "org": "Trường Đại học Mở TP. Hồ Chí Minh"
+      },
+      "khoa học - dalat university journal of science": {
+        "points": "0 - 1,0 từ 2025 (ACI: 0 - 1,25)",
+        "issn": "0866-787X",
+        "org": "Trường Đại học Đà Lạt"
+      },
+      "khoa học và công nghệ việt nam (bản b)": {
+        "points": "0 - 0,75 từ 2022",
+        "issn": "1859-4794, 2615-9759",
+        "org": "Bộ Khoa học và Công nghệ"
+      },
+      "vmost journal of social sciences and humanities": {
+        "points": "0 - 0,75 từ 2025",
+        "issn": "2734-9748",
+        "org": "Bộ Khoa học và Công nghệ"
+      },
+      "kinh tế và ngân hàng châu á": {
+        "points": "0 - 1,0 từ 2025",
+        "issn": "2615-9813",
+        "org": "Trường Đại học Ngân hàng TP. Hồ Chí Minh"
+      },
+      "asain journal of economics and banking": {
+        "points": "0 - 1,0 từ 2025",
+        "issn": "2615-9821",
+        "org": "Trường Đại học Ngân hàng TP. Hồ Chí Minh"
+      },
+      "phát triển khoa học công nghệ: kinh tế - luật và quản lý": {
+        "points": "0 - 1,0 từ 2024",
+        "issn": "2588-1051",
+        "org": "Đại học Quốc gia TP. Hồ Chí Minh"
+      },
+      "quản lý nhà nước": {
+        "points": "0 - 0,75 từ 2022",
+        "issn": "2354-0761",
+        "org": "Học viện Hành chính Quốc gia"
+      },
+      "state management review": {
+        "points": "0 - 0,5 từ 2025",
+        "issn": "2815-6021",
+        "org": "Học viện Hành chính Quốc gia"
+      },
+      "kế toán và kiểm toán": {
+        "points": "0 - 0,75 từ 2025",
+        "issn": "2815-6129",
+        "org": "Hiệp hội Kế toán và Kiểm toán Việt Nam"
+      },
+      "công thương": {
+        "points": "0 - 0,5 điểm",
+        "issn": "0866-7756",
+        "org": "Bộ Công thương"
+      },
+      "thương mại": {
+        "points": "0 - 0,5 điểm",
+        "issn": "0866-7853",
+        "org": "Bộ Công thương"
+      },
+      "ngân hàng": {
+        "points": "0 - 0,5 điểm",
+        "issn": "2815-6048",
+        "org": "Ngân hàng Nhà nước Việt Nam"
+      },
+      "thị trường tài chính tiền tệ": {
+        "points": "0 - 0,5 điểm",
+        "issn": "1859-2805",
+        "org": "Hiệp hội Ngân hàng Việt Nam"
+      },
+      "lao động xã hội": {
+        "points": "0 - 0,5 điểm",
+        "issn": "0866-7643",
+        "org": "Bộ Lao động - Thương binh và Xã hội"
+      },
+      "nông nghiệp và môi trường": {
+        "points": "0 - 0,5 điểm",
+        "issn": "3093-3382",
+        "org": "Bộ Nông nghiệp và Môi trường"
+      },
+      "nghiên cứu khoa học kiểm toán": {
+        "points": "0 - 0,5 từ 2022",
+        "issn": "1859-1671",
+        "org": "Kiểm toán Nhà nước"
+      },
+      "con số và sự kiện": {
+        "points": "0 - 0,5 điểm",
+        "issn": "2734-9136",
+        "org": "Tổng cục Thống kê"
+      },
+      "thuế nhà nước": {
+        "points": "0 - 0,5 điểm",
+        "issn": "1859-0756",
+        "org": "Tổng cục Thuế"
+      },
+      "kinh tế châu á - thái bình dương": {
+        "points": "0 - 0,5 điểm",
+        "issn": "0868-3808",
+        "org": "Trung tâm Kinh tế Châu Á - Thái Bình Dương"
+      },
+      "khoa học quản lý và kinh tế (huế)": {
+        "points": "0 - 0,75 từ 2024",
+        "issn": "2354-1350",
+        "org": "Trường Đại học Kinh tế, Đại học Huế"
+      },
+      "kinh tế và quản trị kinh doanh (thái nguyên)": {
+        "points": "0 - 0,75 từ 2025",
+        "issn": "2525-2569",
+        "org": "Trường ĐH Kinh tế và Quản trị kinh doanh, ĐH Thái Nguyên"
+      },
+      "khoa học đại học cần thơ (kinh tế)": {
+        "points": "0 - 0,75 từ 2024",
+        "issn": "2588-1418",
+        "org": "Trường Đại học Cần Thơ"
+      },
+      "khoa học nông nghiệp việt nam": {
+        "points": "0 - 1,0 từ 2025",
+        "issn": "1859-0004",
+        "org": "Học viện Nông nghiệp Việt Nam"
+      },
+      "khoa học và công nghệ trường đại học công nghiệp hà nội": {
+        "points": "0 - 0,75 từ 2024",
+        "issn": "1859-3585",
+        "org": "Trường Đại học Công nghiệp Hà Nội"
+      },
+      "khoa học giao thông vận tải": {
+        "points": "0 - 0,5 từ 2024",
+        "issn": "1859-2724",
+        "org": "Trường Đại học Giao thông Vận tải"
+      },
+      "journal of science and transport technology": {
+        "points": "0 - 1,5 từ 2025 (Scopus)",
+        "issn": "2734-9950",
+        "org": "Trường ĐH Công nghệ Giao thông Vận tải"
+      }
     }
   }
 }

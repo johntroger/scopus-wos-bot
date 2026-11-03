@@ -46,22 +46,29 @@ function normalizeIssn(val) {
  */
 function buildUserGuideMessage(displayName = "bạn", isFirstTime = false) {
   const header = isFirstTime
-    ? `👋 Chào mừng ${displayName} đến với Bot Tra cứu Tạp chí Scopus & WoS!\n(Hệ thống đã tự động bật thông báo định kỳ cho bạn).\n\n`
-    : `📖 HƯỚNG DẪN SỬ DỤNG BOT TRA CỨU TẠP CHÍ SCOPUS & WOS\n\n`;
+    ? `👋 Chào mừng ${displayName} đến với Bot Thẩm định Tạp chí Khoa học Quốc tế & Quốc gia!\n(Hệ thống đã tự động bật thông báo định kỳ cho bạn).\n\n`
+    : `📖 CẨM NANG TRA CỨU TẠP CHÍ KHOA HỌC (SCOPUS, WOS, ABDC & CHUẨN VIỆT NAM)\n\n`;
 
   return (
     header +
     `🔎 CÁCH 1: TRA CỨU TẠP CHÍ TRỰC TIẾP\n` +
-    `Bạn chỉ cần nhắn trực tiếp Mã ISSN hoặc Tên tạp chí vào khung chat này. Ví dụ:\n` +
-    `• Nhắn: 1096-3685 (kiểm tra theo ISSN)\n` +
-    `• Nhắn: Journal of Business Research (kiểm tra theo tên)\n` +
-    `• Nhắn: Sustainability\n\n` +
-    `⌨️ CÁCH 2: GÕ PHÍM TẮT (1, 2, 3, 4)\n` +
-    `• Gõ 1 : Xem hướng dẫn & ví dụ mẫu\n` +
-    `• Gõ 2 : Xem các tạp chí Kinh tế - Quản trị bị loại khỏi Scopus\n` +
-    `• Gõ 3 : Xem thông tin phiên bản dữ liệu hiện tại\n` +
-    `• Gõ 4 : Bật nhận thông báo định kỳ (Gõ 'huy' để tắt)\n\n` +
-    `👉 Hãy thử nhắn ngay: 1096-3685 hoặc 0148-2963`
+    `Bạn chỉ cần nhắn trực tiếp Mã ISSN, Tên tạp chí hoặc Tên viết tắt:\n` +
+    `• Tạp chí quốc tế: 0148-2963 hoặc Journal of Business Research\n` +
+    `• Tên viết tắt chuẩn: JABES, JED, JBR, JCR, JBE, MISQ, AMJ...\n` +
+    `• Tạp chí Việt Nam: Kinh tế và Quản lý, Tạp chí Cộng sản, Kinh tế và Phát triển...\n\n` +
+    `📋 CƠ SỞ DỮ LIỆU TÍCH HỢP:\n` +
+    `1. Scopus Discontinued (Tạp chí bị loại trừ mới nhất)\n` +
+    `2. Retraction Watch (Dữ liệu bài báo bị rút / đính chính toàn cầu)\n` +
+    `3. SCImago Journal Rank (SJR Q1 - Q4 Scopus)\n` +
+    `4. Bảng xếp hạng Kinh tế Úc ABDC (Hạng A*, A, B, C)\n` +
+    `5. Danh mục 341 Tạp chí đạt Tiêu chuẩn Khoa học Việt Nam năm 2026\n` +
+    `6. Khung điểm công trình HĐGSNN ngành Kinh tế (Quyết định 26/QĐ-HĐGSNN)\n\n` +
+    `⌨️ PHÍM TẮT NHANH:\n` +
+    `• Gõ 1 : Xem hướng dẫn tra cứu\n` +
+    `• Gõ 2 : Xem các tạp chí Kinh tế bị loại khỏi Scopus\n` +
+    `• Gõ 3 : Xem phiên bản dữ liệu & trạng thái kết nối\n` +
+    `• Gõ 4 : Đăng ký nhận thông báo định kỳ (Gõ 'huy' để tắt)\n\n` +
+    `👉 Hãy thử nhắn ngay: JABES hoặc 1096-3685 hoặc Kinh tế và Quản lý`
   );
 }
 
@@ -149,6 +156,24 @@ const KNOWN_ACRONYMS = {
 
 const STOPWORDS = new Set(["of", "and", "the", "in", "for", "on", "with", "at", "by", "to", "a", "an", "&"]);
 
+function normalizeVnText(str) {
+  if (!str) return "";
+  return str
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/g, "d")
+    .replace(/Đ/g, "D")
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function cleanVnJournalName(s) {
+  const norm = normalizeVnText(s);
+  return norm.replace(/^(tap chi|tap chi dien tu|the journal of|journal of)\s+/, "");
+}
+
 function toTitleCase(str) {
   if (!str) return "";
   return str
@@ -165,7 +190,13 @@ function formatIssn(issn) {
 }
 
 /**
- * Tra cứu tạp chí đa nguồn chuyên sâu (Scopus Discontinued, Hijacked/Lừa đảo, Phân hạng ABDC/SJR, HĐGSNN, Retraction Watch)
+ * Tra cứu tạp chí đa nguồn chuyên sâu:
+ * - Scopus Discontinued (danh sách loại trừ)
+ * - Tạp chí Giả mạo / Cướp tên miền (Hijacked Journals)
+ * - SCImago Scopus Quartile (Q1 - Q4) & ABDC (A*, A, B, C)
+ * - Danh mục 341 Tạp chí đạt Tiêu chuẩn Khoa học Việt Nam năm 2026
+ * - Khung điểm Hội đồng Giáo sư Nhà nước ngành Kinh tế (Quyết định 26/QĐ-HĐGSNN)
+ * - Retraction Watch (Lịch sử rút bài)
  */
 function searchJournal(query, lookupDb) {
   const q = (query || "").trim();
@@ -179,12 +210,17 @@ function searchJournal(query, lookupDb) {
 
   // Giải mã từ viết tắt nếu có
   const resolvedQuery = KNOWN_ACRONYMS[qLower] || qLower;
+  const normQVn = normalizeVnText(resolvedQuery);
+  const cleanQVn = cleanVnJournalName(resolvedQuery);
 
   const discList = lookupDb.discontinued_journals || [];
   const hijackedList = lookupDb.hijacked_journals || [];
   const abdcMap = lookupDb.abdc_rankings || {};
   const sjrMap = lookupDb.sjr_rankings || {};
   const retractionMap = lookupDb.retraction_counts_by_journal || {};
+  const vnList = lookupDb.vn_standards_2026 || [];
+  const hdgsData = lookupDb.hdgsnn_kinhte || {};
+  const hdgsJournals = hdgsData.journals || {};
 
   // 1. So khớp Tạp chí Giả mạo / Cướp tên miền (Hijacked)
   let matchedHijacked = null;
@@ -269,8 +305,81 @@ function searchJournal(query, lookupDb) {
     }
   }
 
-  // 5. Tra cứu Retraction Watch
-  const targetJournalName = matchedDisc?.title || sjrTitle || abdcTitle || matchedHijacked?.title || resolvedQuery;
+  // 5. Tra cứu Danh mục Tiêu chuẩn Khoa học Việt Nam năm 2026 (341 tạp chí)
+  let matchedVn = null;
+  // Khớp chính xác tên hoặc alias
+  for (const item of vnList) {
+    const tNorm = normalizeVnText(item.title);
+    const tClean = cleanVnJournalName(item.title);
+    if (tNorm === normQVn || tClean === cleanQVn) {
+      matchedVn = item;
+      break;
+    }
+    if (item.aliases && item.aliases.some((a) => normalizeVnText(a) === normQVn || cleanVnJournalName(a) === cleanQVn)) {
+      matchedVn = item;
+      break;
+    }
+  }
+  // Khớp chuỗi con nếu chưa tìm thấy
+  if (!matchedVn && cleanQVn.length >= 4) {
+    for (const item of vnList) {
+      const tClean = cleanVnJournalName(item.title);
+      if (tClean.includes(cleanQVn) || (cleanQVn.length >= 8 && cleanQVn.includes(tClean))) {
+        matchedVn = item;
+        break;
+      }
+      if (item.aliases && item.aliases.some((a) => {
+        const aClean = cleanVnJournalName(a);
+        return aClean.includes(cleanQVn) || (cleanQVn.length >= 8 && cleanQVn.includes(aClean));
+      })) {
+        matchedVn = item;
+        break;
+      }
+    }
+  }
+
+  // 6. Tra cứu Khung điểm Hội đồng Giáo sư Nhà nước ngành Kinh tế (QĐ 26/QĐ-HĐGSNN)
+  let matchedHdgs = null;
+  for (const [title, info] of Object.entries(hdgsJournals)) {
+    const tNorm = normalizeVnText(title);
+    const tClean = cleanVnJournalName(title);
+    const infoIssns = String(info.issn || "").split(",").map(normalizeIssn).filter(Boolean);
+
+    if (normQIssn && normQIssn.length === 8 && infoIssns.includes(normQIssn)) {
+      matchedHdgs = { title, ...info };
+      break;
+    }
+    if (tNorm === normQVn || tClean === cleanQVn) {
+      matchedHdgs = { title, ...info };
+      break;
+    }
+  }
+
+  if (!matchedHdgs && cleanQVn.length >= 4) {
+    for (const [title, info] of Object.entries(hdgsJournals)) {
+      const tClean = cleanVnJournalName(title);
+      if (tClean.includes(cleanQVn) || (cleanQVn.length >= 8 && cleanQVn.includes(tClean))) {
+        matchedHdgs = { title, ...info };
+        break;
+      }
+    }
+  }
+
+  if (!matchedHdgs && matchedVn) {
+    const vnNorm = normalizeVnText(matchedVn.title);
+    const vnClean = cleanVnJournalName(matchedVn.title);
+    for (const [title, info] of Object.entries(hdgsJournals)) {
+      const tNorm = normalizeVnText(title);
+      const tClean = cleanVnJournalName(title);
+      if (tNorm === vnNorm || tClean === vnClean || tClean.includes(vnClean) || vnClean.includes(tClean)) {
+        matchedHdgs = { title, ...info };
+        break;
+      }
+    }
+  }
+
+  // 7. Tra cứu Retraction Watch
+  const targetJournalName = matchedDisc?.title || sjrTitle || abdcTitle || matchedVn?.title || matchedHdgs?.title || matchedHijacked?.title || resolvedQuery;
   let retractionCount = 0;
   for (const [jName, cnt] of Object.entries(retractionMap)) {
     if (
@@ -281,9 +390,8 @@ function searchJournal(query, lookupDb) {
     }
   }
 
-  // TRƯỜNG HỢP: KHÔNG TÌM THẤY TẠP CHÍ NÀO KHỚP
-  if (!matchedDisc && !matchedHijacked && !matchedSjr && !matchedAbdc) {
-    // Tìm các gợi ý gần nhất
+  // TRƯỜNG HỢP: KHÔNG TÌM THẤY TẠP CHÍ NÀO TRONG MỌI NGUỒN DỮ LIỆU
+  if (!matchedDisc && !matchedHijacked && !matchedSjr && !matchedAbdc && !matchedVn && !matchedHdgs) {
     const suggestions = [];
     const queryTokens = qLower.split(/[\s\-:,/]+/).filter((t) => t.length >= 3 && !STOPWORDS.has(t));
     if (queryTokens.length > 0) {
@@ -293,16 +401,25 @@ function searchJournal(query, lookupDb) {
           if (suggestions.length >= 3) break;
         }
       }
+      if (suggestions.length < 3) {
+        for (const item of vnList) {
+          const tClean = cleanVnJournalName(item.title);
+          if (queryTokens.some((tok) => tClean.includes(tok))) {
+            suggestions.push(`• ${toTitleCase(item.title)} (Chuẩn VN 2026 STT: ${item.stt})`);
+            if (suggestions.length >= 3) break;
+          }
+        }
+      }
     }
 
     const lines = [
       `🔍 KẾT QUẢ TRA CỨU: "${q}"`,
-      `\n❓ KHÔNG TÌM THẤY TRONG CSDL SCOPUS / ABDC`,
+      `\n❓ KHÔNG TÌM THẤY TRONG CSDL KHOA HỌC (SCOPUS / ABDC / CHUẨN VN 2026 / HĐGSNN)`,
       `Hệ thống không tìm thấy tạp chí nào khớp với từ khóa bạn vừa nhập.`,
       `\n💡 GỢI Ý CHO BẠN:`,
-      `1. Nhắn mã ISSN chính xác của tạp chí (ví dụ: 0148-2963 hoặc 2515-964X).`,
-      `2. Nhập tên tiếng Anh đầy đủ (hoặc từ viết tắt chuẩn như JABES, JBR, JCR, JBE...).`,
-      `3. Có thể tạp chí này chưa từng được lập chỉ mục trong danh mục Scopus quốc tế.`
+      `1. Nhắn mã ISSN chính xác (ví dụ: 0148-2963 hoặc 2515-964X).`,
+      `2. Nhập tên tạp chí tiếng Việt (ví dụ: "Kinh tế và Phát triển", "Tạp chí Cộng sản", "Kinh tế và Quản lý").`,
+      `3. Nhập từ viết tắt chuẩn (ví dụ: JABES, JED, JBR, JCR, JBE...).`
     ];
 
     if (suggestions.length > 0) {
@@ -314,8 +431,18 @@ function searchJournal(query, lookupDb) {
   }
 
   // TRƯỜNG HỢP: TÌM THẤY TẠP CHÍ -> XUẤT BÁO CÁO THẨM ĐỊNH HỌC THUẬT TOÀN DIỆN
-  const finalTitle = toTitleCase(matchedDisc?.title || sjrTitle || abdcTitle || matchedHijacked?.title || q);
+  const finalTitle = toTitleCase(
+    matchedVn?.title ||
+    matchedHdgs?.title ||
+    matchedDisc?.title ||
+    sjrTitle ||
+    abdcTitle ||
+    matchedHijacked?.title ||
+    q
+  );
+
   const finalIssn = formatIssn(
+    matchedHdgs?.issn ||
     matchedDisc?.issn ||
     matchedDisc?.eissn ||
     matchedSjr?.issn ||
@@ -324,18 +451,20 @@ function searchJournal(query, lookupDb) {
     "Đang cập nhật"
   );
 
+  const orgPublisher = matchedVn?.org || matchedHdgs?.org || matchedDisc?.publisher || "";
+
   const lines = [`🔬 BÁO CÁO THẨM ĐỊNH TẠP CHÍ KHOA HỌC`];
   lines.push(`📖 Tạp chí: "${finalTitle}"`);
   if (KNOWN_ACRONYMS[qLower]) {
     lines.push(`(Được giải mã từ tên viết tắt: ${q.toUpperCase()})`);
   }
 
-  // PHẦN 1: ĐỊNH DANH
-  lines.push(`\n📋 1. ĐỊNH DANH & XUẤT BẢN:`);
+  // PHẦN 1: ĐỊNH DANH & CƠ QUAN CHỦ QUẢN
+  lines.push(`\n📋 1. ĐỊNH DANH & CƠ QUAN CHỦ QUẢN:`);
   lines.push(`• Tên chính thức: ${finalTitle}`);
   lines.push(`• Mã ISSN / eISSN: ${finalIssn}`);
-  if (matchedDisc?.publisher) {
-    lines.push(`• Nhà xuất bản: ${matchedDisc.publisher}`);
+  if (orgPublisher) {
+    lines.push(`• Cơ quan chủ quản / NXB: ${orgPublisher}`);
   }
 
   // PHẦN 2: CẢNH BÁO NGUY HIỂM (NẾU CÓ)
@@ -353,66 +482,87 @@ function searchJournal(query, lookupDb) {
     lines.push(`• Đánh giá rủi ro: CỰC KỲ NGUY HIỂM. Bài đăng sau ngày bị loại sẽ bị 0 điểm HĐGSNN và không được tính chuẩn đầu ra Tiến sĩ.`);
   }
 
-  // PHẦN 3: XẾP HẠNG & UY TÍN
+  // PHẦN 3: TIÊU CHUẨN KHOA HỌC VIỆT NAM (2026) & ĐIỂM HĐGSNN
+  if (matchedVn || matchedHdgs || matchedSjr) {
+    lines.push(`\n🇻🇳 2. TIÊU CHUẨN VIỆT NAM & ĐIỂM HĐGSNN:`);
+    if (matchedVn) {
+      lines.push(`• Chuẩn khoa học VN 2026: ✅ ĐẠT TIÊU CHUẨN QUỐC GIA (STT: ${matchedVn.stt} / 341)`);
+      lines.push(`• Phân nhóm: ${matchedVn.cat}`);
+    } else if (matchedSjr || matchedAbdc) {
+      lines.push(`• Chuẩn khoa học VN 2026: Tạp chí quốc tế (công nhận tính điểm theo quy chế đào tạo & HĐGSNN)`);
+    }
+
+    // Điểm HĐGSNN Kinh tế theo Quyết định 26/QĐ-HĐGSNN
+    let hdgsPointStr = "";
+    if (matchedHdgs?.points) {
+      hdgsPointStr = `🎯 ${matchedHdgs.points} (HĐGS ngành Kinh tế - QĐ 26/QĐ-HĐGSNN)`;
+    } else if (matchedSjr?.quartile === "Q1") {
+      hdgsPointStr = `🎯 0 - 2,0 điểm (Scopus Q1 / Quyết định 26/QĐ-HĐGSNN)`;
+    } else if (matchedSjr?.quartile) {
+      hdgsPointStr = `🎯 0 - 1,5 điểm (Scopus ${matchedSjr.quartile} / Quyết định 26/QĐ-HĐGSNN)`;
+    }
+
+    if (hdgsPointStr) {
+      lines.push(`• Điểm công trình HĐGSNN: ${hdgsPointStr}`);
+    }
+  }
+
+  // PHẦN 4: PHÂN HẠNG QUỐC TẾ (SCOPUS / ABDC)
   if (!matchedDisc && (matchedSjr || matchedAbdc)) {
-    lines.push(`\n🏆 2. XẾP HẠNG & UY TÍN HỌC THUẬT:`);
+    lines.push(`\n🏆 3. XẾP HẠNG QUỐC TẾ (SCOPUS / ABDC):`);
     if (matchedSjr) {
       const qTier = matchedSjr.quartile || "N/A";
       const sjrVal = matchedSjr.sjr || "N/A";
       let tierDesc = "";
-      let hdgsPoints = "";
-      if (qTier === "Q1") {
-        tierDesc = "Thuộc top 25% tạp chí hàng đầu thế giới";
-        hdgsPoints = "1.0 - 1.5 Điểm công trình";
-      } else if (qTier === "Q2") {
-        tierDesc = "Nhóm 25% - 50% tạp chí uy tín thế giới";
-        hdgsPoints = "0.75 - 1.25 Điểm công trình";
-      } else if (qTier === "Q3") {
-        tierDesc = "Nhóm 50% - 75% trong danh mục Scopus";
-        hdgsPoints = "0.5 - 1.0 Điểm công trình";
-      } else if (qTier === "Q4") {
-        tierDesc = "Nhóm 75% - 100% trong danh mục Scopus";
-        hdgsPoints = "0.25 - 0.75 Điểm công trình";
-      }
+      if (qTier === "Q1") tierDesc = "Top 25% tạp chí hàng đầu thế giới";
+      else if (qTier === "Q2") tierDesc = "Nhóm 25% - 50% thế giới";
+      else if (qTier === "Q3") tierDesc = "Nhóm 50% - 75% danh mục";
+      else if (qTier === "Q4") tierDesc = "Nhóm 75% - 100% danh mục";
       lines.push(`• SCImago Scopus: 🌟 ${qTier} (SJR: ${sjrVal} - ${tierDesc})`);
-      if (hdgsPoints) {
-        lines.push(`• Khung điểm HĐGSNN Việt Nam: 🇻🇳 Ước tính ${hdgsPoints} (Hội đồng GS ngành Kinh tế / Quản lý)`);
-      }
     }
 
     if (matchedAbdc) {
       const rank = matchedAbdc.abdc || "Listed";
       let abdcDesc = "";
-      if (rank === "A*") abdcDesc = "Tạp chí tinh hoa thế giới (Top 7% ngành Kinh tế/Quản trị)";
-      else if (rank === "A") abdcDesc = "Tạp chí xuất sắc, uy tín quốc tế rất cao (Top 15%-25%)";
-      else if (rank === "B") abdcDesc = "Tạp chí chất lượng tốt, được quốc tế công nhận rộng rãi";
-      else if (rank === "C") abdcDesc = "Tạp chí đạt chuẩn bình duyệt học thuật quốc tế";
-      lines.push(`• Phân hạng Kinh tế ABDC (Úc): 🎖️ Hạng ${rank} (${abdcDesc})`);
+      if (rank === "A*") abdcDesc = "Tạp chí tinh hoa quốc tế (Top 7% Kinh tế/Quản trị)";
+      else if (rank === "A") abdcDesc = "Tạp chí xuất sắc, uy tín quốc tế rất cao";
+      else if (rank === "B") abdcDesc = "Tạp chí chất lượng tốt, quốc tế công nhận";
+      else if (rank === "C") abdcDesc = "Tạp chí đạt chuẩn bình duyệt quốc tế";
+      lines.push(`• Phân hạng ABDC (Úc): 🎖️ Hạng ${rank} (${abdcDesc})`);
     }
+  } else if (!matchedDisc && matchedVn && !matchedSjr && !matchedAbdc) {
+    lines.push(`\n🌐 3. CHỈ MỤC QUỐC TẾ:`);
+    lines.push(`• Tình trạng: Tạp chí khoa học uy tín trong nước (Chưa nằm trong CSDL Scopus/WoS quốc tế).`);
   }
 
-  // PHẦN 4: LIÊM CHÍNH & AN TOÀN
-  lines.push(`\n🛡️ 3. KIỂM ĐỊNH LIÊM CHÍNH & RỦI RO:`);
+  // PHẦN 5: LIÊM CHÍNH & RỦI RO
+  lines.push(`\n🛡️ 4. KIỂM ĐỊNH LIÊM CHÍNH & RỦI RO:`);
   if (!matchedDisc) {
-    lines.push(`• Tình trạng Scopus: ✅ ĐANG HOẠT ĐỘNG (Active - Không nằm trong DS Discontinued)`);
+    if (matchedSjr) {
+      lines.push(`• Tình trạng Scopus: ✅ ĐANG HOẠT ĐỘNG (Active - An toàn)`);
+    } else {
+      lines.push(`• Scopus Discontinued: ✅ Không nằm trong danh mục bị loại`);
+    }
   }
   if (!matchedHijacked) {
-    lines.push(`• Tạp chí giả mạo (Hijacked Checker): ✅ AN TOÀN (Chưa ghi nhận web cướp tên miền)`);
+    lines.push(`• Tạp chí giả mạo: ✅ AN TOÀN (Chưa ghi nhận website cướp tên miền)`);
   }
   if (retractionCount > 0) {
     lines.push(`• Lịch sử rút bài (Retraction Watch): ⚠️ Có ${retractionCount} bài từng bị rút/đính chính`);
   } else {
-    lines.push(`• Lịch sử rút bài (Retraction Watch): ✅ 0 bài bị rút (Chỉ số liêm chính tin cậy cao)`);
+    lines.push(`• Lịch sử rút bài (Retraction Watch): ✅ 0 bài bị rút (Chỉ số liêm chính cao)`);
   }
 
-  // PHẦN 5: KẾT LUẬN & KHUYẾN NGHỊ NỘP BÀI
-  lines.push(`\n🎯 4. KHUYẾN NGHỊ NỘP BÀI (VERDICT):`);
+  // PHẦN 6: KHUYẾN NGHỊ NỘP BÀI (VERDICT)
+  lines.push(`\n🎯 5. KHUYẾN NGHỊ NỘP BÀI (VERDICT):`);
   if (matchedDisc || matchedHijacked) {
     lines.push(`⛔ TUYỆT ĐỐI KHÔNG NỘP BÀI: Tạp chí có rủi ro pháp lý học thuật rất lớn, bài báo sẽ không được công nhận.`);
   } else if (matchedSjr?.quartile === "Q1" || matchedAbdc?.abdc === "A*" || matchedAbdc?.abdc === "A") {
-    lines.push(`✅ RẤT NÊN NỘP: Tạp chí thuộc nhóm uy tín hàng đầu, đủ điều kiện bảo vệ Luận án Tiến sĩ, xét chức danh PGS/GS và nghiệm thu đề tài NCKH trọng điểm.`);
+    lines.push(`✅ RẤT NÊN NỘP: Tạp chí quốc tế hàng đầu, đủ điều kiện bảo vệ Luận án Tiến sĩ, xét PGS/GS và nghiệm thu đề tài NCKH trọng điểm.`);
   } else if (matchedSjr || matchedAbdc) {
-    lines.push(`✅ ĐỦ CHUẨN: Tạp chí nằm trong danh mục quốc tế uy tín, phù hợp công bố kết quả nghiên cứu khoa học.`);
+    lines.push(`✅ ĐỦ CHUẨN: Tạp chí quốc tế uy tín, phù hợp công bố kết quả nghiên cứu khoa học.`);
+  } else if (matchedVn || matchedHdgs) {
+    lines.push(`✅ ĐỦ CHUẨN QUỐC GIA: Đạt chuẩn khoa học Việt Nam 2026, tính điểm HĐGSNN và nghiệm thu đề tài NCKH trong nước.`);
   }
 
   lines.push(`\n💡 Nhắn mã ISSN hoặc tên tạp chí khác để tiếp tục tra cứu.`);
