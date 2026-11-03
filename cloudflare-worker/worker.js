@@ -69,8 +69,9 @@ function buildUserGuideMessage(displayName = "bạn", isFirstTime = false) {
     `• Gõ 1 : Xem hướng dẫn tra cứu\n` +
     `• Gõ 2 : Xem các tạp chí Kinh tế bị loại khỏi Scopus\n` +
     `• Gõ 3 : Xem phiên bản dữ liệu & trạng thái kết nối\n` +
-    `• Gõ 4 : Đăng ký nhận thông báo định kỳ (Gõ 'huy' để tắt)\n\n` +
-    `👉 Hãy thử nhắn ngay: JABES hoặc 10.1016/j.jbusres.2021.08.043 hoặc Kinh tế và Quản lý`
+    `• Gõ 4 : Đăng ký nhận thông báo định kỳ (Gõ 'huy' để tắt)\n` +
+    `• Gõ 5 : Xem 16 Tạp chí Việt Nam trong Scopus / WoS quốc tế\n\n` +
+    `👉 Hãy thử nhắn ngay: VJCS hoặc JABES hoặc 10.1016/j.jbusres.2021.08.043`
   );
 }
 
@@ -153,8 +154,42 @@ const KNOWN_ACRONYMS = {
   apjm: "asia pacific journal of management",
   ijim: "international journal of information management",
   eswa: "expert systems with applications",
-  ktpt: "journal of economics and development"
+  ktpt: "journal of economics and development",
+  vjcs: "vietnam journal of computer science",
+  vjm: "vietnam journal of mathematics",
+  vjes: "vietnam journal of earth sciences",
+  vjc: "vietnam journal of chemistry",
+  vjst: "vietnam journal of science and technology",
+  ansn: "advances in natural sciences: nanoscience and nanotechnology",
+  jsamd: "journal of science: advanced materials and devices",
+  jit: "journal of information and telecommunication",
 };
+
+/**
+ * Liệt kê 16 Tạp chí Việt Nam đã gia nhập thành công Scopus & WoS quốc tế
+ */
+function getVietnamScopusList(lookupDb) {
+  const vnList = lookupDb.vn_standards_2026 || [];
+  const sjrMap = lookupDb.sjr_rankings || {};
+  const intlVn = vnList.filter((item) => item.intl || item.stt <= 16);
+
+  const lines = [
+    `🇻🇳 DANH MỤC 16 TẠP CHÍ VIỆT NAM TRONG SCOPUS & WOS QUỐC TẾ`,
+    `(Theo Quyết định Chuẩn Khoa học Quốc gia năm 2026)\n`,
+  ];
+
+  for (const j of intlVn) {
+    const tLower = j.title.toLowerCase();
+    const matchedSjr = sjrMap[tLower] || null;
+    const qStr = matchedSjr ? `🌟 Scopus ${matchedSjr.quartile} (SJR: ${matchedSjr.sjr})` : `Scopus / WoS Quốc tế`;
+    lines.push(
+      `• [STT ${j.stt}] ${toTitleCase(j.title)}\n  ${qStr}\n  Cơ quan: ${j.org}`
+    );
+  }
+
+  lines.push(`\n💡 Nhắn tên viết tắt (vd: VJCS, JABES, JED, JSAMD) để xem báo cáo thẩm định chi tiết.`);
+  return lines.join("\n").slice(0, 1950);
+}
 
 const STOPWORDS = new Set(["of", "and", "the", "in", "for", "on", "with", "at", "by", "to", "a", "an", "&"]);
 
@@ -380,15 +415,58 @@ function searchJournal(query, lookupDb) {
     }
   }
 
-  // 7. Tra cứu Retraction Watch
-  const targetJournalName = matchedDisc?.title || sjrTitle || abdcTitle || matchedVn?.title || matchedHdgs?.title || matchedHijacked?.title || resolvedQuery;
+  // 7. Đồng bộ hai chiều cho Tạp chí Việt Nam với SCImago Scopus
+  if (!matchedSjr && matchedVn) {
+    const vnTitleLower = (matchedVn.title || "").toLowerCase();
+    if (sjrMap[vnTitleLower]) {
+      matchedSjr = sjrMap[vnTitleLower];
+      sjrTitle = vnTitleLower;
+    } else if (matchedVn.aliases) {
+      for (const a of matchedVn.aliases) {
+        const aLower = a.toLowerCase();
+        if (sjrMap[aLower]) {
+          matchedSjr = sjrMap[aLower];
+          sjrTitle = aLower;
+          break;
+        }
+      }
+    }
+    if (!matchedSjr) {
+      for (const [k, v] of Object.entries(sjrMap)) {
+        if (k.length >= 10 && (vnTitleLower.includes(k) || k.includes(vnTitleLower))) {
+          if (Math.min(k.length, vnTitleLower.length) / Math.max(k.length, vnTitleLower.length) > 0.65) {
+            matchedSjr = v;
+            sjrTitle = k;
+            break;
+          }
+        }
+      }
+    }
+  }
+
+  // 8. Tra cứu Retraction Watch chính xác (chống false-positive với các tên ngắn như Science, RNA, Cell...)
+  const targetJournalName = matchedVn?.title || matchedHdgs?.title || matchedDisc?.title || sjrTitle || abdcTitle || matchedHijacked?.title || resolvedQuery;
+  const cleanTarget = (targetJournalName || "").toLowerCase().replace(/[^a-z0-9]/g, " ").replace(/\s+/g, " ").trim();
   let retractionCount = 0;
+
   for (const [jName, cnt] of Object.entries(retractionMap)) {
-    if (
-      jName.toLowerCase().includes(targetJournalName.toLowerCase()) ||
-      targetJournalName.toLowerCase().includes(jName.toLowerCase())
-    ) {
+    const cleanJ = jName.toLowerCase().replace(/[^a-z0-9]/g, " ").replace(/\s+/g, " ").trim();
+    if (!cleanJ || cleanJ.length < 3) continue;
+
+    // Khớp tuyệt đối
+    if (cleanJ === cleanTarget) {
       retractionCount = Math.max(retractionCount, cnt);
+      break;
+    }
+
+    // Khớp chuỗi con có điều kiện: từ khóa phải dài từ 8 ký tự và chứa khoảng trắng (tránh khớp 'Science' hay 'RNA')
+    if (cleanJ.length >= 8 && cleanJ.includes(" ") && cleanTarget.includes(" ")) {
+      if (cleanTarget.includes(cleanJ) || cleanJ.includes(cleanTarget)) {
+        const lenRatio = Math.min(cleanTarget.length, cleanJ.length) / Math.max(cleanTarget.length, cleanJ.length);
+        if (lenRatio > 0.6) {
+          retractionCount = Math.max(retractionCount, cnt);
+        }
+      }
     }
   }
 
@@ -918,6 +996,9 @@ async function processZaloIncomingMessage(env, botToken, update) {
       await removeSubscriber(env, chatId);
       replyText =
         "✅ Đã tắt thông báo định kỳ. Bạn vẫn có thể nhắn Tên tạp chí hoặc mã ISSN bất cứ lúc nào để tra cứu!";
+    } else if (["5", "vn", "vietnam", "tcvn", "việt nam"].includes(cmd)) {
+      const db = await getLookupDatabase();
+      replyText = getVietnamScopusList(db);
     } else {
       const db = await getLookupDatabase();
       replyText = await resolveAndSearch(text, db);
