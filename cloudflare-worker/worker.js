@@ -1385,7 +1385,7 @@ async function resolveAndSearch(query, lookupDb) {
  */
 const ACADEMIC_DICTIONARY_FOOTER =
   `\n\n📖 Từ điển Thuật ngữ Nghiên cứu Khoa học:\n` +
-  `👉 https://vnresearch-dictionary.vercel.app/`;
+  `👉 https://vnresearch-dictionary.vercel.app/home`;
 
 function appendAcademicFooter(text) {
   if (!text || typeof text !== "string") return text;
