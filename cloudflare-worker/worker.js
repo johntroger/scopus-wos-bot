@@ -51,9 +51,10 @@ function buildUserGuideMessage(displayName = "bạn", isFirstTime = false) {
 
   return (
     header +
-    `🔎 CÁCH 1: TRA CỨU TẠP CHÍ TRỰC TIẾP\n` +
-    `Bạn chỉ cần nhắn trực tiếp Mã ISSN, Tên tạp chí hoặc Tên viết tắt:\n` +
-    `• Tạp chí quốc tế: 0148-2963 hoặc Journal of Business Research\n` +
+    `🔎 CÁCH 1: TRA CỨU TRỰC TIẾP (TẠP CHÍ HOẶC BÀI BÁO)\n` +
+    `Bạn chỉ cần nhắn trực tiếp bất kỳ thông tin nào sau đây:\n` +
+    `• Link bài báo / Mã DOI: Dán link https://doi.org/... để bot tự tra tên bài, tác giả, phí APC và thẩm định tạp chí mẹ\n` +
+    `• Mã ISSN quốc tế: 0148-2963 hoặc 2515-964X\n` +
     `• Tên viết tắt chuẩn: JABES, JED, JBR, JCR, JBE, MISQ, AMJ...\n` +
     `• Tạp chí Việt Nam: Kinh tế và Quản lý, Tạp chí Cộng sản, Kinh tế và Phát triển...\n\n` +
     `📋 CƠ SỞ DỮ LIỆU TÍCH HỢP:\n` +
@@ -62,13 +63,14 @@ function buildUserGuideMessage(displayName = "bạn", isFirstTime = false) {
     `3. SCImago Journal Rank (SJR Q1 - Q4 Scopus)\n` +
     `4. Bảng xếp hạng Kinh tế Úc ABDC (Hạng A*, A, B, C)\n` +
     `5. Danh mục 341 Tạp chí đạt Tiêu chuẩn Khoa học Việt Nam năm 2026\n` +
-    `6. Khung điểm công trình HĐGSNN ngành Kinh tế (Quyết định 26/QĐ-HĐGSNN)\n\n` +
+    `6. Khung điểm công trình HĐGSNN ngành Kinh tế (Quyết định 26/QĐ-HĐGSNN)\n` +
+    `7. Crossref & OpenAlex (Tra cứu tự động qua DOI & kiểm tra phí APC)\n\n` +
     `⌨️ PHÍM TẮT NHANH:\n` +
     `• Gõ 1 : Xem hướng dẫn tra cứu\n` +
     `• Gõ 2 : Xem các tạp chí Kinh tế bị loại khỏi Scopus\n` +
     `• Gõ 3 : Xem phiên bản dữ liệu & trạng thái kết nối\n` +
     `• Gõ 4 : Đăng ký nhận thông báo định kỳ (Gõ 'huy' để tắt)\n\n` +
-    `👉 Hãy thử nhắn ngay: JABES hoặc 1096-3685 hoặc Kinh tế và Quản lý`
+    `👉 Hãy thử nhắn ngay: JABES hoặc https://doi.org/10.1016/j.jbusres.2021.08.043`
   );
 }
 
@@ -570,6 +572,123 @@ function searchJournal(query, lookupDb) {
 }
 
 /**
+ * Trích xuất DOI từ văn bản người dùng (URL bài báo, xâu doi: 10.xxxx, hoặc dán link ScienceDirect/Springer...)
+ */
+function extractDoi(text) {
+  if (!text) return null;
+  const m = text.match(/\b(10\.\d{4,9}\/[-._;()/:A-Za-z0-9]+)/i);
+  return m ? m[1].replace(/[.,;)]+$/, "") : null;
+}
+
+/**
+ * Tra cứu thông tin bài báo khoa học qua DOI (tích hợp OpenAlex & Crossref)
+ */
+async function resolveDoiMetadata(doi) {
+  if (!doi) return null;
+
+  // 1. Thử qua OpenAlex (có sẵn thông tin Tác giả, Tên bài, Tạp chí, ISSN, Phí APC)
+  try {
+    const oaUrl = `https://api.openalex.org/works/https://doi.org/${encodeURIComponent(doi)}`;
+    const resp = await fetch(oaUrl, {
+      headers: { "User-Agent": "ScopusBot/1.0 (mailto:admin@scopus-wos-bot.workers.dev)" },
+    });
+    if (resp.ok) {
+      const data = await resp.json();
+      const title = data.title || data.display_name || "";
+      const journal = data.primary_location?.source?.display_name || "";
+      const issns = data.primary_location?.source?.issn || [];
+      const year = data.publication_year || "";
+      const authors = (data.authorships || [])
+        .slice(0, 3)
+        .map((a) => a.author?.display_name)
+        .filter(Boolean)
+        .join(", ");
+      const apc = data.apc_list ? `${data.apc_list.value} ${data.apc_list.currency}` : null;
+      return {
+        doi,
+        title,
+        journal,
+        issns,
+        year,
+        authors: authors + ((data.authorships || []).length > 3 ? " et al." : ""),
+        apc,
+      };
+    }
+  } catch (e) {
+    console.error("OpenAlex resolve error:", e);
+  }
+
+  // 2. Fallback qua Crossref REST API
+  try {
+    const crUrl = `https://api.crossref.org/works/${encodeURIComponent(doi)}`;
+    const resp = await fetch(crUrl, {
+      headers: { "User-Agent": "ScopusBot/1.0 (mailto:admin@scopus-wos-bot.workers.dev)" },
+    });
+    if (resp.ok) {
+      const data = await resp.json();
+      const item = data.message || {};
+      const title = item.title?.[0] || "";
+      const journal = item["container-title"]?.[0] || "";
+      const issns = item.ISSN || [];
+      const year =
+        item.issued?.["date-parts"]?.[0]?.[0] ||
+        item["published-print"]?.["date-parts"]?.[0]?.[0] ||
+        "";
+      const authors = (item.author || [])
+        .slice(0, 3)
+        .map((a) => `${a.given || ""} ${a.family || ""}`.trim())
+        .filter(Boolean)
+        .join(", ");
+      return {
+        doi,
+        title,
+        journal,
+        issns,
+        year,
+        authors: authors + ((item.author || []).length > 3 ? " et al." : ""),
+        apc: null,
+      };
+    }
+  } catch (e) {
+    console.error("Crossref resolve error:", e);
+  }
+
+  return null;
+}
+
+/**
+ * Xử lý truy vấn thông minh: Tự động phát hiện DOI bài báo hoặc tra cứu Tạp chí
+ */
+async function resolveAndSearch(query, lookupDb) {
+  const text = (query || "").trim();
+  const doi = extractDoi(text);
+
+  if (doi) {
+    const meta = await resolveDoiMetadata(doi);
+    if (meta && (meta.journal || (meta.issns && meta.issns.length > 0))) {
+      const qJournal = (meta.issns && meta.issns[0]) || meta.journal;
+      const journalReport = searchJournal(qJournal, lookupDb);
+
+      const lines = [
+        `📄 THÔNG TIN BÀI BÁO KHOA HỌC (TRA CỨU THEO DOI):`,
+        `• Tiêu đề bài: "${meta.title || "Đang cập nhật"}"`,
+        meta.authors ? `• Tác giả: ${meta.authors}` : null,
+        meta.year ? `• Năm công bố: ${meta.year}` : null,
+        `• Mã DOI: https://doi.org/${meta.doi}`,
+        `• Tạp chí đăng: ${meta.journal || "Không xác định"}`,
+        meta.apc ? `• Phí đăng bài tham khảo (APC): 💰 ${meta.apc}` : null,
+        `───────────────────────────────────────`,
+        journalReport,
+      ].filter(Boolean);
+
+      return lines.join("\n").slice(0, 1950);
+    }
+  }
+
+  return searchJournal(text, lookupDb);
+}
+
+/**
  * Gửi tin nhắn phản hồi qua Zalo Bot API
  */
 async function sendZaloMessage(botToken, chatId, text) {
@@ -731,7 +850,7 @@ async function processZaloIncomingMessage(env, botToken, update) {
         "✅ Đã tắt thông báo định kỳ. Bạn vẫn có thể nhắn Tên tạp chí hoặc mã ISSN bất cứ lúc nào để tra cứu!";
     } else {
       const db = await getLookupDatabase();
-      replyText = searchJournal(text, db);
+      replyText = await resolveAndSearch(text, db);
       if (isNewUser) {
         replyText =
           `👋 Chào ${displayName}! (Gõ '1' bất cứ lúc nào để xem bảng hướng dẫn sử dụng).\n\n` +
@@ -1072,7 +1191,7 @@ export default {
       const q = url.searchParams.get("q") || "";
       try {
         const db = await getLookupDatabase();
-        const result = searchJournal(q, db);
+        const result = await resolveAndSearch(q, db);
         return Response.json({
           ok: true,
           query: q,
