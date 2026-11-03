@@ -2,6 +2,10 @@
  * Cloudflare Worker: Scopus Discontinued & Retraction Watch Zalo/Telegram Bot + Web Portal
  * Kết nối trực tiếp với cơ sở dữ liệu tự động cập nhật trên GitHub:
  * https://raw.githubusercontent.com/johntroger/scopus-wos-bot/main/discontinued_lookup.json
+ *
+ * Cơ chế nhận tin nhắn Zalo:
+ * Sử dụng kết hợp Long-Polling (getUpdates) chạy liên tục mỗi phút qua Cloudflare Cron Trigger (* * * * *)
+ * để vượt qua việc Cloudflare WAF chặn User-Agent "Java/<version>" của máy chủ Zalo khi gọi Webhook.
  */
 
 const GITHUB_LOOKUP_URL =
@@ -42,13 +46,13 @@ function normalizeIssn(val) {
  */
 function buildUserGuideMessage(displayName = "bạn", isFirstTime = false) {
   const header = isFirstTime
-    ? `👋 Chào mừng ${displayName} đến với *Bot Tra cứu Tạp chí Scopus & WoS*!\n(Hệ thống đã tự động bật thông báo định kỳ cho bạn).\n\n`
+    ? `👋 Chào mừng ${displayName} đến với Bot Tra cứu Tạp chí Scopus & WoS!\n(Hệ thống đã tự động bật thông báo định kỳ cho bạn).\n\n`
     : `📖 HƯỚNG DẪN SỬ DỤNG BOT TRA CỨU TẠP CHÍ SCOPUS & WOS\n\n`;
 
   return (
     header +
     `🔎 CÁCH 1: TRA CỨU TẠP CHÍ TRỰC TIẾP\n` +
-    `Bạn chỉ cần nhắn trực tiếp *Mã ISSN* hoặc *Tên tạp chí* vào khung chat này. Ví dụ:\n` +
+    `Bạn chỉ cần nhắn trực tiếp Mã ISSN hoặc Tên tạp chí vào khung chat này. Ví dụ:\n` +
     `• Nhắn: 1096-3685 (kiểm tra theo ISSN)\n` +
     `• Nhắn: Journal of Business Research (kiểm tra theo tên)\n` +
     `• Nhắn: Sustainability\n\n` +
@@ -83,7 +87,6 @@ function getBusinessDiscontinuedSamples(lookupDb) {
     return keywords.some((kw) => t.includes(kw));
   });
 
-  // Sắp xếp ưu tiên các tạp chí bị loại những năm gần đây nhất
   filtered.sort((a, b) =>
     String(b.discontinued_info || "").localeCompare(String(a.discontinued_info || ""))
   );
@@ -241,6 +244,146 @@ async function removeSubscriber(env, chatId) {
   delete subs[String(chatId)];
   await env.SCOPUS_BOT_KV.put("SUBSCRIBERS_MAP", JSON.stringify(subs));
   return Object.keys(subs).length;
+}
+
+/**
+ * Xử lý 1 tin nhắn đến từ người dùng Zalo
+ */
+async function processZaloIncomingMessage(env, botToken, msg) {
+  const chatId = msg?.chat?.id || msg?.from?.id;
+  if (!chatId) return false;
+
+  const displayName = msg?.from?.display_name || "bạn";
+  const text = (msg?.text || "").trim();
+
+  try {
+    const subs = await getSubscribers(env);
+    const isNewUser = !subs[String(chatId)];
+    if (isNewUser) {
+      await addSubscriber(env, chatId, displayName);
+    }
+
+    const cmd = text.toLowerCase();
+    const helpTriggers = [
+      "",
+      "1",
+      "menu",
+      "/menu",
+      "help",
+      "/help",
+      "start",
+      "/start",
+      "trogiup",
+      "trợ giúp",
+      "huongdan",
+      "hướng dẫn",
+      "cách dùng",
+      "cach dung",
+      "?",
+      "hi",
+      "hello",
+      "alo",
+      "xin chào",
+      "xin chao",
+      "chào",
+      "chao",
+      "bot",
+      "bot ơi",
+    ];
+
+    let replyText = "";
+
+    if (!text || helpTriggers.includes(cmd)) {
+      replyText = buildUserGuideMessage(displayName, isNewUser);
+    } else if (["2", "kinhte", "kinh tế", "ds", "danh sách"].includes(cmd)) {
+      const db = await getLookupDatabase();
+      replyText = getBusinessDiscontinuedSamples(db);
+    } else if (["3", "thongke", "/thongke", "stats", "status"].includes(cmd)) {
+      const db = await getLookupDatabase();
+      const updatedSubs = await getSubscribers(env);
+      replyText =
+        `📊 THÔNG TIN HỆ THỐNG SCOPUS & WOS BOT:\n` +
+        `• Phiên bản Scopus: ${db.scopus_version}\n` +
+        `• Tổng số tạp chí Discontinued đang lưu: ${(db.discontinued_journals || []).length} tạp chí\n` +
+        `• Số tạp chí có lịch sử Retraction Watch: ${Object.keys(db.retraction_counts_by_journal || {}).length} tạp chí\n` +
+        `• Số thành viên đăng ký nhận cảnh báo: ${Object.keys(updatedSubs).length} người\n` +
+        `• Cập nhật lần cuối: ${db.updated_at}\n\n` +
+        `💡 Gõ '1' để xem hướng dẫn | Gõ '2' xem DS tạp chí Kinh tế bị loại.`;
+    } else if (["4", "dangky", "/dangky", "subscribe"].includes(cmd)) {
+      const total = await addSubscriber(env, chatId, displayName);
+      replyText =
+        `✅ ${displayName} đã bật nhận cảnh báo định kỳ thành công (Tổng số: ${total} thành viên).\n` +
+        `Mỗi khi Scopus công bố danh sách tạp chí bị loại tháng mới hoặc Retraction Watch có biến động lớn, Bot sẽ tự động nhắn cho bạn.\n\n` +
+        `💡 Gõ '1' để xem hướng dẫn tra cứu | Gõ 'huy' nếu muốn tắt thông báo định kỳ.`;
+    } else if (["huy", "/huy", "unsubscribe", "/stop"].includes(cmd)) {
+      await removeSubscriber(env, chatId);
+      replyText =
+        "✅ Đã tắt thông báo định kỳ. Bạn vẫn có thể nhắn Tên tạp chí hoặc mã ISSN bất cứ lúc nào để tra cứu!";
+    } else {
+      const db = await getLookupDatabase();
+      replyText = searchJournal(text, db);
+      if (isNewUser) {
+        replyText =
+          `👋 Chào ${displayName}! (Gõ '1' bất cứ lúc nào để xem bảng hướng dẫn sử dụng).\n\n` +
+          replyText;
+      }
+    }
+
+    await sendZaloMessage(botToken, chatId, replyText);
+    return true;
+  } catch (err) {
+    await sendZaloMessage(
+      botToken,
+      chatId,
+      `⚠️ Có lỗi xảy ra khi tra cứu: ${err.message}`
+    );
+    return false;
+  }
+}
+
+/**
+ * Vòng lặp Long-Polling (getUpdates) liên tục trong suốt chu kỳ Cron 1 phút
+ */
+async function pollZaloUpdatesLoop(env, maxDurationMs = 52000) {
+  const botToken =
+    env.ZALO_BOT_TOKEN || (await env.SCOPUS_BOT_KV.get("ZALO_BOT_TOKEN"));
+  if (!botToken) return { ok: false, reason: "No ZALO_BOT_TOKEN" };
+
+  const startTime = Date.now();
+  let processedCount = 0;
+
+  while (Date.now() - startTime < maxDurationMs) {
+    const remainingSec = Math.floor((maxDurationMs - (Date.now() - startTime)) / 1000);
+    if (remainingSec < 2) break;
+    const waitSec = Math.min(18, Math.max(2, remainingSec - 1));
+
+    try {
+      const resp = await fetch(
+        `https://bot-api.zaloplatforms.com/bot${botToken}/getUpdates`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ timeout: waitSec }),
+        }
+      );
+      const data = await resp.json().catch(() => ({}));
+
+      if (data && data.ok && data.result) {
+        const items = Array.isArray(data.result) ? data.result : [data.result];
+        for (const item of items) {
+          const msg = item.message || item;
+          if (msg && (msg.chat || msg.from)) {
+            await processZaloIncomingMessage(env, botToken, msg);
+            processedCount++;
+          }
+        }
+      }
+    } catch {
+      await new Promise((r) => setTimeout(r, 1000));
+    }
+  }
+
+  return { ok: true, processedCount };
 }
 
 /**
@@ -420,7 +563,7 @@ function renderWebPortal(workerOrigin, botConfigured, subscriberCount) {
       <div style="margin-top:12px;cursor:default;">
         <div class="input-row">
           <input type="password" id="tokenInput" placeholder="Dán mã Zalo Bot Token mới nếu muốn thay đổi..." />
-          <button onclick="setupZalo()">Cập nhật Webhook</button>
+          <button onclick="setupZalo()">Cập nhật Token</button>
         </div>
         <pre id="setupResult"></pre>
       </div>
@@ -457,7 +600,7 @@ function renderWebPortal(workerOrigin, botConfigured, subscriberCount) {
         return;
       }
       box.style.display = 'block';
-      box.textContent = 'Đang đăng ký Webhook với Zalo Bot Platform...';
+      box.textContent = 'Đang lưu cấu hình Zalo Bot...';
       try {
         const res = await fetch('/api/setup-zalo', {
           method: 'POST',
@@ -523,165 +666,37 @@ export default {
           );
         }
 
-        let secretToken = await env.SCOPUS_BOT_KV.get("ZALO_WEBHOOK_SECRET");
-        if (!secretToken) {
-          secretToken =
-            "scopus_wos_secret_" + Math.random().toString(36).slice(2, 12);
-          await env.SCOPUS_BOT_KV.put("ZALO_WEBHOOK_SECRET", secretToken);
-        }
-
-        const webhookUrl = `${url.origin}/webhook/zalo`;
-        const zaloResp = await fetch(
-          `https://bot-api.zaloplatforms.com/bot${botToken}/setWebhook`,
+        // Xóa webhook để bật chế độ Long-Polling (getUpdates) không bị chặn bởi Cloudflare WAF
+        const delResp = await fetch(
+          `https://bot-api.zaloplatforms.com/bot${botToken}/deleteWebhook`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              url: webhookUrl,
-              secret_token: secretToken,
-            }),
           }
         );
-        const zaloData = await zaloResp.json();
+        const delData = await delResp.json().catch(() => ({}));
 
-        if (zaloData.ok) {
-          await env.SCOPUS_BOT_KV.put("ZALO_BOT_TOKEN", botToken);
-        }
+        await env.SCOPUS_BOT_KV.put("ZALO_BOT_TOKEN", botToken);
+
+        // Kích hoạt quét ngay lập tức
+        ctx.waitUntil(pollZaloUpdatesLoop(env, 25000));
 
         return Response.json({
-          ok: Boolean(zaloData.ok),
-          webhook_url: webhookUrl,
-          zalo_response: zaloData,
-          message: zaloData.ok
-            ? "✅ Đã kết nối Zalo Bot thành công! Bây giờ bạn và mọi người có thể nhắn tên tạp chí hoặc ISSN vào Zalo Bot để tra cứu ngay."
-            : "❌ Kết nối thất bại, vui lòng kiểm tra lại Bot Token.",
+          ok: true,
+          mode: "Cloudflare Continuous Long-Polling (24/7)",
+          zalo_response: delData,
+          message:
+            "✅ Đã kết nối Zalo Bot thành công! Bây giờ bạn và mọi người có thể nhắn tên tạp chí hoặc ISSN vào Zalo Bot để tra cứu ngay.",
         });
       } catch (err) {
         return Response.json({ ok: false, error: err.message }, { status: 500 });
       }
     }
 
-    // 4. Webhook nhận tin nhắn thời gian thực từ Zalo Bot (/webhook/zalo)
-    if (path === "/webhook/zalo") {
-      if (request.method === "GET") {
-        return Response.json({ ok: true, status: "Zalo webhook endpoint ready" });
-      }
-      if (request.method === "POST") {
-        const savedSecret = await env.SCOPUS_BOT_KV.get("ZALO_WEBHOOK_SECRET");
-        const headerSecret = request.headers.get("x-bot-api-secret-token");
-        if (savedSecret && headerSecret && headerSecret !== savedSecret) {
-          return Response.json({ ok: false, error: "Unauthorized" }, { status: 403 });
-        }
-
-        let payload = {};
-        try {
-          payload = await request.json();
-        } catch {
-          return Response.json({ ok: true });
-        }
-
-        const msg = payload.message || {};
-        const chatId = msg.chat?.id || msg.from?.id;
-        const displayName = msg.from?.display_name || "bạn";
-        const text = (msg.text || "").trim();
-
-        if (!chatId) {
-          return Response.json({ ok: true, note: "Verification ping" });
-        }
-
-        const botToken =
-          env.ZALO_BOT_TOKEN || (await env.SCOPUS_BOT_KV.get("ZALO_BOT_TOKEN"));
-
-        ctx.waitUntil(
-          (async () => {
-            try {
-              const subs = await getSubscribers(env);
-              const isNewUser = !subs[String(chatId)];
-              if (isNewUser) {
-                await addSubscriber(env, chatId, displayName);
-              }
-
-              // Nếu người dùng gửi Sticker chào hỏi, gửi ảnh, hoặc gõ lệnh trợ giúp / phím 1
-              const cmd = text.toLowerCase();
-              const helpTriggers = [
-                "",
-                "1",
-                "menu",
-                "/menu",
-                "help",
-                "/help",
-                "start",
-                "/start",
-                "trogiup",
-                "trợ giúp",
-                "huongdan",
-                "hướng dẫn",
-                "cách dùng",
-                "cach dung",
-                "?",
-                "hi",
-                "hello",
-                "alo",
-                "xin chào",
-                "xin chao",
-                "chào",
-                "chao",
-                "bot",
-                "bot ơi",
-              ];
-
-              let replyText = "";
-
-              if (!text || helpTriggers.includes(cmd)) {
-                replyText = buildUserGuideMessage(displayName, isNewUser);
-              } else if (["2", "kinhte", "kinh tế", "ds", "danh sách"].includes(cmd)) {
-                const db = await getLookupDatabase();
-                replyText = getBusinessDiscontinuedSamples(db);
-              } else if (["3", "thongke", "/thongke", "stats", "status"].includes(cmd)) {
-                const db = await getLookupDatabase();
-                const updatedSubs = await getSubscribers(env);
-                replyText =
-                  `📊 THÔNG TIN HỆ THỐNG SCOPUS & WOS BOT:\n` +
-                  `• Phiên bản Scopus: ${db.scopus_version}\n` +
-                  `• Tổng số tạp chí Discontinued đang lưu: ${(db.discontinued_journals || []).length} tạp chí\n` +
-                  `• Số tạp chí có lịch sử Retraction Watch: ${Object.keys(db.retraction_counts_by_journal || {}).length} tạp chí\n` +
-                  `• Số thành viên đăng ký nhận cảnh báo: ${Object.keys(updatedSubs).length} người\n` +
-                  `• Cập nhật lần cuối: ${db.updated_at}\n\n` +
-                  `💡 Gõ '1' để xem hướng dẫn | Gõ '2' xem DS tạp chí Kinh tế bị loại.`;
-              } else if (["4", "dangky", "/dangky", "subscribe"].includes(cmd)) {
-                const total = await addSubscriber(env, chatId, displayName);
-                replyText =
-                  `✅ ${displayName} đã bật nhận cảnh báo định kỳ thành công (Tổng số: ${total} thành viên).\n` +
-                  `Mỗi khi Scopus công bố danh sách tạp chí bị loại tháng mới hoặc Retraction Watch có biến động lớn, Bot sẽ tự động nhắn cho bạn.\n\n` +
-                  `💡 Gõ 'huy' nếu muốn tắt thông báo định kỳ.`;
-              } else if (["huy", "/huy", "unsubscribe", "/stop"].includes(cmd)) {
-                await removeSubscriber(env, chatId);
-                replyText =
-                  "✅ Đã tắt thông báo định kỳ. Bạn vẫn có thể nhắn Tên tạp chí hoặc mã ISSN bất cứ lúc nào để tra cứu!";
-              } else {
-                const db = await getLookupDatabase();
-                replyText = searchJournal(text, db);
-                // Nếu là người mới hoàn toàn và gõ tra cứu ngay ở tin nhắn đầu tiên, đính kèm lời chào ngắn ở đầu
-                if (isNewUser) {
-                  replyText =
-                    `👋 Chào ${displayName}! (Gõ '1' bất cứ lúc nào để xem bảng hướng dẫn sử dụng).\n\n` +
-                    replyText;
-                }
-              }
-
-              await sendZaloMessage(botToken, chatId, replyText);
-            } catch (err) {
-              await sendZaloMessage(
-                botToken,
-                chatId,
-                `⚠️ Có lỗi xảy ra khi tra cứu: ${err.message}`
-              );
-            }
-          })()
-        );
-
-        return Response.json({ ok: true });
-      }
+    // 4. Endpoint kích hoạt quét tin nhắn tức thì (/api/poll)
+    if (path === "/api/poll") {
+      const result = await pollZaloUpdatesLoop(env, 12000);
+      return Response.json(result);
     }
 
     // 5. API Broadcast cho phép GitHub Actions gửi thông báo định kỳ tới tất cả người đã đăng ký (/api/broadcast)
@@ -713,5 +728,10 @@ export default {
     }
 
     return Response.json({ ok: false, error: "Not found" }, { status: 404 });
+  },
+
+  // 6. Cloudflare Cron Trigger chạy tự động mỗi 60 giây (* * * * *), giữ kết nối Long-Polling liên tục
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(pollZaloUpdatesLoop(env, 54000));
   },
 };
