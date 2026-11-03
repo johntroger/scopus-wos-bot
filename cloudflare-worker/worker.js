@@ -53,7 +53,7 @@ function buildUserGuideMessage(displayName = "bạn", isFirstTime = false) {
     header +
     `🔎 CÁCH 1: TRA CỨU TRỰC TIẾP (TẠP CHÍ HOẶC BÀI BÁO)\n` +
     `Bạn chỉ cần nhắn trực tiếp bất kỳ thông tin nào sau đây:\n` +
-    `• Link bài báo / Mã DOI: Dán link https://doi.org/... để bot tự tra tên bài, tác giả, phí APC và thẩm định tạp chí mẹ\n` +
+    `• Mã DOI bài báo: Nhắn trực tiếp mã 10.xxxx/... (Ví dụ: 10.1016/j.jbusres.2021.08.043) để xem tên bài, tác giả, phí APC & thẩm định tạp chí\n` +
     `• Mã ISSN quốc tế: 0148-2963 hoặc 2515-964X\n` +
     `• Tên viết tắt chuẩn: JABES, JED, JBR, JCR, JBE, MISQ, AMJ...\n` +
     `• Tạp chí Việt Nam: Kinh tế và Quản lý, Tạp chí Cộng sản, Kinh tế và Phát triển...\n\n` +
@@ -70,7 +70,7 @@ function buildUserGuideMessage(displayName = "bạn", isFirstTime = false) {
     `• Gõ 2 : Xem các tạp chí Kinh tế bị loại khỏi Scopus\n` +
     `• Gõ 3 : Xem phiên bản dữ liệu & trạng thái kết nối\n` +
     `• Gõ 4 : Đăng ký nhận thông báo định kỳ (Gõ 'huy' để tắt)\n\n` +
-    `👉 Hãy thử nhắn ngay: JABES hoặc https://doi.org/10.1016/j.jbusres.2021.08.043`
+    `👉 Hãy thử nhắn ngay: JABES hoặc 10.1016/j.jbusres.2021.08.043 hoặc Kinh tế và Quản lý`
   );
 }
 
@@ -559,6 +559,14 @@ function searchJournal(query, lookupDb) {
   lines.push(`\n🎯 5. KHUYẾN NGHỊ NỘP BÀI (VERDICT):`);
   if (matchedDisc || matchedHijacked) {
     lines.push(`⛔ TUYỆT ĐỐI KHÔNG NỘP BÀI: Tạp chí có rủi ro pháp lý học thuật rất lớn, bài báo sẽ không được công nhận.`);
+
+    // GỢI Ý TẠP CHÍ THAY THẾ AN TOÀN CÙNG CHUYÊN NGÀNH
+    const alts = getSafeAlternatives(finalTitle);
+    lines.push(`\n💡 6. GỢI Ý TẠP CHÍ THAY THẾ AN TOÀN (CÙNG CHUYÊN NGÀNH):`);
+    lines.push(`Để không gián đoạn kế hoạch công bố, bạn có thể cân nhắc nộp bài vào các tạp chí uy tín đang hoạt động sau:`);
+    for (const a of alts) {
+      lines.push(`• ${a.name}\n  ISSN: ${a.issn} | ${a.note}`);
+    }
   } else if (matchedSjr?.quartile === "Q1" || matchedAbdc?.abdc === "A*" || matchedAbdc?.abdc === "A") {
     lines.push(`✅ RẤT NÊN NỘP: Tạp chí quốc tế hàng đầu, đủ điều kiện bảo vệ Luận án Tiến sĩ, xét PGS/GS và nghiệm thu đề tài NCKH trọng điểm.`);
   } else if (matchedSjr || matchedAbdc) {
@@ -569,6 +577,55 @@ function searchJournal(query, lookupDb) {
 
   lines.push(`\n💡 Nhắn mã ISSN hoặc tên tạp chí khác để tiếp tục tra cứu.`);
   return lines.join("\n").slice(0, 1950);
+}
+
+const SAFE_DOMAIN_ALTERNATIVES = {
+  accounting: [
+    { name: "Journal of Accounting and Public Policy", issn: "0278-4254", note: "Elsevier, Scopus Q1, ABDC A, HĐGSNN 0-2.0đ" },
+    { name: "International Review of Financial Analysis", issn: "1057-5219", note: "Elsevier, Scopus Q1, ABDC A, HĐGSNN 0-2.0đ" },
+    { name: "Journal of Asian Business and Economic Studies", issn: "2515-964X", note: "UEH, Scopus Q1, ABDC B, Chuẩn VN 2026 STT 13" },
+  ],
+  marketing: [
+    { name: "Journal of Business Research", issn: "0148-2963", note: "Elsevier, Scopus Q1, ABDC A, HĐGSNN 0-2.0đ" },
+    { name: "Journal of Retailing and Consumer Services", issn: "0969-6989", note: "Elsevier, Scopus Q1, ABDC A, HĐGSNN 0-2.0đ" },
+    { name: "Journal of Asian Business and Economic Studies", issn: "2515-964X", note: "UEH, Scopus Q1, ABDC B, HĐGSNN 0-2.0đ" },
+  ],
+  hospitality: [
+    { name: "International Journal of Hospitality Management", issn: "0278-4319", note: "Elsevier, Scopus Q1, ABDC A*" },
+    { name: "Journal of Hospitality and Tourism Management", issn: "1447-6770", note: "Elsevier, Scopus Q1, ABDC A" },
+    { name: "Tourism Recreation Research", issn: "0250-8281", note: "Taylor & Francis, Scopus Q1, ABDC A" },
+  ],
+  sustainability: [
+    { name: "Journal of Cleaner Production", issn: "0959-6526", note: "Elsevier, Scopus Q1, HĐGSNN 0-2.0đ" },
+    { name: "Business Strategy and the Environment", issn: "0964-4733", note: "Wiley, Scopus Q1, ABDC A" },
+    { name: "Sustainable Development", issn: "0968-0802", note: "Wiley, Scopus Q1, ABDC B" },
+  ],
+  economics: [
+    { name: "Journal of Asian Business and Economic Studies", issn: "2515-964X", note: "UEH, Scopus Q1, ABDC B, HĐGSNN 0-2.0đ" },
+    { name: "Journal of Economics and Development", issn: "1859-0020", note: "NEU, Scopus Q1, HĐGSNN 0-2.0đ" },
+    { name: "Economic Analysis and Policy", issn: "0313-5926", note: "Elsevier, Scopus Q1, ABDC B" },
+  ],
+  technology: [
+    { name: "International Journal of Information Management", issn: "0268-4012", note: "Elsevier, Scopus Q1, ABDC A*" },
+    { name: "Technological Forecasting and Social Change", issn: "0040-1625", note: "Elsevier, Scopus Q1, ABDC A" },
+    { name: "Expert Systems with Applications", issn: "0957-4174", note: "Elsevier, Scopus Q1, HĐGSNN 0-2.0đ" },
+  ],
+  general: [
+    { name: "Journal of Business Research", issn: "0148-2963", note: "Elsevier, Scopus Q1, ABDC A, HĐGSNN 0-2.0đ" },
+    { name: "Journal of Asian Business and Economic Studies", issn: "2515-964X", note: "UEH, Scopus Q1, ABDC B, Chuẩn VN STT 13" },
+    { name: "Journal of Economics and Development", issn: "1859-0020", note: "NEU, Scopus Q1, Chuẩn VN STT 12" },
+  ],
+};
+
+function getSafeAlternatives(title) {
+  const t = (title || "").toLowerCase();
+  if (t.includes("account") || t.includes("financ") || t.includes("bank")) return SAFE_DOMAIN_ALTERNATIVES.accounting;
+  if (t.includes("market") || t.includes("consumer") || t.includes("retail")) return SAFE_DOMAIN_ALTERNATIVES.marketing;
+  if (t.includes("hospital") || t.includes("touris") || t.includes("hotel") || t.includes("leisure")) return SAFE_DOMAIN_ALTERNATIVES.hospitality;
+  if (t.includes("sustain") || t.includes("cleaner") || t.includes("ecolog") || t.includes("environ")) return SAFE_DOMAIN_ALTERNATIVES.sustainability;
+  if (t.includes("econom") || t.includes("trade") || t.includes("fiscal")) return SAFE_DOMAIN_ALTERNATIVES.economics;
+  if (t.includes("technol") || t.includes("comput") || t.includes("system") || t.includes("artifici") || t.includes("data")) return SAFE_DOMAIN_ALTERNATIVES.technology;
+  return SAFE_DOMAIN_ALTERNATIVES.general;
 }
 
 /**
@@ -783,6 +840,19 @@ async function processZaloIncomingMessage(env, botToken, update) {
   if (!chatId) {
     console.error("Không tìm thấy chatId trong update:", update);
     return false;
+  }
+
+  // Xử lý sự kiện tin nhắn dạng link preview / unsupported của Zalo
+  if (update.event_name === "message.unsupported.received" || (!text && String(update.event_name || "").includes("unsupported"))) {
+    const tipText =
+      `💡 MẸO TRA CỨU THEO DOI TRÊN ZALO:\n\n` +
+      `Khi dán link có tiền tố "https://", ứng dụng Zalo tự động tạo Thẻ xem trước (Link Preview) và mã hóa nội dung nên Bot không nhận được văn bản.\n\n` +
+      `👉 Bạn chỉ cần gửi trực tiếp MÃ DOI (không kèm "https://doi.org/").\n` +
+      `Ví dụ gửi:\n` +
+      `10.1016/j.jbusres.2021.08.043\n\n` +
+      `Hệ thống sẽ lập tức trả về thông tin bài báo, phí APC và thẩm định tạp chí!`;
+    await sendZaloMessage(botToken, chatId, tipText);
+    return true;
   }
 
   try {
