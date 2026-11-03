@@ -342,31 +342,39 @@ async function processZaloIncomingMessage(env, botToken, msg) {
 }
 
 /**
- * Vòng lặp Long-Polling (getUpdates) liên tục trong suốt chu kỳ Cron 1 phút
+ * Thực hiện đúng 1 chu kỳ Long-Polling (getUpdates) an toàn (khoảng 10-15s) dưới ngưỡng 30s của Cloudflare
  */
-async function pollZaloUpdatesLoop(env, maxDurationMs = 52000) {
+async function pollZaloUpdatesLoop(env) {
   const botToken =
     env.ZALO_BOT_TOKEN || (await env.SCOPUS_BOT_KV.get("ZALO_BOT_TOKEN"));
   if (!botToken) return { ok: false, reason: "No ZALO_BOT_TOKEN" };
 
   const startTime = Date.now();
   let processedCount = 0;
+  let lastDebug = null;
 
-  while (Date.now() - startTime < maxDurationMs) {
-    const remainingSec = Math.floor((maxDurationMs - (Date.now() - startTime)) / 1000);
-    if (remainingSec < 2) break;
-    const waitSec = Math.min(18, Math.max(2, remainingSec - 1));
-
+  // Nếu có tin nhắn đến ngay (trả về trong < 1s), tiếp tục lắng nghe thêm trong phạm vi 12 giây
+  while (Date.now() - startTime < 12000) {
     try {
       const resp = await fetch(
         `https://bot-api.zaloplatforms.com/bot${botToken}/getUpdates`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ timeout: waitSec }),
+          headers: {
+            "Content-Type": "application/json",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/128.0.0.0",
+          },
+          body: JSON.stringify({ timeout: 10 }),
         }
       );
-      const data = await resp.json().catch(() => ({}));
+      const rawText = await resp.text();
+      let data = {};
+      try {
+        data = JSON.parse(rawText);
+      } catch {
+        data = { raw: rawText.slice(0, 300) };
+      }
+      lastDebug = { status: resp.status, data };
 
       if (data && data.ok && data.result) {
         const items = Array.isArray(data.result) ? data.result : [data.result];
@@ -377,13 +385,26 @@ async function pollZaloUpdatesLoop(env, maxDurationMs = 52000) {
             processedCount++;
           }
         }
+      } else {
+        // Nếu timeout 408 (đã chờ đủ ~10-15s trên Zalo server), thoát vòng lặp ngay để không vượt 30s
+        break;
       }
-    } catch {
-      await new Promise((r) => setTimeout(r, 1000));
+    } catch (err) {
+      lastDebug = { error: err.message };
+      break;
     }
   }
 
-  return { ok: true, processedCount };
+  await env.SCOPUS_BOT_KV.put(
+    "LAST_POLL_STATUS",
+    JSON.stringify({
+      time: new Date().toISOString(),
+      durationMs: Date.now() - startTime,
+      processedCount,
+      lastDebug,
+    })
+  );
+  return { ok: true, processedCount, durationMs: Date.now() - startTime, lastDebug };
 }
 
 /**
@@ -693,10 +714,22 @@ export default {
       }
     }
 
-    // 4. Endpoint kích hoạt quét tin nhắn tức thì (/api/poll)
+    // 4. Endpoint kích hoạt quét tin nhắn tức thì & Ping-Pong giữa 2 Worker phủ kín 60/60 giây (/api/poll)
     if (path === "/api/poll") {
-      const result = await pollZaloUpdatesLoop(env, 12000);
-      return Response.json(result);
+      const step = parseInt(url.searchParams.get("step") || "0", 10);
+      const result = await pollZaloUpdatesLoop(env);
+
+      if (step >= 1 && step < 4) {
+        const nextHost = url.hostname.includes("scopus-wos-poller")
+          ? "https://scopus-wos-zalo-bot.nttu-kts-johntroger.workers.dev"
+          : "https://scopus-wos-poller.nttu-kts-johntroger.workers.dev";
+        ctx.waitUntil(
+          fetch(`${nextHost}/api/poll?step=${step + 1}`, {
+            headers: { "User-Agent": "Mozilla/5.0 Cloudflare-Relay" },
+          }).catch(() => {})
+        );
+      }
+      return Response.json({ ...result, step });
     }
 
     // 5. API Broadcast cho phép GitHub Actions gửi thông báo định kỳ tới tất cả người đã đăng ký (/api/broadcast)
@@ -730,8 +763,16 @@ export default {
     return Response.json({ ok: false, error: "Not found" }, { status: 404 });
   },
 
-  // 6. Cloudflare Cron Trigger chạy tự động mỗi 60 giây (* * * * *), giữ kết nối Long-Polling liên tục
+  // 6. Cloudflare Cron Trigger chạy tự động mỗi 60 giây (* * * * *), khởi động chuỗi Ping-Pong 4 nhịp (4 x 14s = 56s)
   async scheduled(event, env, ctx) {
-    ctx.waitUntil(pollZaloUpdatesLoop(env, 54000));
+    ctx.waitUntil(
+      (async () => {
+        await pollZaloUpdatesLoop(env);
+        await fetch(
+          "https://scopus-wos-poller.nttu-kts-johntroger.workers.dev/api/poll?step=1",
+          { headers: { "User-Agent": "Mozilla/5.0 Cloudflare-Relay" } }
+        ).catch(() => {});
+      })()
+    );
   },
 };
