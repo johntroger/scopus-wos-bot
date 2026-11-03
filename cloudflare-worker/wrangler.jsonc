@@ -1,0 +1,11 @@
+{
+  "name": "scopus-wos-zalo-bot",
+  "main": "worker.js",
+  "compatibility_date": "2026-10-01",
+  "kv_namespaces": [
+    {
+      "binding": "SCOPUS_BOT_KV",
+      "id": "4d693c2de75e44d8a3e863607b0f8dda"
+    }
+  ]
+}

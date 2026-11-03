@@ -124,11 +124,46 @@ def send_telegram_message(text: str, target_chat_id: str = "") -> bool:
     return success
 
 
+CLOUDFLARE_WORKER_URL = os.environ.get(
+    "CLOUDFLARE_WORKER_URL",
+    "https://scopus-wos-zalo-bot.nttu-kts-johntroger.workers.dev",
+).strip()
+
+
+def send_cloudflare_broadcast(text: str) -> bool:
+    """Gửi thông báo đồng loạt tới tất cả người dùng đã đăng ký trên Cloudflare Worker (Zalo Multi-user Broadcast)."""
+    if not CLOUDFLARE_WORKER_URL:
+        return False
+
+    url = f"{CLOUDFLARE_WORKER_URL.rstrip('/')}/api/broadcast"
+    chunks = split_text_chunks(text, max_length=1850)
+    success = True
+
+    for idx, chunk in enumerate(chunks, 1):
+        try:
+            resp = requests.post(url, json={"message": chunk}, timeout=30)
+            if resp.status_code == 200:
+                data = resp.json()
+                print(
+                    f"[Cloudflare Broadcast] Đã gửi phần {idx}/{len(chunks)} tới "
+                    f"{data.get('sent_count', 0)}/{data.get('subscribers_total', 0)} thành viên Zalo."
+                )
+            else:
+                print(f"[Cloudflare Broadcast] Lỗi HTTP {resp.status_code}: {resp.text}")
+                success = False
+        except Exception as exc:
+            print(f"[Cloudflare Broadcast] Lỗi kết nối tới Cloudflare Worker: {exc}")
+            success = False
+
+    return success
+
+
 def broadcast_notification(message: str) -> None:
-    """Gửi thông báo tới tất cả các kênh đã được cấu hình."""
+    """Gửi thông báo tới tất cả các kênh đã được cấu hình (Cloudflare Multi-user Zalo, Direct Zalo, Telegram)."""
     print("\n--- NỘI DUNG THÔNG BÁO ---")
     print(message)
     print("--------------------------\n")
+    send_cloudflare_broadcast(message)
     send_zalo_message(message)
     send_telegram_message(message)
 
