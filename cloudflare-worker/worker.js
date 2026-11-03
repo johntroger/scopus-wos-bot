@@ -753,7 +753,39 @@ export default {
       }
     }
 
-    // 4. Endpoint kích hoạt quét tin nhắn tức thì & Ping-Pong giữa 2 Worker phủ kín 60/60 giây (/api/poll)
+    // 4. Webhook nhận tin nhắn thời gian thực từ Zalo Bot (qua Google Apps Script Proxy)
+    if (path === "/webhook/zalo") {
+      if (request.method === "GET") {
+        return Response.json({ ok: true, status: "Zalo webhook ready" });
+      }
+
+      if (request.method === "POST") {
+        let payload = {};
+        try {
+          payload = await request.json();
+        } catch {
+          return Response.json({ ok: true, note: "Empty body" });
+        }
+
+        const botToken =
+          env.ZALO_BOT_TOKEN || (await env.SCOPUS_BOT_KV.get("ZALO_BOT_TOKEN"));
+
+        // Xử lý sự kiện tin nhắn bất đồng bộ để trả về 200 OK ngay cho Zalo
+        ctx.waitUntil(
+          (async () => {
+            try {
+              await processZaloIncomingMessage(env, botToken, payload);
+            } catch (err) {
+              console.error("[Webhook Error]:", err);
+            }
+          })()
+        );
+
+        return Response.json({ ok: true, status: "Event received" });
+      }
+    }
+
+    // 5. Endpoint kích hoạt quét tin nhắn tức thì & Ping-Pong giữa 2 Worker phủ kín 60/60 giây (/api/poll)
     if (path === "/api/poll") {
       const step = parseInt(url.searchParams.get("step") || "0", 10);
       const result = await pollZaloUpdatesLoop(env);
