@@ -18,6 +18,9 @@ import requests
 
 SCOPUS_CONTENT_PAGE = "https://www.elsevier.com/products/scopus/content"
 RETRACTION_WATCH_CSV_URL = "https://gitlab.com/crossref/retraction-watch-data/-/raw/main/retraction_watch.csv"
+HIJACKED_JOURNALS_CSV_URL = "https://docs.google.com/spreadsheets/d/1ak985WGOgGbJRJbZFanoktAN_UFeExpE/export?format=csv&gid=5255084"
+ABDC_RANKINGS_JSON_URL = "https://raw.githubusercontent.com/ben-AI-cybersec/zotero-publication-rankings/main/update-scripts/abdc_rankings.json"
+SJR_RANKINGS_JSON_URL = "https://raw.githubusercontent.com/ben-AI-cybersec/zotero-publication-rankings/main/update-scripts/sjr_rankings.json"
 
 STATE_FILE = "state.json"
 WATCHLIST_FILE = "watchlist.json"
@@ -526,80 +529,190 @@ def check_retraction_watch(state: dict, watchlist: dict, lookup_db: dict) -> Lis
 
 
 # ==============================================================================
-# 5. MODULE TRA CỨU TẠP CHÍ 2 CHIỀU (NHẮN TÊN TẠP CHÍ / ISSN VÀO ZALO BOT)
+# 5. ĐỒNG BỘ HIJACKED JOURNALS, PHÂN HẠNG ABDC & SCIMAGO SJR (Q1-Q4)
+# ==============================================================================
+
+def sync_hijacked_journals(lookup_db: dict) -> int:
+    """Đồng bộ danh sách tạp chí bị mạo danh / cướp tên miền từ Retraction Watch Hijacked Journal Checker."""
+    print("[Hijacked Journals] Đang tải danh sách tạp chí bị mạo danh mới nhất...")
+    try:
+        resp = requests.get(HIJACKED_JOURNALS_CSV_URL, headers=HEADERS, timeout=45)
+        resp.raise_for_status()
+        df = pd.read_csv(io.BytesIO(resp.content), dtype=str, skiprows=1, low_memory=False)
+        df.columns = [str(c).strip() for c in df.columns]
+
+        t_col = next((c for c in df.columns if "title" in c.lower()), df.columns[1])
+        h_url_col = next((c for c in df.columns if "url (hijacked)" in c.lower() or "hijacked url" in c.lower()), None)
+        a_url_col = next((c for c in df.columns if "authentic" in c.lower() or "legitimate" in c.lower() or "url (authentic)" in c.lower()), None)
+        issn_col = next((c for c in df.columns if "issn" in c.lower()), None)
+
+        hijacked_list = []
+        for _, row in df.iterrows():
+            title = clean_str(row.get(t_col, ""))
+            if not title or title.lower() in ["nan", "title"]:
+                continue
+            h_url = clean_str(row.get(h_url_col, "")) if h_url_col else ""
+            a_url = clean_str(row.get(a_url_col, "")) if a_url_col else ""
+            issn_val = clean_str(row.get(issn_col, "")) if issn_col else ""
+
+            hijacked_list.append({
+                "title": title,
+                "issn": issn_val,
+                "hijacked_url": h_url,
+                "authentic_url": a_url,
+            })
+
+        lookup_db["hijacked_journals"] = hijacked_list
+        print(f"[Hijacked Journals] Đã nạp thành công {len(hijacked_list)} tạp chí bị mạo danh.")
+        return len(hijacked_list)
+    except Exception as exc:
+        print(f"[Hijacked Journals] Lỗi khi nạp dữ liệu: {exc}")
+        return len(lookup_db.get("hijacked_journals", []))
+
+
+def sync_academic_rankings(lookup_db: dict) -> None:
+    """Đồng bộ phân hạng ABDC (A*, A, B, C) và SCImago Journal Rank SJR (Q1, Q2, Q3, Q4)."""
+    # 1. Đồng bộ ABDC
+    try:
+        if not lookup_db.get("abdc_rankings"):
+            print("[ABDC Ranking] Đang nạp danh mục ABDC Journal Quality List...")
+            resp = requests.get(ABDC_RANKINGS_JSON_URL, headers=HEADERS, timeout=30)
+            if resp.status_code == 200:
+                lookup_db["abdc_rankings"] = resp.json()
+                print(f"[ABDC Ranking] Đã nạp {len(lookup_db['abdc_rankings'])} tạp chí phân hạng ABDC.")
+    except Exception as exc:
+        print(f"[ABDC Ranking] Lỗi: {exc}")
+
+    # 2. Đồng bộ SJR (Q1-Q4)
+    try:
+        if not lookup_db.get("sjr_rankings"):
+            print("[SCImago SJR] Đang nạp danh mục xếp hạng SJR Q1-Q4...")
+            resp = requests.get(SJR_RANKINGS_JSON_URL, headers=HEADERS, timeout=45)
+            if resp.status_code == 200:
+                lookup_db["sjr_rankings"] = resp.json()
+                print(f"[SCImago SJR] Đã nạp {len(lookup_db['sjr_rankings'])} tạp chí phân hạng SJR.")
+    except Exception as exc:
+        print(f"[SCImago SJR] Lỗi: {exc}")
+
+
+# ==============================================================================
+# 6. MODULE TRA CỨU TẠP CHÍ 2 CHIỀU (NHẮN TÊN TẠP CHÍ / ISSN VÀO ZALO BOT)
 # ==============================================================================
 
 def search_journal_in_lookup(query: str, lookup_db: dict) -> str:
     """
-    Tìm kiếm tạp chí theo Tên hoặc mã ISSN trong cơ sở dữ liệu Discontinued của Scopus
-    và thống kê Retraction Watch.
+    Tìm kiếm tạp chí đa chiều:
+    1. Trạng thái Scopus Discontinued (bị loại).
+    2. Cảnh báo Tạp chí Giả mạo / Cướp tên miền (Hijacked Journals).
+    3. Phân hạng Quốc tế: SCImago Scopus Quartile (Q1 - Q4) & ABDC (A*, A, B, C).
+    4. Thống kê bài báo bị rút / đính chính trên Retraction Watch.
     """
     q = query.strip()
     if len(q) < 3:
         return (
             "ℹ️ HƯỚNG DẪN TRA CỨU TẠP CHÍ:\n"
             "Hãy nhắn tên tạp chí (ví dụ: 'Journal of Business Research') hoặc mã ISSN (ví dụ: '0148-2963') "
-            "để kiểm tra xem tạp chí có nằm trong danh sách bị loại (Discontinued) của Scopus và lịch sử rút bài trên Retraction Watch hay không."
+            "để kiểm tra toàn diện: Scopus Discontinued, Cảnh báo Web lừa đảo, Phân hạng Q1-Q4 / ABDC và lịch sử rút bài."
         )
 
     norm_q_issn = normalize_issn(q)
     q_lower = q.lower()
 
     disc_list = lookup_db.get("discontinued_journals", [])
-    retraction_map: Dict[str, int] = lookup_db.get("retraction_counts_by_journal", {})
+    hijacked_list = lookup_db.get("hijacked_journals", [])
+    abdc_map = lookup_db.get("abdc_rankings", {})
+    sjr_map = lookup_db.get("sjr_rankings", {})
+    retraction_map = lookup_db.get("retraction_counts_by_journal", {})
     scopus_ver = lookup_db.get("scopus_version", "Scopus Discontinued List")
 
+    # 1. So khớp Scopus Discontinued
     matched_disc = []
     for item in disc_list:
         title = item.get("title", "")
         issn = normalize_issn(item.get("issn", ""))
         eissn = normalize_issn(item.get("eissn", ""))
-
         if norm_q_issn and len(norm_q_issn) == 8 and (norm_q_issn == issn or norm_q_issn == eissn):
             matched_disc.append(item)
         elif q_lower in title.lower():
             matched_disc.append(item)
 
-    # Tìm thống kê bài bị rút trên Retraction Watch
+    # 2. So khớp Tạp chí giả mạo / lừa đảo (Hijacked)
+    matched_hijacked = []
+    for h in hijacked_list:
+        h_title = h.get("title", "")
+        h_issn = normalize_issn(h.get("issn", ""))
+        if (norm_q_issn and len(norm_q_issn) == 8 and norm_q_issn == h_issn) or (q_lower in h_title.lower()):
+            matched_hijacked.append(h)
+
+    # 3. Tra cứu phân hạng ABDC & SJR
+    matched_abdc = []
+    for j_title, info in abdc_map.items():
+        j_issns = [normalize_issn(x) for x in str(info.get("issn", "")).split(",") if normalize_issn(x)]
+        if (norm_q_issn and len(norm_q_issn) == 8 and norm_q_issn in j_issns) or (q_lower in j_title.lower()):
+            matched_abdc.append((j_title, info.get("abdc", "Listed")))
+
+    matched_sjr = []
+    for j_title, info in sjr_map.items():
+        j_issns = [normalize_issn(x) for x in str(info.get("issn", "")).split(",") if normalize_issn(x)]
+        if (norm_q_issn and len(norm_q_issn) == 8 and norm_q_issn in j_issns) or (q_lower in j_title.lower()):
+            matched_sjr.append((j_title, info.get("quartile", "N/A"), info.get("sjr", "")))
+
+    # 4. Tra cứu Retraction Watch
     matched_retractions = []
     for j_name, count in retraction_map.items():
         if q_lower in j_name.lower():
             matched_retractions.append((j_name, count))
     matched_retractions.sort(key=lambda x: x[1], reverse=True)
 
-    lines = [f"🔍 KẾT QUẢ KIỂM TRA TẠP CHÍ: \"{q}\""]
-    lines.append(f"(Dữ liệu đối chiếu: {scopus_ver})\n")
+    lines = [f"🔍 KẾT QUẢ THẨM ĐỊNH TẠP CHÍ: \"{q}\""]
 
+    # In kết quả Hijacked (Cảnh báo quan trọng nhất)
+    if matched_hijacked:
+        lines.append("\n⛔ CẢNH BÁO TẠP CHÍ BỊ GIẢ MẠO / CƯỚP TÊN MIỀN (HIJACKED):")
+        for h in matched_hijacked[:3]:
+            lines.append(f"• Tạp chí: {h.get('title')}")
+            if h.get('hijacked_url'):
+                lines.append(f"  ❌ Web giả mạo: {h.get('hijacked_url')}")
+            if h.get('authentic_url'):
+                lines.append(f"  ✅ Web chính chủ: {h.get('authentic_url')}")
+
+    # In kết quả Scopus Discontinued
     if matched_disc:
-        lines.append(f"🚨 CẢNH BÁO: Tìm thấy {len(matched_disc)} kết quả trong danh sách BỊ LOẠI (DISCONTINUED) khỏi Scopus:")
-        for item in matched_disc[:10]:
+        lines.append(f"\n🚨 CẢNH BÁO BỊ LOẠI KHỎI SCOPUS (DISCONTINUED - {scopus_ver}):")
+        for item in matched_disc[:5]:
             issn_str = item.get("issn") or item.get("eissn") or "N/A"
-            eissn_str = f" / e-ISSN: {item.get('eissn')}" if item.get("eissn") and item.get("issn") else ""
             lines.append(
-                f"• Tên tạp chí: {item.get('title')}\n"
-                f"  - ISSN: {issn_str}{eissn_str}\n"
-                f"  - NXB: {item.get('publisher')}\n"
-                f"  - Lý do bị loại: {item.get('reason')}\n"
-                f"  - Thông tin ngừng lập chỉ mục: {item.get('discontinued_info') or 'Đã ngừng coverage'}"
+                f"• {item.get('title')} (ISSN: {issn_str})\n"
+                f"  - Lý do: {item.get('reason')} | Năm ngừng: {item.get('discontinued_info') or 'Đã ngừng'}\n"
+                f"  - NXB: {item.get('publisher')}"
             )
-        if len(matched_disc) > 10:
-            lines.append(f"... và {len(matched_disc) - 10} kết quả trùng khớp khác.")
     else:
-        lines.append(
-            "✅ TRẠNG THÁI SCOPUS DISCONTINUED:\n"
-            "Không tìm thấy tạp chí này trong danh sách bị loại (Discontinued Titles) của Scopus!"
-        )
+        lines.append(f"\n✅ TRẠNG THÁI SCOPUS: An toàn (Không nằm trong danh sách Discontinued {scopus_ver})")
 
-    lines.append("")
+    # In kết quả Phân hạng
+    rank_lines = []
+    if matched_sjr:
+        for t, q_tier, val in matched_sjr[:3]:
+            rank_lines.append(f"• SCImago Scopus: {t} ➔ Phân hạng: {q_tier} (SJR: {val})")
+    if matched_abdc:
+        for t, tier in matched_abdc[:3]:
+            rank_lines.append(f"• Phân hạng Kinh tế ABDC: {t} ➔ Hạng {tier}")
+
+    if rank_lines:
+        lines.append("\n🏆 PHÂN HẠNG HỌC THUẬT QUỐC TẾ:")
+        lines.extend(rank_lines)
+
+    # In kết quả Retraction Watch
     if matched_retractions:
-        lines.append("📊 LỊCH SỬ BÀI BÁO BỊ RÚT TRÊN RETRACTION WATCH:")
-        for j_name, cnt in matched_retractions[:5]:
-            risk_tag = "⚠️ (Số lượng cao - Cần thận trọng)" if cnt >= 20 else ""
-            lines.append(f"• {j_name}: {cnt} bài từng bị rút/đính chính {risk_tag}")
+        lines.append("\n📊 LỊCH SỬ RÚT BÀI (RETRACTION WATCH):")
+        for j_name, cnt in matched_retractions[:4]:
+            warn = " ⚠️ (Số lượng cao bất thường)" if cnt >= 15 else ""
+            lines.append(f"• {j_name}: {cnt} bài từng bị rút/đính chính{warn}")
     else:
-        lines.append("📊 RETRACTION WATCH: Tạp chí này không có (hoặc có < 2) bài bị rút trong cơ sở dữ liệu Retraction Watch.")
+        lines.append("\n📊 RETRACTION WATCH: Tạp chí này không có bài bị rút trong CSDL.")
 
-    return "\n".join(lines)
+    lines.append("\n💡 Mẹo: Nhắn mã ISSN để có kết quả chính xác nhất.")
+    return "\n".join(lines)[:1950]
 
 
 def process_incoming_zalo_queries(state: dict, lookup_db: dict) -> None:
@@ -673,7 +786,11 @@ def main():
     rw_msgs = check_retraction_watch(state, watchlist, lookup_db)
     all_notifications.extend(rw_msgs)
 
-    # 3. Nếu người dùng truyền từ khóa tra cứu trực tiếp từ giao diện GitHub Actions (workflow_dispatch input)
+    # 3. Đồng bộ danh sách tạp chí bị mạo danh (Hijacked Journals) & Phân hạng (ABDC, SJR Q1-Q4)
+    sync_hijacked_journals(lookup_db)
+    sync_academic_rankings(lookup_db)
+
+    # 4. Nếu người dùng truyền từ khóa tra cứu trực tiếp từ giao diện GitHub Actions (workflow_dispatch input)
     manual_query = os.environ.get("LOOKUP_QUERY", "").strip()
     if manual_query:
         query_result = search_journal_in_lookup(manual_query, lookup_db)

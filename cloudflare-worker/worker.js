@@ -111,7 +111,7 @@ function getBusinessDiscontinuedSamples(lookupDb) {
 }
 
 /**
- * Tra cứu tạp chí theo Tên hoặc Mã ISSN
+ * Tra cứu tạp chí đa nguồn (Scopus Discontinued, Hijacked/Lừa đảo, Phân hạng ABDC/SJR, Retraction Watch)
  */
 function searchJournal(query, lookupDb) {
   const q = (query || "").trim();
@@ -123,9 +123,13 @@ function searchJournal(query, lookupDb) {
   const qLower = q.toLowerCase();
 
   const discList = lookupDb.discontinued_journals || [];
+  const hijackedList = lookupDb.hijacked_journals || [];
+  const abdcMap = lookupDb.abdc_rankings || {};
+  const sjrMap = lookupDb.sjr_rankings || {};
   const retractionMap = lookupDb.retraction_counts_by_journal || {};
   const scopusVer = lookupDb.scopus_version || "Scopus Discontinued List";
 
+  // 1. So khớp Scopus Discontinued
   const matchedDisc = [];
   for (const item of discList) {
     const title = item.title || "";
@@ -143,6 +147,49 @@ function searchJournal(query, lookupDb) {
     }
   }
 
+  // 2. So khớp Tạp chí Giả mạo / Cướp tên miền (Hijacked)
+  const matchedHijacked = [];
+  for (const h of hijackedList) {
+    const hTitle = h.title || "";
+    const hIssn = normalizeIssn(h.issn || "");
+    if (
+      (normQIssn && normQIssn.length === 8 && normQIssn === hIssn) ||
+      hTitle.toLowerCase().includes(qLower)
+    ) {
+      matchedHijacked.push(h);
+    }
+  }
+
+  // 3. Tra cứu Phân hạng ABDC & SCImago SJR (Q1-Q4)
+  const matchedAbdc = [];
+  for (const [jTitle, info] of Object.entries(abdcMap)) {
+    const jIssns = String(info.issn || "")
+      .split(",")
+      .map(normalizeIssn)
+      .filter(Boolean);
+    if (
+      (normQIssn && normQIssn.length === 8 && jIssns.includes(normQIssn)) ||
+      jTitle.toLowerCase().includes(qLower)
+    ) {
+      matchedAbdc.push([jTitle, info.abdc || "Listed"]);
+    }
+  }
+
+  const matchedSjr = [];
+  for (const [jTitle, info] of Object.entries(sjrMap)) {
+    const jIssns = String(info.issn || "")
+      .split(",")
+      .map(normalizeIssn)
+      .filter(Boolean);
+    if (
+      (normQIssn && normQIssn.length === 8 && jIssns.includes(normQIssn)) ||
+      jTitle.toLowerCase().includes(qLower)
+    ) {
+      matchedSjr.push([jTitle, info.quartile || "N/A", info.sjr || ""]);
+    }
+  }
+
+  // 4. Tra cứu Retraction Watch
   const matchedRetractions = [];
   for (const [jName, count] of Object.entries(retractionMap)) {
     if (jName.toLowerCase().includes(qLower)) {
@@ -151,51 +198,69 @@ function searchJournal(query, lookupDb) {
   }
   matchedRetractions.sort((a, b) => b[1] - a[1]);
 
-  const lines = [
-    `🔍 KẾT QUẢ KIỂM TRA: "${q}"`,
-    `(Nguồn đối chiếu: ${scopusVer})\n`,
-  ];
+  const lines = [`🔍 KẾT QUẢ THẨM ĐỊNH TẠP CHÍ: "${q}"`];
 
+  // In cảnh báo Hijacked (Quan trọng nhất)
+  if (matchedHijacked.length > 0) {
+    lines.push("\n⛔ CẢNH BÁO TẠP CHÍ BỊ GIẢ MẠO / CƯỚP TÊN MIỀN (HIJACKED):");
+    for (const h of matchedHijacked.slice(0, 3)) {
+      lines.push(`• Tạp chí: ${h.title}`);
+      if (h.hijacked_url) lines.push(`  ❌ Web giả mạo: ${h.hijacked_url}`);
+      if (h.authentic_url) lines.push(`  ✅ Web chính chủ: ${h.authentic_url}`);
+    }
+  }
+
+  // In Scopus Discontinued
   if (matchedDisc.length > 0) {
     lines.push(
-      `🚨 CẢNH BÁO: Tìm thấy ${matchedDisc.length} kết quả trong danh sách BỊ LOẠI (DISCONTINUED) khỏi Scopus:`
+      `\n🚨 CẢNH BÁO: BỊ LOẠI KHỎI SCOPUS (DISCONTINUED - ${scopusVer}):`
     );
-    for (const item of matchedDisc.slice(0, 8)) {
+    for (const item of matchedDisc.slice(0, 5)) {
       const issnStr = item.issn || item.eissn || "N/A";
-      const eissnStr =
-        item.eissn && item.issn ? ` / e-ISSN: ${item.eissn}` : "";
       lines.push(
-        `• Tên tạp chí: ${item.title}\n` +
-          `  - ISSN: ${issnStr}${eissnStr}\n` +
-          `  - NXB: ${item.publisher || "N/A"}\n` +
-          `  - Lý do bị loại: ${item.reason || "Discontinued"}\n` +
-          `  - Năm ngừng coverage: ${item.discontinued_info || "Đã ngừng"}`
+        `• ${item.title} (ISSN: ${issnStr})\n` +
+          `  - Lý do: ${item.reason || "Discontinued"} | Năm ngừng: ${item.discontinued_info || "Đã ngừng"}\n` +
+          `  - NXB: ${item.publisher || "N/A"}`
       );
-    }
-    if (matchedDisc.length > 8) {
-      lines.push(`... và ${matchedDisc.length - 8} tạp chí trùng khớp khác.`);
     }
   } else {
     lines.push(
-      "✅ TRẠNG THÁI SCOPUS DISCONTINUED:\n" +
-        "Không tìm thấy tạp chí này trong danh sách bị loại (Discontinued Titles) của Scopus!"
+      `\n✅ TRẠNG THÁI SCOPUS: An toàn (Không nằm trong danh sách Discontinued ${scopusVer})`
     );
   }
 
-  lines.push("");
+  // In Phân hạng
+  const rankLines = [];
+  if (matchedSjr.length > 0) {
+    for (const [t, qTier, val] of matchedSjr.slice(0, 3)) {
+      rankLines.push(`• SCImago Scopus: ${t} ➔ Phân hạng: ${qTier} (SJR: ${val})`);
+    }
+  }
+  if (matchedAbdc.length > 0) {
+    for (const [t, tier] of matchedAbdc.slice(0, 3)) {
+      rankLines.push(`• Phân hạng Kinh tế ABDC: ${t} ➔ Hạng ${tier}`);
+    }
+  }
+
+  if (rankLines.length > 0) {
+    lines.push("\n🏆 PHÂN HẠNG HỌC THUẬT QUỐC TẾ:");
+    lines.push(...rankLines);
+  }
+
+  // In Retraction Watch
   if (matchedRetractions.length > 0) {
-    lines.push("📊 LỊCH SỬ BÀI BÁO BỊ RÚT (RETRACTION WATCH):");
-    for (const [jName, cnt] of matchedRetractions.slice(0, 5)) {
-      const warn = cnt >= 20 ? " ⚠️ (Số lượng cao)" : "";
+    lines.push("\n📊 LỊCH SỬ RÚT BÀI (RETRACTION WATCH):");
+    for (const [jName, cnt] of matchedRetractions.slice(0, 4)) {
+      const warn = cnt >= 15 ? " ⚠️ (Số lượng cao bất thường)" : "";
       lines.push(`• ${jName}: ${cnt} bài từng bị rút/đính chính${warn}`);
     }
   } else {
     lines.push(
-      "📊 RETRACTION WATCH: Tạp chí này không có (hoặc < 2) bài bị rút trong CSDL Retraction Watch."
+      "\n📊 RETRACTION WATCH: Tạp chí này không có bài bị rút trong CSDL."
     );
   }
 
-  lines.push(`\n💡 Mẹo: Gõ '1' để xem hướng dẫn | Gõ '2' xem DS ngành Kinh tế - Quản trị bị loại.`);
+  lines.push("\n💡 Mẹo: Gõ '1' xem hướng dẫn | Nhắn mã ISSN để kết quả chính xác nhất.");
   return lines.join("\n").slice(0, 1950);
 }
 
