@@ -1115,6 +1115,44 @@ async function resolveDoiMetadata(doi) {
  */
 async function resolveAndSearch(query, lookupDb) {
   const text = (query || "").trim();
+  const cmd = text.toLowerCase();
+
+  // 1. Phím tắt danh mục 28 Hội đồng GSNN (QĐ 26/QĐ-HĐGSNN)
+  if (
+    ["6", "hdgs", "/hdgs", "hoidong", "hội đồng", "hdgsnn"].includes(cmd) ||
+    cmd.startsWith("hdgs ") ||
+    cmd.startsWith("/hdgs ") ||
+    cmd.startsWith("hoidong ")
+  ) {
+    return handleHdgsCommand(text, lookupDb);
+  }
+
+  // 2. Phím tắt danh mục ASEAN Citation Index (ACI)
+  if (["aci", "/aci", "asean"].includes(cmd)) {
+    return getAciListMessage(lookupDb);
+  }
+
+  // 3. Phím tắt tiêu chuẩn Quỹ NAFOSTED (QĐ 14/QĐ-HĐQL-NAFOSTED)
+  if (["nafosted", "/nafosted", "nafos"].includes(cmd)) {
+    return getNafostedGuideMessage(lookupDb);
+  }
+
+  // 4. Phím tắt Top 16 Tạp chí Việt Nam trong Scopus/WoS
+  if (["5", "vn", "vietnam", "tcvn", "việt nam"].includes(cmd)) {
+    return getVietnamScopusList(lookupDb);
+  }
+
+  // 5. Phím tắt Tạp chí Kinh tế bị loại khỏi Scopus
+  if (["2", "kinhte", "kinh tế", "ds", "danh sách"].includes(cmd)) {
+    return getBusinessDiscontinuedSamples(lookupDb);
+  }
+
+  // 6. Phím tắt Hướng dẫn
+  if (["1", "help", "/help", "menu", "/menu", "huongdan", "hướng dẫn"].includes(cmd)) {
+    return buildUserGuideMessage();
+  }
+
+  // 7. Tra cứu theo DOI
   const doi = extractDoi(text);
 
   if (doi) {
