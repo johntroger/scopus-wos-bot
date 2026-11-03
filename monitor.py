@@ -699,6 +699,37 @@ def search_journal_in_lookup(query: str, lookup_db: dict) -> str:
     hdgs_data = lookup_db.get("hdgsnn_kinhte", {})
     hdgs_journals = hdgs_data.get("journals", {})
     scopus_ver = lookup_db.get("scopus_version", "Scopus Discontinued List")
+    wos_delisted_list = lookup_db.get("wos_delisted_journals", [])
+    beall_journals_list = lookup_db.get("beall_standalone_journals", [])
+    beall_publishers_list = lookup_db.get("beall_publishers", [])
+
+    # So khớp WoS Delisted
+    matched_wos_delisted = None
+    for item in wos_delisted_list:
+        issn = normalize_issn(item.get("issn", ""))
+        eissn = normalize_issn(item.get("e_issn", ""))
+        title = item.get("name", "").lower()
+        if (norm_q_issn and len(norm_q_issn) == 8 and (norm_q_issn == issn or norm_q_issn == eissn)) or (title and (title == resolved_query or (len(resolved_query) >= 8 and (resolved_query in title or title in resolved_query)))):
+            matched_wos_delisted = item
+            break
+
+    # So khớp Beall Standalone Journal
+    matched_beall_journal = None
+    for item in beall_journals_list:
+        name = item.get("name", "").lower()
+        abbr = item.get("abbr", "").lower()
+        if (abbr and abbr == resolved_query) or (name and (name == resolved_query or (len(resolved_query) >= 8 and (resolved_query in name or name in resolved_query)))):
+            matched_beall_journal = item
+            break
+
+    # So khớp Beall Predatory Publisher
+    matched_beall_publisher = None
+    for item in beall_publishers_list:
+        name = item.get("name", "").lower()
+        abbr = item.get("abbr", "").lower()
+        if (abbr and abbr == resolved_query) or (name and (name == resolved_query or (len(resolved_query) >= 8 and resolved_query in name))):
+            matched_beall_publisher = item
+            break
 
     # 1. So khớp Tạp chí giả mạo (Hijacked)
     matched_hijacked = None
@@ -829,7 +860,7 @@ def search_journal_in_lookup(query: str, lookup_db: dict) -> str:
             retraction_count = max(retraction_count, cnt)
 
     # Nếu không tìm thấy tạp chí nào trong mọi nguồn
-    if not matched_disc and not matched_hijacked and not matched_sjr and not matched_abdc and not matched_vn and not matched_hdgs:
+    if not matched_disc and not matched_hijacked and not matched_sjr and not matched_abdc and not matched_vn and not matched_hdgs and not matched_wos_delisted and not matched_beall_journal and not matched_beall_publisher:
         return (
             f"🔍 KẾT QUẢ TRA CỨU: \"{q}\"\n\n"
             f"❓ KHÔNG TÌM THẤY TRONG CSDL KHOA HỌC (SCOPUS / ABDC / CHUẨN VN 2026 / HĐGSNN)\n"

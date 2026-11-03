@@ -1,3 +1,16 @@
+function matchTitleSafely(targetText, queryText) {
+  if (!targetText || !queryText) return false;
+  const t = targetText.toLowerCase();
+  const q = queryText.toLowerCase();
+  if (t === q) return true;
+  if (q.length <= 5) {
+    const escaped = q.replace(/[.*+?^$\{\}()|[\]\\]/g, '\\$&');
+    const re = new RegExp('(?:^|[^a-z0-9])' + escaped + '(?:[^a-z0-9]|$)', 'i');
+    return re.test(t);
+  }
+  return t.includes(q);
+}
+
 /**
  * Cloudflare Worker: Scopus Discontinued & Retraction Watch Zalo/Telegram Bot + Web Portal
  * Kết nối trực tiếp với cơ sở dữ liệu tự động cập nhật trên GitHub:
@@ -256,14 +269,63 @@ function searchJournal(query, lookupDb) {
   const vnList = lookupDb.vn_standards_2026 || [];
   const hdgsData = lookupDb.hdgsnn_kinhte || {};
   const hdgsJournals = hdgsData.journals || {};
+  const wosDelistedList = lookupDb.wos_delisted_journals || [];
+  const beallJournalsList = lookupDb.beall_standalone_journals || [];
+  const beallPublishersList = lookupDb.beall_publishers || [];
+
+  // So khớp Web of Science Delisted / Suppressed
+  let matchedWosDelisted = null;
+  for (const item of wosDelistedList) {
+    const issn = normalizeIssn(item.issn || "");
+    const eissn = normalizeIssn(item.e_issn || "");
+    const title = (item.name || "").toLowerCase();
+    if (
+      (normQIssn && normQIssn.length === 8 && (normQIssn === issn || normQIssn === eissn)) ||
+      (title && title === resolvedQuery) ||
+      (title && resolvedQuery.length >= 8 && (title.includes(resolvedQuery) || resolvedQuery.includes(title)))
+    ) {
+      matchedWosDelisted = item;
+      break;
+    }
+  }
+
+  // So khớp Beall's List - Tạp chí săn mồi độc lập (Standalone Predatory Journals)
+  let matchedBeallJournal = null;
+  for (const item of beallJournalsList) {
+    const name = (item.name || "").toLowerCase();
+    const abbr = (item.abbr || "").toLowerCase();
+    if (
+      (abbr && abbr === resolvedQuery) ||
+      (name && name === resolvedQuery) ||
+      (name && resolvedQuery.length >= 8 && (name.includes(resolvedQuery) || resolvedQuery.includes(name)))
+    ) {
+      matchedBeallJournal = item;
+      break;
+    }
+  }
+
+  // So khớp Beall's List - Nhà xuất bản săn mồi (Predatory Publishers)
+  let matchedBeallPublisher = null;
+  for (const item of beallPublishersList) {
+    const name = (item.name || "").toLowerCase();
+    const abbr = (item.abbr || "").toLowerCase();
+    if (
+      (abbr && abbr === resolvedQuery) ||
+      (name && matchTitleSafely(name, resolvedQuery))
+    ) {
+      matchedBeallPublisher = item;
+      break;
+    }
+  }
 
   // 1. So khớp Tạp chí Giả mạo / Cướp tên miền (Hijacked)
   let matchedHijacked = null;
   for (const h of hijackedList) {
+    const hTitle = (h.title || h.journal_title || "").toLowerCase();
     const hIssn = normalizeIssn(h.issn || "");
     if (
       (normQIssn && normQIssn.length === 8 && normQIssn === hIssn) ||
-      h.title.toLowerCase().includes(resolvedQuery)
+      (hTitle && matchTitleSafely(hTitle, resolvedQuery))
     ) {
       matchedHijacked = h;
       break;
@@ -284,7 +346,7 @@ function searchJournal(query, lookupDb) {
     ) {
       matchedDisc = item;
       break;
-    } else if (title.toLowerCase().includes(resolvedQuery)) {
+    } else if (matchTitleSafely(title, resolvedQuery)) {
       matchedDisc = item;
       break;
     }
@@ -307,7 +369,7 @@ function searchJournal(query, lookupDb) {
     }
     if (!matchedSjr) {
       for (const [title, info] of Object.entries(sjrMap)) {
-        if (title.includes(resolvedQuery)) {
+        if (matchTitleSafely(title, resolvedQuery)) {
           matchedSjr = info;
           sjrTitle = title;
           break;
@@ -332,7 +394,7 @@ function searchJournal(query, lookupDb) {
         matchedAbdc = info;
         abdcTitle = title;
         break;
-      } else if (title.includes(resolvedQuery)) {
+      } else if (matchTitleSafely(title, resolvedQuery)) {
         matchedAbdc = info;
         abdcTitle = title;
         break;
@@ -359,13 +421,13 @@ function searchJournal(query, lookupDb) {
   if (!matchedVn && cleanQVn.length >= 4) {
     for (const item of vnList) {
       const tClean = cleanVnJournalName(item.title);
-      if (tClean.includes(cleanQVn) || (cleanQVn.length >= 8 && cleanQVn.includes(tClean))) {
+      if (matchTitleSafely(tClean, cleanQVn) || (cleanQVn.length >= 8 && cleanQVn.includes(tClean))) {
         matchedVn = item;
         break;
       }
       if (item.aliases && item.aliases.some((a) => {
         const aClean = cleanVnJournalName(a);
-        return aClean.includes(cleanQVn) || (cleanQVn.length >= 8 && cleanQVn.includes(aClean));
+        return matchTitleSafely(aClean, cleanQVn) || (cleanQVn.length >= 8 && cleanQVn.includes(aClean));
       })) {
         matchedVn = item;
         break;
@@ -393,7 +455,7 @@ function searchJournal(query, lookupDb) {
   if (!matchedHdgs && cleanQVn.length >= 4) {
     for (const [title, info] of Object.entries(hdgsJournals)) {
       const tClean = cleanVnJournalName(title);
-      if (tClean.includes(cleanQVn) || (cleanQVn.length >= 8 && cleanQVn.includes(tClean))) {
+      if (matchTitleSafely(tClean, cleanQVn) || (cleanQVn.length >= 8 && cleanQVn.includes(tClean))) {
         matchedHdgs = { title, ...info };
         break;
       }
@@ -469,7 +531,7 @@ function searchJournal(query, lookupDb) {
   }
 
   // TRƯỜNG HỢP: KHÔNG TÌM THẤY TẠP CHÍ NÀO TRONG MỌI NGUỒN DỮ LIỆU
-  if (!matchedDisc && !matchedHijacked && !matchedSjr && !matchedAbdc && !matchedVn && !matchedHdgs) {
+  if (!matchedDisc && !matchedHijacked && !matchedSjr && !matchedAbdc && !matchedVn && !matchedHdgs && !matchedWosDelisted && !matchedBeallJournal && !matchedBeallPublisher) {
     const suggestions = [];
     const queryTokens = qLower.split(/[\s\-:,/]+/).filter((t) => t.length >= 3 && !STOPWORDS.has(t));
     if (queryTokens.length > 0) {
@@ -515,6 +577,9 @@ function searchJournal(query, lookupDb) {
     matchedVn?.title ||
     matchedHdgs?.title ||
     matchedDisc?.title ||
+    matchedWosDelisted?.name ||
+    matchedBeallJournal?.name ||
+    matchedBeallPublisher?.name ||
     sjrTitle ||
     abdcTitle ||
     matchedHijacked?.title ||
@@ -525,13 +590,15 @@ function searchJournal(query, lookupDb) {
     matchedHdgs?.issn ||
     matchedDisc?.issn ||
     matchedDisc?.eissn ||
+    matchedWosDelisted?.issn ||
+    matchedWosDelisted?.e_issn ||
     matchedSjr?.issn ||
     matchedAbdc?.issn ||
     matchedHijacked?.issn ||
     "Đang cập nhật"
   );
 
-  const orgPublisher = matchedVn?.org || matchedHdgs?.org || matchedDisc?.publisher || "";
+  const orgPublisher = matchedVn?.org || matchedHdgs?.org || matchedDisc?.publisher || matchedWosDelisted?.publisher || (matchedBeallPublisher ? matchedBeallPublisher.name : "");
 
   const lines = [`🔬 BÁO CÁO THẨM ĐỊNH TẠP CHÍ KHOA HỌC`];
   lines.push(`📖 Tạp chí: "${finalTitle}"`);
@@ -560,6 +627,28 @@ function searchJournal(query, lookupDb) {
     lines.push(`• Thời điểm ngừng chỉ mục: ${matchedDisc.discontinued_info || "Đã ngừng"}`);
     lines.push(`• Lý do loại bỏ: ${matchedDisc.reason || "Publication Concerns (Nghi vấn biên tập)"}`);
     lines.push(`• Đánh giá rủi ro: CỰC KỲ NGUY HIỂM. Bài đăng sau ngày bị loại sẽ bị 0 điểm HĐGSNN và không được tính chuẩn đầu ra Tiến sĩ.`);
+  }
+
+  if (matchedWosDelisted) {
+    lines.push(`\n🚨 CẢNH BÁO NGUY HIỂM: ĐÃ BỊ LOẠI KHỎI WEB OF SCIENCE (WoS DELISTED)!`);
+    lines.push(`• Nhà xuất bản: ${matchedWosDelisted.publisher || "N/A"}`);
+    lines.push(`• Năm bị tước chỉ mục WoS: ${matchedWosDelisted.year || "2023"}`);
+    lines.push(`• Lý do xử phạt: ${matchedWosDelisted.reason || "Vi phạm liêm chính khoa học / Nghi vấn paper mill"}`);
+    lines.push(`• Đánh giá rủi ro: CỰC KỲ NGUY HIỂM. Bị tước Impact Factor (JIF), bài báo công bố không được tính chuẩn đầu ra WoS Core Collection!`);
+  }
+
+  if (matchedBeallJournal) {
+    lines.push(`\n⚠️ CẢNH BÁO: TẠP CHÍ SĂN MỒI (BEALL'S LIST - STANDALONE JOURNAL)!`);
+    lines.push(`• Nguồn cảnh báo: Danh mục tạp chí săn mồi độc lập của Jeffrey Beall & Stop Predatory Journals.`);
+    if (matchedBeallJournal.url) lines.push(`• Website ghi nhận: ${matchedBeallJournal.url}`);
+    lines.push(`• Khuyến cáo: Không nộp bài do quy trình bình duyệt không đạt chuẩn học thuật, nguy cơ mất uy tín công trình!`);
+  }
+
+  if (matchedBeallPublisher) {
+    lines.push(`\n⚠️ CẢNH BÁO: THUỘC NHÀ XUẤT BẢN SĂN MỒI (BEALL'S LIST - PREDATORY PUBLISHER)!`);
+    lines.push(`• Nhà xuất bản: ${matchedBeallPublisher.name}`);
+    if (matchedBeallPublisher.url) lines.push(`• Website NXB: ${matchedBeallPublisher.url}`);
+    lines.push(`• Đánh giá rủi ro: NXB này nằm trong danh sách đen các nhà xuất bản săn mồi (Predatory Publisher) theo Beall's List.`);
   }
 
   // PHẦN 3: TIÊU CHUẨN KHOA HỌC VIỆT NAM (2026) & ĐIỂM HĐGSNN
@@ -624,8 +713,14 @@ function searchJournal(query, lookupDb) {
       lines.push(`• Scopus Discontinued: ✅ Không nằm trong danh mục bị loại`);
     }
   }
+  if (!matchedWosDelisted) {
+    lines.push(`• Web of Science: ✅ Không nằm trong danh sách bị loại (WoS Delisted)`);
+  }
   if (!matchedHijacked) {
     lines.push(`• Tạp chí giả mạo: ✅ AN TOÀN (Chưa ghi nhận website cướp tên miền)`);
+  }
+  if (!matchedBeallJournal && !matchedBeallPublisher) {
+    lines.push(`• Danh sách Beall's List: ✅ An toàn (Không thuộc NXB/Tạp chí săn mồi)`);
   }
   if (retractionCount > 0) {
     lines.push(`• Lịch sử rút bài (Retraction Watch): ⚠️ Có ${retractionCount} bài từng bị rút/đính chính`);
@@ -635,7 +730,7 @@ function searchJournal(query, lookupDb) {
 
   // PHẦN 6: KHUYẾN NGHỊ NỘP BÀI (VERDICT)
   lines.push(`\n🎯 5. KHUYẾN NGHỊ NỘP BÀI (VERDICT):`);
-  if (matchedDisc || matchedHijacked) {
+  if (matchedDisc || matchedHijacked || matchedWosDelisted || matchedBeallJournal) {
     lines.push(`⛔ TUYỆT ĐỐI KHÔNG NỘP BÀI: Tạp chí có rủi ro pháp lý học thuật rất lớn, bài báo sẽ không được công nhận.`);
 
     // GỢI Ý TẠP CHÍ THAY THẾ AN TOÀN CÙNG CHUYÊN NGÀNH
@@ -645,6 +740,8 @@ function searchJournal(query, lookupDb) {
     for (const a of alts) {
       lines.push(`• ${a.name}\n  ISSN: ${a.issn} | ${a.note}`);
     }
+  } else if (matchedBeallPublisher) {
+    lines.push(`⚠️ CẢNH GIÁC CAO: Đơn vị xuất bản nằm trong danh mục NXB săn mồi của Beall's List. Cần kiểm tra kỹ lưỡng ban biên tập và chính sách phản biện trước khi nộp bài.`);
   } else if (matchedSjr?.quartile === "Q1" || matchedAbdc?.abdc === "A*" || matchedAbdc?.abdc === "A") {
     lines.push(`✅ RẤT NÊN NỘP: Tạp chí quốc tế hàng đầu, đủ điều kiện bảo vệ Luận án Tiến sĩ, xét PGS/GS và nghiệm thu đề tài NCKH trọng điểm.`);
   } else if (matchedSjr || matchedAbdc) {
@@ -1009,13 +1106,22 @@ async function processZaloIncomingMessage(env, botToken, update) {
       const db = await getLookupDatabase();
       const updatedSubs = await getSubscribers(env);
       replyText =
-        `📊 THÔNG TIN HỆ THỐNG SCOPUS & WOS BOT:\n` +
-        `• Phiên bản Scopus: ${db.scopus_version}\n` +
-        `• Tổng số tạp chí Discontinued đang lưu: ${(db.discontinued_journals || []).length} tạp chí\n` +
-        `• Số tạp chí có lịch sử Retraction Watch: ${Object.keys(db.retraction_counts_by_journal || {}).length} tạp chí\n` +
-        `• Số thành viên đăng ký nhận cảnh báo: ${Object.keys(updatedSubs).length} người\n` +
-        `• Cập nhật lần cuối: ${db.updated_at}\n\n` +
-        `💡 Gõ '1' để xem hướng dẫn | Gõ '2' xem DS tạp chí Kinh tế bị loại.`;
+        `📊 CƠ SỞ DỮ LIỆU ĐA NGUỒN CỦA BOT (ĐÃ ĐỒNG BỘ 100%):\n` +
+        `───────────────────────────────────────\n` +
+        `1️⃣ NGUỒN TRA CỨU HỌC THUẬT:\n` +
+        `• SCImago Scopus SJR: ${Object.keys(db.sjr_rankings || {}).length.toLocaleString()} tạp chí quốc tế (Q1-Q4)\n` +
+        `• Danh mục ABDC (Úc): ${Object.keys(db.abdc_rankings || {}).length.toLocaleString()} tạp chí (A*, A, B, C)\n` +
+        `• Chuẩn Khoa học Quốc gia VN: ${(db.vn_standards_2026 || []).length} tạp chí (gồm 16 tạp chí Scopus/WoS)\n` +
+        `• 28 Hội đồng GSNN: Đầy đủ 28/28 Hội đồng ngành/liên ngành\n\n` +
+        `2️⃣ HỆ THỐNG CẢNH BÁO RỦI RO & SĂN MỒI:\n` +
+        `• Scopus Discontinued (bị loại): ${(db.discontinued_journals || []).length.toLocaleString()} tạp chí\n` +
+        `• WoS Delisted (bị tước chỉ mục): ${(db.wos_delisted_journals || []).length} tạp chí quốc tế\n` +
+        `• Tạp chí Giả mạo (Hijacked): ${(db.hijacked_journals || []).length} website lừa đảo (Retraction Watch + Beall)\n` +
+        `• Beall's List (Tạp chí săn mồi): ${(db.beall_standalone_journals || []).length.toLocaleString()} tạp chí độc lập\n` +
+        `• Beall's List (NXB săn mồi): ${(db.beall_publishers || []).length.toLocaleString()} nhà xuất bản\n` +
+        `• Retraction Watch: ${Object.keys(db.retraction_counts_by_journal || {}).length.toLocaleString()} tạp chí có bài bị rút\n\n` +
+        `👥 Thành viên nhận thông báo: ${Object.keys(updatedSubs).length} nhà nghiên cứu\n` +
+        `💡 Gõ '1' để xem hướng dẫn | Nhắn mã ISSN/tên để tra cứu ngay.`;
     } else if (["4", "dangky", "/dangky", "subscribe"].includes(cmd)) {
       const total = await addSubscriber(env, chatId, displayName);
       replyText =
