@@ -82,8 +82,10 @@ function buildUserGuideMessage(displayName = "bạn", isFirstTime = false) {
     `• Gõ 3 : Xem thông tin phiên bản CSDL\n` +
     `• Gõ 4 : Bật/tắt nhận thông báo định kỳ (Gõ 'huy' để tắt)\n` +
     `• Gõ 5 : Xem 16 Tạp chí Việt Nam trong Scopus / WoS quốc tế\n` +
-    `• Gõ 6 : Danh mục điểm 28 Hội đồng Giáo sư Nhà nước (QĐ 26/QĐ-HĐGSNN)\n\n` +
-    `👉 Hãy thử nhắn: VJCS, hdgs y hoc, hdgs cntt hoặc 10.1016/j.jbusres.2021.08.043`
+    `• Gõ 6 : Danh mục điểm 28 Hội đồng Giáo sư Nhà nước (QĐ 26/QĐ-HĐGSNN)\n` +
+    `• Gõ aci : Xem danh mục Tạp chí Việt Nam trong ASEAN Citation Index\n` +
+    `• Gõ nafosted : Xem chuẩn công nhận bài báo Quỹ NAFOSTED Quốc gia\n\n` +
+    `👉 Hãy thử nhắn: VJCS, aci, nafosted, hdgs y hoc hoặc 10.1016/j.jbusres.2021.08.043`
   );
 }
 
@@ -273,6 +275,12 @@ function searchJournal(query, lookupDb) {
   const hdgsByIssn = lookupDb.hdgs_by_issn || {};
   const hdgsByTitle = lookupDb.hdgs_by_title || {};
   const issnLinkedMap = lookupDb.issn_linked_map || {};
+  const aciData = lookupDb.aci_journals || {};
+  const aciByIssn = aciData.by_issn || {};
+  const aciByTitle = aciData.by_title || {};
+  const nafostedData = lookupDb.nafosted_national || {};
+  const nafostedByIssn = nafostedData.by_issn || {};
+  const nafostedByTitle = nafostedData.by_title || {};
   const wosDelistedList = lookupDb.wos_delisted_journals || [];
   const beallJournalsList = lookupDb.beall_standalone_journals || [];
   const beallPublishersList = lookupDb.beall_publishers || [];
@@ -534,6 +542,70 @@ function searchJournal(query, lookupDb) {
     }
   }
 
+  // 6.5. Tra cứu Danh mục ACI (ASEAN Citation Index) & NAFOSTED Quốc gia
+  let matchedAci = null;
+  let matchedNafostedNational = null;
+
+  // Tra cứu ACI theo ISSN
+  if (normQIssn && normQIssn.length === 8) {
+    if (aciByIssn[normQIssn]) matchedAci = aciByIssn[normQIssn];
+    else if (issnLinkedMap[normQIssn]) {
+      for (const li of issnLinkedMap[normQIssn]) {
+        if (aciByIssn[li]) { matchedAci = aciByIssn[li]; break; }
+      }
+    }
+  }
+
+  // Tra cứu ACI theo Title
+  if (!matchedAci && cleanQVn.length >= 4) {
+    if (aciByTitle[cleanQVn]) matchedAci = aciByTitle[cleanQVn];
+    else {
+      for (const [t, info] of Object.entries(aciByTitle)) {
+        if (matchTitleSafely(t, cleanQVn) || (cleanQVn.length >= 8 && cleanQVn.includes(t))) {
+          matchedAci = info;
+          break;
+        }
+      }
+    }
+  }
+
+  // Tra cứu NAFOSTED Quốc gia theo ISSN
+  if (normQIssn && normQIssn.length === 8) {
+    if (nafostedByIssn[normQIssn]) matchedNafostedNational = nafostedByIssn[normQIssn];
+    else if (issnLinkedMap[normQIssn]) {
+      for (const li of issnLinkedMap[normQIssn]) {
+        if (nafostedByIssn[li]) { matchedNafostedNational = nafostedByIssn[li]; break; }
+      }
+    }
+  }
+
+  // Tra cứu NAFOSTED Quốc gia theo Title
+  if (!matchedNafostedNational && cleanQVn.length >= 4) {
+    if (nafostedByTitle[cleanQVn]) matchedNafostedNational = nafostedByTitle[cleanQVn];
+    else {
+      for (const [t, info] of Object.entries(nafostedByTitle)) {
+        if (matchTitleSafely(t, cleanQVn) || (cleanQVn.length >= 8 && cleanQVn.includes(t))) {
+          matchedNafostedNational = info;
+          break;
+        }
+      }
+    }
+  }
+
+  // Đồng bộ ACI & NAFOSTED qua Tạp chí Chuẩn VN
+  if (matchedVn) {
+    const vnIssns = [matchedVn.issn, matchedVn.eissn].filter(Boolean).map(normalizeIssn).filter(Boolean);
+    const vnClean = cleanVnJournalName(matchedVn.title);
+    if (!matchedAci) {
+      for (const vi of vnIssns) { if (aciByIssn[vi]) { matchedAci = aciByIssn[vi]; break; } }
+      if (!matchedAci && aciByTitle[vnClean]) matchedAci = aciByTitle[vnClean];
+    }
+    if (!matchedNafostedNational) {
+      for (const vi of vnIssns) { if (nafostedByIssn[vi]) { matchedNafostedNational = nafostedByIssn[vi]; break; } }
+      if (!matchedNafostedNational && nafostedByTitle[vnClean]) matchedNafostedNational = nafostedByTitle[vnClean];
+    }
+  }
+
   // 7. Đồng bộ hai chiều cho Tạp chí Việt Nam với SCImago Scopus
   if (!matchedSjr && matchedVn) {
     const vnTitleLower = (matchedVn.title || "").toLowerCase();
@@ -710,14 +782,34 @@ function searchJournal(query, lookupDb) {
     lines.push(`• Đánh giá rủi ro: NXB này nằm trong danh sách đen các nhà xuất bản săn mồi (Predatory Publisher) theo Beall's List.`);
   }
 
-  // PHẦN 3: TIÊU CHUẨN KHOA HỌC VIỆT NAM (2026) & ĐIỂM HĐGSNN
-  if (matchedVn || matchedHdgs || matchedSjr) {
-    lines.push(`\n🇻🇳 2. TIÊU CHUẨN VIỆT NAM & ĐIỂM HĐGSNN:`);
+  // PHẦN 3: TIÊU CHUẨN KHOA HỌC VIỆT NAM (2026), NAFOSTED & ĐIỂM HĐGSNN
+  const isNafostedIntl =
+    matchedSjr &&
+    ["Q1", "Q2", "Q3"].includes(matchedSjr.quartile) &&
+    !matchedDisc &&
+    !matchedBeallJournal &&
+    !matchedBeallPublisher &&
+    !matchedWosDelisted;
+
+  if (matchedVn || matchedHdgs || matchedSjr || matchedAci || matchedNafostedNational) {
+    lines.push(`\n🇻🇳 2. TIÊU CHUẨN VIỆT NAM, NAFOSTED & HĐGSNN:`);
     if (matchedVn) {
       lines.push(`• Chuẩn khoa học VN 2026: ✅ ĐẠT TIÊU CHUẨN QUỐC GIA (STT: ${matchedVn.stt} / 341)`);
       lines.push(`• Phân nhóm: ${matchedVn.cat}`);
     } else if (matchedSjr || matchedAbdc) {
       lines.push(`• Chuẩn khoa học VN 2026: Tạp chí quốc tế (công nhận tính điểm theo quy chế đào tạo & HĐGSNN)`);
+    }
+
+    // Tiêu chuẩn Quỹ NAFOSTED (QĐ 14/QĐ-HĐQL-NAFOSTED)
+    if (matchedNafostedNational) {
+      lines.push(`• Chuẩn Quỹ NAFOSTED: 🇻🇳 ĐẠT CHUẨN QUỐC GIA UY TÍN (HĐ ngành: ${matchedNafostedNational.council} - Đủ điều kiện nghiệm thu đề tài NAFOSTED)`);
+    } else if (isNafostedIntl) {
+      lines.push(`• Chuẩn Quỹ NAFOSTED: 🎖️ ĐẠT CHUẨN QUỐC TẾ UY TÍN (Scopus ${matchedSjr.quartile} theo QĐ 14/QĐ-HĐQL-NAFOSTED - Đủ điều kiện chủ nhiệm/nghiệm thu đề tài cấp Quốc gia)`);
+    }
+
+    // Chỉ mục ASEAN Citation Index (ACI)
+    if (matchedAci) {
+      lines.push(`• Chỉ mục ACI (Đông Nam Á): 🌟 ĐẠT CHUẨN ACI (${matchedAci.title} - Tính điểm HĐGSNN tối đa 1,25 điểm & chuẩn Tiến sĩ)`);
     }
 
     // Điểm HĐGSNN 2025 theo Quyết định 26/QĐ-HĐGSNN
@@ -1187,6 +1279,61 @@ function handleHdgsCommand(query, lookupDb) {
   return res;
 }
 
+
+/**
+ * Danh mục tạp chí Việt Nam trong hệ thống ASEAN Citation Index (ACI)
+ */
+function getAciListMessage(lookupDb) {
+  const aciData = lookupDb.aci_journals || {};
+  const rawList = aciData.raw_list || [];
+
+  let res =
+    `🌏 DANH MỤC TẠP CHÍ VIỆT NAM TRONG ASEAN CITATION INDEX (ACI)\n` +
+    `📋 Tình trạng: ${rawList.length} tạp chí khoa học Việt Nam được chỉ mục\n` +
+    `⚖️ Giá trị pháp lý: Tính điểm xét PGS/GS tối đa 1,25 điểm & quy chế Tiến sĩ Bộ GD&ĐT\n` +
+    `───────────────────────────────────────\n`;
+
+  rawList.forEach((j, idx) => {
+    res += `${idx + 1}. ${j.title}\n`;
+    res += `   • Đơn vị: ${j.org}\n`;
+    res += `   • ISSN: ${[j.pissn, j.eissn].filter(Boolean).join(' | ')} | Lĩnh vực: ${j.field}\n`;
+  });
+
+  res +=
+    `\n───────────────────────────────────────\n` +
+    `💡 Bạn có thể nhắn mã ISSN hoặc Tên bất kỳ tạp chí nào ở trên để thẩm định chi tiết!`;
+
+  return res;
+}
+
+/**
+ * Hướng dẫn tra cứu tiêu chuẩn Quỹ NAFOSTED (QĐ 14/QĐ-HĐQL-NAFOSTED)
+ */
+function getNafostedGuideMessage(lookupDb) {
+  const nafData = lookupDb.nafosted_national || {};
+  const rawList = nafData.raw_list || [];
+
+  let res =
+    `🏛️ TIÊU CHUẨN CÔNG BỐ QUỸ NAFOSTED (QĐ 14/QĐ-HĐQL-NAFOSTED)\n` +
+    `───────────────────────────────────────\n` +
+    `1️⃣ TẠP CHÍ QUỐC TẾ CÓ UY TÍN NAFOSTED:\n` +
+    `• Khối KHXH&NV: Các tạp chí Scopus Q1, Q2, Q3 (theo SCImago) không thuộc Beall's List\n` +
+    `• Khối KHTN&KT: Các tạp chí SCIE (Web of Science) Q1, Q2, Q3 không thuộc Beall's List\n` +
+    `↳ Hệ thống Bot tự động nhận diện và gắn nhãn 'ĐẠT CHUẨN QUỐC TẾ UY TÍN NAFOSTED' khi bạn tra cứu!\n\n` +
+    `2️⃣ DANH MỤC TẠP CHÍ QUỐC GIA CÓ UY TÍN (${rawList.length} TẠP CHÍ TIÊU BIỂU):\n`;
+
+  rawList.slice(0, 15).forEach((j, idx) => {
+    res += `• ${j.title} (${j.council}) - ISSN: ${j.pissn || j.eissn}\n`;
+  });
+
+  res +=
+    `• (+ ${rawList.length - 15} tạp chí chuyên ngành khác)\n\n` +
+    `───────────────────────────────────────\n` +
+    `💡 Gõ Tên hoặc mã ISSN để kiểm tra xem bài viết của bạn có đủ chuẩn nghiệm thu đề tài NAFOSTED không!`;
+
+  return res;
+}
+
 async function processZaloIncomingMessage(env, botToken, update) {
   if (!update) return false;
 
@@ -1331,6 +1478,12 @@ async function processZaloIncomingMessage(env, botToken, update) {
     ) {
       const db = await getLookupDatabase();
       replyText = handleHdgsCommand(text, db);
+    } else if (["aci", "/aci", "asean"].includes(cmd)) {
+      const db = await getLookupDatabase();
+      replyText = getAciListMessage(db);
+    } else if (["nafosted", "/nafosted", "nafos"].includes(cmd)) {
+      const db = await getLookupDatabase();
+      replyText = getNafostedGuideMessage(db);
     } else {
       const db = await getLookupDatabase();
       replyText = await resolveAndSearch(text, db);
