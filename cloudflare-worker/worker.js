@@ -1381,18 +1381,37 @@ async function resolveAndSearch(query, lookupDb) {
 }
 
 /**
+ * Chân trang giới thiệu Từ điển Thuật ngữ Nghiên cứu Khoa học (tối đa 2 dòng)
+ */
+const ACADEMIC_DICTIONARY_FOOTER =
+  `\n\n📖 Từ điển Thuật ngữ Nghiên cứu Khoa học:\n` +
+  `👉 https://vnresearch-dictionary.vercel.app/`;
+
+function appendAcademicFooter(text) {
+  if (!text || typeof text !== "string") return text;
+  if (text.includes("vnresearch-dictionary.vercel.app")) return text;
+  const maxBodyLength = 1950 - ACADEMIC_DICTIONARY_FOOTER.length;
+  const trimmed = text.length > maxBodyLength ? text.slice(0, maxBodyLength) + "..." : text;
+  return trimmed + ACADEMIC_DICTIONARY_FOOTER;
+}
+
+/**
  * Gửi tin nhắn phản hồi qua Zalo Bot API
  */
-async function sendZaloMessage(botToken, chatId, text) {
+async function sendZaloMessage(botToken, chatId, text, options = {}) {
   if (!botToken || !chatId) return { ok: false, error: "Missing token/chatId" };
   const url = `https://bot-api.zaloplatforms.com/bot${botToken}/sendMessage`;
   try {
+    let finalMessage = String(text || "");
+    if (!options.skipFooter) {
+      finalMessage = appendAcademicFooter(finalMessage);
+    }
     const resp = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         chat_id: String(chatId),
-        text: String(text).slice(0, 1980),
+        text: finalMessage.slice(0, 1980),
       }),
     });
     const result = await resp.json().catch(() => ({ ok: false }));
@@ -1791,7 +1810,8 @@ async function processZaloIncomingMessage(env, botToken, update) {
     await sendZaloMessage(
       botToken,
       chatId,
-      `⚠️ Có lỗi xảy ra khi tra cứu: ${err.message}`
+      `⚠️ Có lỗi xảy ra khi tra cứu: ${err.message}`,
+      { skipFooter: true }
     );
     return false;
   }
@@ -2229,7 +2249,7 @@ export default {
 
       let sentCount = 0;
       for (const cid of chatIds) {
-        const res = await sendZaloMessage(botToken, cid, message);
+        const res = await sendZaloMessage(botToken, cid, message, { skipFooter: true });
         if (res && res.ok !== false) sentCount++;
       }
 
