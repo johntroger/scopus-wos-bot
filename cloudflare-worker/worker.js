@@ -1398,8 +1398,24 @@ function appendAcademicFooter(text) {
 /**
  * Gửi tin nhắn phản hồi qua Zalo Bot API
  */
+const recentSentCache = new Map();
+
 async function sendZaloMessage(botToken, chatId, text, options = {}) {
   if (!botToken || !chatId) return { ok: false, error: "Missing token/chatId" };
+
+  // Khóa chống gửi trùng lặp: Nếu cùng 1 chatId nhận tin nhắn có 80 ký tự đầu giống hệt trong 10 giây, chặn ngay
+  const dedupKey = `${chatId}:${String(text).slice(0, 80)}`;
+  const now = Date.now();
+  if (recentSentCache.has(dedupKey) && now - recentSentCache.get(dedupKey) < 10000) {
+    console.log(`[sendZaloMessage Dedup] Bỏ qua gửi trùng lặp tới ${chatId} (đã gửi cách đây ${now - recentSentCache.get(dedupKey)}ms)`);
+    return { ok: true, deduplicated: true };
+  }
+  recentSentCache.set(dedupKey, now);
+  if (recentSentCache.size > 300) {
+    const oldestKey = recentSentCache.keys().next().value;
+    recentSentCache.delete(oldestKey);
+  }
+
   const url = `https://bot-api.zaloplatforms.com/bot${botToken}/sendMessage`;
   try {
     let finalMessage = String(text || "");
@@ -1644,6 +1660,8 @@ function getNafostedGuideMessage(lookupDb) {
   return res;
 }
 
+const recentProcessedMsgCache = new Map();
+
 async function processZaloIncomingMessage(env, botToken, update) {
   if (!update) return false;
 
@@ -1666,6 +1684,19 @@ async function processZaloIncomingMessage(env, botToken, update) {
     "bạn";
 
   const text = (msgObj.text || update.text || "").trim();
+  const msgId = msgObj.msg_id || msgObj.message_id || update.msg_id || update.update_id || `${chatId}:${text}`;
+
+  // Chống Webhook Retry từ Zalo: Nếu cùng 1 tin nhắn đến trong vòng 6 giây, bỏ qua không xử lý lại
+  const now = Date.now();
+  if (recentProcessedMsgCache.has(msgId) && now - recentProcessedMsgCache.get(msgId) < 6000) {
+    console.log(`[Zalo Webhook Dedup] Bỏ qua tin nhắn trùng từ Zalo retry: ${msgId}`);
+    return true;
+  }
+  recentProcessedMsgCache.set(msgId, now);
+  if (recentProcessedMsgCache.size > 300) {
+    const oldest = recentProcessedMsgCache.keys().next().value;
+    recentProcessedMsgCache.delete(oldest);
+  }
 
   // Ghi log qua console.log (tiết kiệm 100% quota KV Write hàng ngày)
   console.log(`[Zalo Update received] ChatId: ${chatId} (${displayName}): "${text}"`);

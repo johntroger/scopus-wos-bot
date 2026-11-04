@@ -140,25 +140,29 @@ def send_cloudflare_broadcast(text: str) -> bool:
 
     url = f"{CLOUDFLARE_WORKER_URL.rstrip('/')}/api/broadcast"
     chunks = split_text_chunks(text, max_length=1850)
-    success = True
+    all_success = True
+    any_sent = False
 
     for idx, chunk in enumerate(chunks, 1):
         try:
             resp = requests.post(url, json={"message": chunk}, timeout=30)
             if resp.status_code == 200:
                 data = resp.json()
+                sent_cnt = data.get("sent_count", 0)
+                if sent_cnt > 0:
+                    any_sent = True
                 print(
                     f"[Cloudflare Broadcast] Đã gửi phần {idx}/{len(chunks)} tới "
-                    f"{data.get('sent_count', 0)}/{data.get('subscribers_total', 0)} thành viên Zalo."
+                    f"{sent_cnt}/{data.get('subscribers_total', 0)} thành viên Zalo."
                 )
             else:
                 print(f"[Cloudflare Broadcast] Lỗi HTTP {resp.status_code}: {resp.text}")
-                success = False
+                all_success = False
         except Exception as exc:
             print(f"[Cloudflare Broadcast] Lỗi kết nối tới Cloudflare Worker: {exc}")
-            success = False
+            all_success = False
 
-    return success
+    return all_success and any_sent
 
 
 def broadcast_notification(message: str) -> None:
@@ -166,8 +170,15 @@ def broadcast_notification(message: str) -> None:
     print("\n--- NỘI DUNG THÔNG BÁO ---")
     print(message)
     print("--------------------------\n")
-    send_cloudflare_broadcast(message)
-    send_zalo_message(message)
+    cf_sent = False
+    if CLOUDFLARE_WORKER_URL:
+        cf_sent = send_cloudflare_broadcast(message)
+
+    # CHỈ gửi trực tiếp qua send_zalo_message nếu Cloudflare broadcast không thành công hoặc không có ai nhận
+    # Tránh gửi trùng lặp 2 lần cùng một nội dung cho tài khoản Admin/ZALO_CHAT_ID đã nằm trong danh sách subscribers
+    if not cf_sent:
+        send_zalo_message(message)
+
     send_telegram_message(message)
 
 
