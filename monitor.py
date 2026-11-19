@@ -26,6 +26,7 @@ TODDRJONES_DATASETS_README_URL = "https://raw.githubusercontent.com/toddrjones/d
 STATE_FILE = "state.json"
 WATCHLIST_FILE = "watchlist.json"
 LOOKUP_INDEX_FILE = "discontinued_lookup.json"
+RESEARCH_DATASETS_FILE = "research_datasets.json"
 
 HEADERS = {
     "User-Agent": (
@@ -200,10 +201,13 @@ def load_json_file(path: str, default: dict) -> dict:
 def save_json_file(path: str, data: dict) -> None:
     # Đối với cơ sở dữ liệu lớn discontinued_lookup.json: lưu dạng compact và kiểm tra tính toàn vẹn
     if "lookup" in path:
-        critical_keys = ["hdgs_by_issn", "hdgs_councils", "aci_journals", "nafosted_national", "vn_standards_2026", "issn_linked_map", "research_datasets"]
+        critical_keys = ["hdgs_by_issn", "hdgs_councils", "aci_journals", "nafosted_national", "vn_standards_2026", "issn_linked_map"]
         for ck in critical_keys:
             if ck not in data:
                 print(f"[CẢNH BÁO TOÀN VẸN] Khóa '{ck}' không có trong CSDL! Đang giữ nguyên bản ghi trước đó...")
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, separators=(',', ':'))
+    elif "datasets" in path:
         with open(path, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, separators=(',', ':'))
     else:
@@ -830,27 +834,26 @@ def parse_toddrjones_datasets_markdown(raw: str) -> dict:
     }
 
 
-def sync_research_datasets(lookup_db: dict) -> int:
-    """Đồng bộ danh mục 150+ bộ dữ liệu mở KHXH & Kinh tế từ toddrjones/datasets."""
+def sync_research_datasets(datasets_db: dict) -> dict:
+    """Đồng bộ danh mục 150+ bộ dữ liệu mở KHXH & Kinh tế từ toddrjones/datasets ra file riêng."""
     print("[Research Datasets] Đang đồng bộ kho dữ liệu mở toddrjones/datasets...")
     try:
         resp = requests.get(TODDRJONES_DATASETS_README_URL, headers=HEADERS, timeout=30)
         resp.raise_for_status()
         parsed = parse_toddrjones_datasets_markdown(resp.text)
         if parsed.get("total", 0) >= 50:
-            lookup_db["research_datasets"] = parsed
             print(
                 f"[Research Datasets] Đã đồng bộ thành công {parsed['total']} bộ dữ liệu "
                 f"({len(parsed['categories'])} chủ đề)."
             )
-            return parsed["total"]
+            return parsed
         print(
             f"[Research Datasets] Cảnh báo: Số lượng parse được ({parsed.get('total', 0)}) dưới ngưỡng an toàn (50). "
             "Giữ nguyên dữ liệu hiện có."
         )
     except Exception as exc:
         print(f"[Research Datasets] Lỗi khi đồng bộ toddrjones/datasets: {exc}")
-    return lookup_db.get("research_datasets", {}).get("total", 0)
+    return datasets_db
 
 
 # ==============================================================================
@@ -1389,6 +1392,8 @@ def main():
     )
     watchlist = load_json_file(WATCHLIST_FILE, {})
     lookup_db = load_json_file(LOOKUP_INDEX_FILE, {})
+    lookup_db.pop("research_datasets", None)
+    datasets_db = load_json_file(RESEARCH_DATASETS_FILE, {})
 
     all_notifications: List[str] = []
 
@@ -1400,10 +1405,10 @@ def main():
     rw_msgs = check_retraction_watch(state, watchlist, lookup_db)
     all_notifications.extend(rw_msgs)
 
-    # 3. Đồng bộ danh sách tạp chí bị mạo danh (Hijacked Journals) & Phân hạng (ABDC, SJR Q1-Q4) & Kho dữ liệu mở
+    # 3. Đồng bộ danh sách tạp chí bị mạo danh (Hijacked Journals) & Phân hạng (ABDC, SJR Q1-Q4) & Kho dữ liệu mở riêng
     sync_hijacked_journals(lookup_db)
     sync_academic_rankings(lookup_db)
-    sync_research_datasets(lookup_db)
+    datasets_db = sync_research_datasets(datasets_db)
 
     # 4. Nếu người dùng truyền từ khóa tra cứu trực tiếp từ giao diện GitHub Actions (workflow_dispatch input)
     manual_query = os.environ.get("LOOKUP_QUERY", "").strip()
@@ -1415,10 +1420,12 @@ def main():
     if not CLOUDFLARE_WORKER_URL:
         process_incoming_zalo_queries(state, lookup_db)
 
-    # Lưu trạng thái mới & chỉ mục tra cứu
+    # Lưu trạng thái mới & chỉ mục tra cứu tách biệt
     state["last_updated"] = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
     save_json_file(STATE_FILE, state)
     save_json_file(LOOKUP_INDEX_FILE, lookup_db)
+    if datasets_db:
+        save_json_file(RESEARCH_DATASETS_FILE, datasets_db)
 
     # Gửi thông báo nếu có cập nhật mới
     if all_notifications:

@@ -23,8 +23,17 @@ function matchTitleSafely(targetText, queryText) {
 
 const GITHUB_LOOKUP_URL =
   "https://raw.githubusercontent.com/johntroger/scopus-wos-bot/main/discontinued_lookup.json";
+const GITHUB_DATASETS_URL =
+  "https://raw.githubusercontent.com/johntroger/scopus-wos-bot/main/research_datasets.json";
+const DATASETS_PORTAL_URL =
+  "https://scopus-wos-zalo-bot.nttu-kts-johntroger.workers.dev/datasets";
 
 let memoryCache = {
+  data: null,
+  fetchedAt: 0,
+};
+
+let datasetsMemoryCache = {
   data: null,
   fetchedAt: 0,
 };
@@ -46,6 +55,26 @@ async function getLookupDatabase() {
   }
   const data = await resp.json();
   memoryCache = { data, fetchedAt: now };
+  return data;
+}
+
+/**
+ * Tải và cache riêng kho dữ liệu mở NCKH (tách biệt hoàn toàn khỏi CSDL tạp chí)
+ */
+async function getDatasetsDatabase() {
+  const now = Date.now();
+  if (datasetsMemoryCache.data && now - datasetsMemoryCache.fetchedAt < 60 * 60 * 1000) {
+    return datasetsMemoryCache.data;
+  }
+
+  const resp = await fetch(GITHUB_DATASETS_URL, {
+    cf: { cacheTtl: 900, cacheEverything: true },
+  });
+  if (!resp.ok) {
+    throw new Error(`Không thể tải dữ liệu research_datasets từ GitHub (${resp.status})`);
+  }
+  const data = await resp.json();
+  datasetsMemoryCache = { data, fetchedAt: now };
   return data;
 }
 
@@ -83,7 +112,7 @@ function buildUserGuideMessage(displayName = "bạn", isFirstTime = false) {
     `• Gõ 4 : Bật/tắt nhận thông báo định kỳ (Gõ 'huy' để tắt)\n` +
     `• Gõ 5 : Xem 16 Tạp chí Việt Nam trong Scopus / WoS quốc tế\n` +
     `• Gõ 6 : Danh mục điểm 28 Hội đồng Giáo sư Nhà nước (QĐ 26/QĐ-HĐGSNN)\n` +
-    `• Gõ 7 / data : Kho 150+ bộ dữ liệu mở NCKH Xã hội & Kinh tế\n` +
+    `• Gõ 7 / data : Kho 147 bộ dữ liệu mở NCKH (Web: /datasets)\n` +
     `• Gõ aci : Xem danh mục Tạp chí Việt Nam trong ASEAN Citation Index\n` +
     `• Gõ nafosted : Xem chuẩn công nhận bài báo Quỹ NAFOSTED Quốc gia\n` +
     `• So sánh 2 tạp chí : Nhắn 'so sánh JED và JABES' hoặc 'JED vs JABES'\n\n` +
@@ -314,7 +343,7 @@ function findClosestSuggestions(rawQuery, lookupDb, maxResults = 3) {
   return uniqueMatches.slice(0, maxResults);
 }
 
-function searchJournal(query, lookupDb) {
+function searchJournal(query, lookupDb, datasetsDb = null) {
   const q = (query || "").trim();
   if (q.length < 2) {
     return buildUserGuideMessage("bạn", false);
@@ -729,7 +758,7 @@ function searchJournal(query, lookupDb) {
   // TRƯỜNG HỢP: KHÔNG TÌM THẤY TẠP CHÍ NÀO TRONG MỌI NGUỒN DỮ LIỆU
   if (!matchedDisc && !matchedHijacked && !matchedSjr && !matchedAbdc && !matchedVn && !matchedHdgs && !matchedWosDelisted && !matchedBeallJournal && !matchedBeallPublisher) {
     const suggestions = findClosestSuggestions(q, lookupDb, 3);
-    const datasetHints = findDatasetHintsForQuery(q, lookupDb, 2);
+    const datasetHints = datasetsDb ? findDatasetHintsForQuery(q, datasetsDb, 2) : [];
     const lines = [
       `🔍 KẾT QUẢ TRA CỨU: "${q}"`,
       `\n❓ KHÔNG TÌM THẤY TRONG CSDL KHOA HỌC (SCOPUS / ABDC / CHUẨN VN 2026 / HĐGSNN / ACI)`,
@@ -748,7 +777,7 @@ function searchJournal(query, lookupDb) {
         const catVi = DATASET_CAT_VI[dh.cat_key] || dh.cat;
         lines.push(`• ${dh.name} [${catVi}]`);
       });
-      lines.push(`👉 Nhắn 'data ${q}' để xem mô tả chi tiết & link tải miễn phí!`);
+      lines.push(`👉 Nhắn 'data ${q}' hoặc mở ${DATASETS_PORTAL_URL}`);
     }
 
     lines.push(
@@ -757,7 +786,7 @@ function searchJournal(query, lookupDb) {
       `• Nhắn mã ISSN (ví dụ: 0148-2963 hoặc 2515-964X)`,
       `• Nhắn mã DOI bài báo (ví dụ: 10.1016/j.jbusres.2021.08.043) để tra tự động`,
       `• Nhắn từ viết tắt chuẩn (VJCS, JABES, JED, JSAMD, JBR, JCR...)`,
-      `• Gõ '6' xem 28 HĐGSNN | '7' / 'data' xem kho 150+ bộ dữ liệu mở NCKH`,
+      `• Gõ '6' xem 28 HĐGSNN | '7' / 'data' xem kho dữ liệu mở NCKH`,
       `• Gõ '1' để xem lại toàn bộ hướng dẫn tra cứu.`
     );
 
@@ -1317,7 +1346,7 @@ function compareTwoJournals(q1, q2, lookupDb) {
   );
 }
 
-async function resolveAndSearch(query, lookupDb) {
+async function resolveAndSearch(query, lookupDb, datasetsDb = null) {
   const parsed = extractCleanQuery(query);
 
   if (parsed.type === 'compare') {
@@ -1347,9 +1376,9 @@ async function resolveAndSearch(query, lookupDb) {
     return getNafostedGuideMessage(lookupDb);
   }
 
-  // 4. Phím tắt Kho dữ liệu mở NCKH (Todd Jones - Social Science Datasets)
-  if (isDatasetCommand(text, lookupDb)) {
-    return handleDatasetCommand(text, lookupDb);
+  // 4. Phím tắt Kho dữ liệu mở NCKH (tách biệt hoàn toàn khỏi /api/search khi datasetsDb === null)
+  if (datasetsDb && isDatasetCommand(text, lookupDb)) {
+    return handleDatasetCommand(text, datasetsDb);
   }
 
   // 5. Phím tắt Top 16 Tạp chí Việt Nam trong Scopus/WoS
@@ -1394,7 +1423,7 @@ async function resolveAndSearch(query, lookupDb) {
     }
   }
 
-  return searchJournal(text, lookupDb);
+  return searchJournal(text, lookupDb, datasetsDb);
 }
 
 /**
@@ -1936,8 +1965,8 @@ function isDatasetCommand(rawText, lookupDb = null) {
   );
 }
 
-function findDatasetHintsForQuery(rawQuery, lookupDb, maxResults = 2) {
-  const items = lookupDb?.research_datasets?.items || [];
+function findDatasetHintsForQuery(rawQuery, datasetsDb, maxResults = 2) {
+  const items = datasetsDb?.items || [];
   if (!items.length) return [];
   const qNorm = normalizeVnText(rawQuery);
   if (qNorm.length < 3) return [];
@@ -2004,14 +2033,15 @@ function buildDatasetMenuMessage(ds) {
 
   msg +=
     `\n───────────────────────────────────────\n` +
-    `💡 Cú pháp: Nhắn 'data <chủ đề/từ khóa>' để xem link tải\n` +
-    `VD: data tài chính, data doanh nghiệp, data IPUMS, data tiền lương`;
+    `💡 Nhắn 'data <chủ đề/từ khóa>' (vd: data tài chính, data IPUMS)\n` +
+    `🌐 Xem & lọc trọn bộ ${total} dataset trên Web:\n` +
+    `👉 ${DATASETS_PORTAL_URL}`;
 
   return msg;
 }
 
-function findMatchingDatasets(rawQuery, lookupDb) {
-  const ds = lookupDb?.research_datasets;
+function findMatchingDatasets(rawQuery, datasetsDb) {
+  const ds = datasetsDb;
   if (!ds || !Array.isArray(ds.items)) {
     return { isMenu: false, matches: [], matchedCatKeys: [], qNorm: "" };
   }
@@ -2138,17 +2168,18 @@ function formatDatasetEntry(item, idx, includeCat = false) {
   return parts.join("\n");
 }
 
-function handleDatasetCommand(query, lookupDb) {
-  const ds = lookupDb?.research_datasets;
+function handleDatasetCommand(query, datasetsDb) {
+  const ds = datasetsDb;
   if (!ds || !Array.isArray(ds.items) || ds.items.length === 0) {
     return (
       `📂 KHO DỮ LIỆU MỞ NCKH XÃ HỘI & KINH TẾ (TODD JONES)\n` +
       `⚠️ Dữ liệu đang được đồng bộ lại vào hệ thống.\n` +
-      `🔗 Bạn có thể truy cập trực tiếp tại: https://github.com/toddrjones/datasets`
+      `🌐 Web Portal riêng: ${DATASETS_PORTAL_URL}\n` +
+      `🔗 Kho gốc GitHub: https://github.com/toddrjones/datasets`
     );
   }
 
-  const res = findMatchingDatasets(query, lookupDb);
+  const res = findMatchingDatasets(query, ds);
   if (res.isMenu) {
     return buildDatasetMenuMessage(ds);
   }
@@ -2159,7 +2190,8 @@ function handleDatasetCommand(query, lookupDb) {
       `💡 GỢI Ý TRA CỨU NHANH:\n` +
       `• Theo chủ đề: data kinh tế, data tài chính, data doanh nghiệp, data lao động, data giáo dục, data y tế, data môi trường\n` +
       `• Theo từ khóa: data IPUMS, data Amazon, data OpenAlex, data tiền lương, data bất động sản\n` +
-      `• Gõ 'data' (hoặc '7') để xem toàn bộ ${ds.categories?.length || 34} chủ đề dữ liệu mở!`
+      `• Gõ 'data' (hoặc '7') để xem toàn bộ ${ds.categories?.length || 34} chủ đề dữ liệu mở\n` +
+      `🌐 Hoặc duyệt & lọc trực tiếp trên Web: ${DATASETS_PORTAL_URL}`
     );
   }
 
@@ -2176,7 +2208,7 @@ function handleDatasetCommand(query, lookupDb) {
     `📂 KHO DỮ LIỆU MỞ: ${titleLabel} (${res.matches.length} bộ)\n` +
     `───────────────────────────────────────\n`;
 
-  const MAX_BODY_WITH_CLOSING = 1660;
+  const MAX_BODY_WITH_CLOSING = 1580;
   const shown = [];
   let runningLen = headerBlock.length;
 
@@ -2194,9 +2226,9 @@ function handleDatasetCommand(query, lookupDb) {
   const closingLines = [
     `\n───────────────────────────────────────`,
     remaining > 0
-      ? `📌 Đang hiển thị ${shown.length}/${res.matches.length} bộ dữ liệu. Gõ 'data <từ khóa cụ thể>' để lọc hẹp hơn.`
-      : `💡 Gõ 'data' xem đủ ${ds.categories?.length || 34} chủ đề | Gõ 'data <từ khóa>' để tìm tiếp.`,
-    `🔗 Kho gốc: https://github.com/toddrjones/datasets`,
+      ? `📌 Hiển thị ${shown.length}/${res.matches.length} bộ. Gõ 'data <từ khóa>' để lọc hẹp hơn.`
+      : `💡 Gõ 'data' xem 34 chủ đề hoặc 'data <từ khóa>' để tìm tiếp.`,
+    `🌐 Xem trọn bộ trên Web: ${DATASETS_PORTAL_URL}`,
   ];
 
   return headerBlock + shown.join("\n\n") + closingLines.join("\n");
@@ -2321,7 +2353,10 @@ async function processZaloIncomingMessage(env, botToken, update) {
       const db = await getLookupDatabase();
       replyText = getBusinessDiscontinuedSamples(db);
     } else if (["3", "thongke", "/thongke", "stats", "status"].includes(cmd)) {
-      const db = await getLookupDatabase();
+      const [db, dsDb] = await Promise.all([
+        getLookupDatabase(),
+        getDatasetsDatabase().catch(() => null),
+      ]);
       const updatedSubs = await getSubscribers(env);
       replyText =
         `📊 CƠ SỞ DỮ LIỆU ĐA NGUỒN CỦA BOT (ĐÃ ĐỒNG BỘ 100%):\n` +
@@ -2331,7 +2366,7 @@ async function processZaloIncomingMessage(env, botToken, update) {
         `• Danh mục ABDC (Úc): ${Object.keys(db.abdc_rankings || {}).length.toLocaleString()} tạp chí (A*, A, B, C)\n` +
         `• Chuẩn Khoa học Quốc gia VN: ${(db.vn_standards_2026 || []).length} tạp chí (gồm 16 tạp chí Scopus/WoS)\n` +
         `• 28 Hội đồng GSNN: Đầy đủ 28/28 Hội đồng ngành/liên ngành\n` +
-        `• Kho Dữ liệu mở NCKH (Todd Jones): ${db.research_datasets?.total || 0} bộ dữ liệu (${(db.research_datasets?.categories || []).length} chủ đề)\n\n` +
+        `• Kho Dữ liệu mở NCKH (Todd Jones): ${dsDb?.total || 0} bộ dữ liệu (${(dsDb?.categories || []).length} chủ đề) — ${DATASETS_PORTAL_URL}\n\n` +
         `2️⃣ HỆ THỐNG CẢNH BÁO RỦI RO & SĂN MỒI:\n` +
         `• Scopus Discontinued (bị loại): ${(db.discontinued_journals || []).length.toLocaleString()} tạp chí\n` +
         `• WoS Delisted (bị tước chỉ mục): ${(db.wos_delisted_journals || []).length} tạp chí quốc tế\n` +
@@ -2369,13 +2404,24 @@ async function processZaloIncomingMessage(env, botToken, update) {
       const db = await getLookupDatabase();
       replyText = getNafostedGuideMessage(db);
     } else if (isDatasetCommand(text)) {
-      const db = await getLookupDatabase();
-      replyText = isDatasetCommand(text, db)
-        ? handleDatasetCommand(text, db)
-        : await resolveAndSearch(text, db);
+      if (/^data\s+/i.test(text.trim())) {
+        const [db, dsDb] = await Promise.all([
+          getLookupDatabase(),
+          getDatasetsDatabase().catch(() => null),
+        ]);
+        replyText = isDatasetCommand(text, db)
+          ? handleDatasetCommand(text, dsDb)
+          : await resolveAndSearch(text, db, dsDb);
+      } else {
+        const dsDb = await getDatasetsDatabase().catch(() => null);
+        replyText = handleDatasetCommand(text, dsDb);
+      }
     } else {
-      const db = await getLookupDatabase();
-      replyText = await resolveAndSearch(text, db);
+      const [db, dsDb] = await Promise.all([
+        getLookupDatabase(),
+        getDatasetsDatabase().catch(() => null),
+      ]);
+      replyText = await resolveAndSearch(text, db, dsDb);
       if (isNewUser) {
         replyText =
           `👋 Chào ${displayName}! (Gõ '1' bất cứ lúc nào để xem bảng hướng dẫn sử dụng).\n\n` +
@@ -2572,7 +2618,10 @@ function renderWebPortal(workerOrigin, botConfigured, subscriberCount) {
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
         <h1>🔍 Hệ thống Tra cứu Tạp chí Scopus Discontinued & Retraction Watch</h1>
-        <span class="badge">${botConfigured ? "✅ Bot Tra cứu Tạp chí đang hoạt động (" + subscriberCount + " người nhận tin)" : "⚡ Sẵn sàng kết nối Zalo Bot"}</span>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <a href="/datasets" style="text-decoration:none;padding:4px 11px;border-radius:999px;font-size:0.82rem;font-weight:600;background:#ecfeff;color:#0f5257;border:1px solid #a5f3fc;">📂 Kho Dữ liệu Mở NCKH (147 bộ) →</a>
+          <span class="badge">${botConfigured ? "✅ Bot Tra cứu Tạp chí đang hoạt động (" + subscriberCount + " người nhận tin)" : "⚡ Sẵn sàng kết nối Zalo Bot"}</span>
+        </div>
       </div>
       <p style="color:var(--muted);margin:6px 0 0;">
         Nhập <strong>Tên tạp chí</strong> hoặc <strong>Mã ISSN</strong> để kiểm tra tức thì xem tạp chí có bị loại khỏi Scopus (Discontinued) hoặc có lịch sử rút bài trên Retraction Watch hay không.
@@ -2689,12 +2738,623 @@ function renderWebPortal(workerOrigin, botConfigured, subscriberCount) {
 </html>`;
 }
 
+/**
+ * Giao diện Web Độc Lập cho Kho Dữ liệu Mở NCKH Xã hội & Kinh tế (/datasets)
+ */
+function renderDatasetsPortal(workerOrigin) {
+  const DOMAIN_MAP = {
+    econ: [
+      "finance", "personal_finance", "businesses", "macroeconomics",
+      "working", "shopping", "real_estate", "inflation_and_cost_of_living", "patents",
+    ],
+    edu_soc: [
+      "education", "academia", "household_surveys", "us_censuses_and_economic_history",
+      "family", "demography", "mobility_and_migration", "time_use",
+      "beliefs_and_values", "social_networks",
+    ],
+    health_env: [
+      "health_public_health_and_epidemiology", "injury_and_death",
+      "environment_and_energy", "weather", "maps_and_geography", "crashes_and_traffic",
+    ],
+    gov_misc: [
+      "government", "politics_and_voting", "law", "crime",
+      "states_conflict_and_regimes", "religion", "sports", "names", "misc",
+    ],
+  };
+
+  return `<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kho Dữ liệu Mở NCKH Xã hội & Kinh tế | Research Datasets</title>
+  <style>
+    :root {
+      --bg: #faf8f5;
+      --surface: #ffffff;
+      --surface-alt: #f3efe8;
+      --ink: #111827;
+      --muted: #4b5563;
+      --accent: #0f5257;
+      --accent-soft: #e6f4f4;
+      --accent-hover: #0a3c40;
+      --border: #e5dfd5;
+      --tag-bg: #f3f4f6;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.58;
+    }
+    .topbar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 20px;
+    }
+    .topbar-inner {
+      max-width: 1120px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      font-size: 0.88rem;
+    }
+    .nav-link {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .nav-link:hover { text-decoration: underline; }
+    .container {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 24px 16px 48px;
+    }
+    .hero {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 26px 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 10px rgba(17, 24, 39, 0.03);
+    }
+    .hero-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    .kicker {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--accent);
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    h1 {
+      margin: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 1.72rem;
+      line-height: 1.25;
+      color: var(--ink);
+    }
+    .stat-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-weight: 600;
+      font-size: 0.84rem;
+      white-space: nowrap;
+    }
+    .hero-sub {
+      color: var(--muted);
+      margin: 10px 0 0;
+      font-size: 0.96rem;
+      max-width: 78ch;
+    }
+    .search-wrap {
+      display: flex;
+      gap: 10px;
+      margin-top: 18px;
+      flex-wrap: wrap;
+    }
+    .search-input {
+      flex: 1;
+      min-width: 240px;
+      padding: 12px 16px;
+      border: 1.5px solid #d6cfc3;
+      border-radius: 10px;
+      font-size: 0.98rem;
+      background: #fff;
+      color: var(--ink);
+    }
+    .search-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(15, 82, 87, 0.12);
+    }
+    .btn {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 11px 18px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn:hover { background: var(--accent-hover); }
+    .btn-ghost {
+      background: var(--surface-alt);
+      color: var(--ink);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover { background: #e8e1d5; }
+    .quick-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+      align-items: center;
+    }
+    .quick-chip {
+      background: var(--surface-alt);
+      border: 1px solid var(--border);
+      color: #374151;
+      padding: 4px 11px;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      cursor: pointer;
+    }
+    .quick-chip:hover {
+      background: var(--accent-soft);
+      border-color: #9ad1d4;
+      color: var(--accent);
+    }
+    .domain-tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    .tab-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 8px 14px;
+      border-radius: 10px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .tab-btn.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+    .cat-strip {
+      display: flex;
+      gap: 7px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+    .cat-pill {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 5px 11px;
+      border-radius: 999px;
+      font-size: 0.81rem;
+      cursor: pointer;
+    }
+    .cat-pill.active {
+      background: var(--accent-soft);
+      border-color: var(--accent);
+      color: var(--accent);
+      font-weight: 600;
+    }
+    .results-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      font-size: 0.88rem;
+      color: var(--muted);
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 14px;
+    }
+    .ds-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 12px;
+      transition: transform 0.12s ease, box-shadow 0.12s ease;
+    }
+    .ds-card:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 18px rgba(17, 24, 39, 0.06);
+    }
+    .ds-cat {
+      display: inline-block;
+      font-size: 0.76rem;
+      font-weight: 600;
+      padding: 3px 9px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+    .ds-title {
+      margin: 0;
+      font-size: 1.04rem;
+      font-weight: 700;
+      color: var(--ink);
+      line-height: 1.35;
+    }
+    .ds-desc {
+      margin: 8px 0 0;
+      font-size: 0.88rem;
+      color: var(--muted);
+    }
+    .ds-meta {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    .meta-tag {
+      font-size: 0.76rem;
+      padding: 2px 8px;
+      border-radius: 6px;
+      background: var(--tag-bg);
+      color: #374151;
+    }
+    .ds-actions {
+      display: flex;
+      gap: 8px;
+      padding-top: 10px;
+      border-top: 1px solid #f0ece4;
+    }
+    .ds-actions a, .ds-actions button {
+      font-size: 0.82rem;
+      padding: 7px 12px;
+      border-radius: 8px;
+    }
+    .empty-state {
+      background: var(--surface);
+      border: 1px dashed #cfc7b8;
+      border-radius: 14px;
+      padding: 32px;
+      text-align: center;
+      color: var(--muted);
+    }
+    .footer {
+      margin-top: 36px;
+      padding-top: 18px;
+      border-top: 1px solid var(--border);
+      font-size: 0.84rem;
+      color: var(--muted);
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .footer a { color: var(--accent); text-decoration: none; font-weight: 600; }
+    .footer a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-inner">
+      <a class="nav-link" href="${workerOrigin}/">← Quay lại Tra cứu Tạp chí Scopus / WoS / HĐGSNN</a>
+      <span style="color:var(--muted);">Nguồn gốc: <a class="nav-link" href="https://github.com/toddrjones/datasets" target="_blank" rel="noopener">toddrjones/datasets ↗</a></span>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="hero">
+      <div class="hero-top">
+        <div>
+          <div class="kicker">Open Research Data Directory</div>
+          <h1>Kho Dữ liệu Mở Nghiên cứu Xã hội &amp; Kinh tế</h1>
+        </div>
+        <span class="stat-pill" id="statPill">Đang tải danh mục...</span>
+      </div>
+      <p class="hero-sub">
+        Tổng hợp các bộ dữ liệu thứ cấp miễn phí phục vụ nghiên cứu định lượng trong <strong>Kinh tế học, Tài chính, Doanh nghiệp, Giáo dục, Y tế và Khoa học Xã hội</strong> (không lẫn với CSDL tạp chí Scopus/HĐGSNN). Tìm kiếm được bằng cả <strong>tiếng Việt và tiếng Anh</strong>.
+      </p>
+      <div class="search-wrap">
+        <input class="search-input" type="text" id="qInput" placeholder="Tìm theo chủ đề hoặc từ khóa (VD: tài chính, tiền lương, khí hậu, IPUMS, OpenAlex, Zillow...)" />
+        <button class="btn" onclick="resetFilters()">Đặt lại</button>
+      </div>
+      <div class="quick-row">
+        <span style="font-size:0.82rem;color:var(--muted);">Gợi ý nhanh:</span>
+        <span class="quick-chip" onclick="applyQuick('tài chính')">Tài chính</span>
+        <span class="quick-chip" onclick="applyQuick('kinh tế vĩ mô')">Kinh tế vĩ mô</span>
+        <span class="quick-chip" onclick="applyQuick('doanh nghiệp')">Doanh nghiệp</span>
+        <span class="quick-chip" onclick="applyQuick('tiền lương')">Tiền lương</span>
+        <span class="quick-chip" onclick="applyQuick('giáo dục')">Giáo dục</span>
+        <span class="quick-chip" onclick="applyQuick('y tế')">Y tế</span>
+        <span class="quick-chip" onclick="applyQuick('biến đổi khí hậu')">Khí hậu</span>
+        <span class="quick-chip" onclick="applyQuick('IPUMS')">IPUMS</span>
+        <span class="quick-chip" onclick="applyQuick('OpenAlex')">OpenAlex</span>
+      </div>
+    </div>
+
+    <div class="domain-tabs" id="domainTabs">
+      <button class="tab-btn active" data-domain="all" onclick="setDomain('all')">Tất cả</button>
+      <button class="tab-btn" data-domain="econ" onclick="setDomain('econ')">💼 Kinh tế &amp; Tài chính</button>
+      <button class="tab-btn" data-domain="edu_soc" onclick="setDomain('edu_soc')">🎓 Giáo dục &amp; Xã hội</button>
+      <button class="tab-btn" data-domain="health_env" onclick="setDomain('health_env')">🌿 Y tế &amp; Môi trường</button>
+      <button class="tab-btn" data-domain="gov_misc" onclick="setDomain('gov_misc')">⚖️ Chính sách &amp; Khác</button>
+    </div>
+
+    <div class="cat-strip" id="catStrip"></div>
+
+    <div class="results-meta">
+      <span id="resultCount">Đang nạp dữ liệu...</span>
+      <span id="updatedMeta"></span>
+    </div>
+
+    <div id="grid" class="grid"></div>
+
+    <div class="footer">
+      <span>📖 Từ điển Thuật ngữ NCKH: <a href="https://vnresearch-dictionary.vercel.app/home" target="_blank" rel="noopener">vnresearch-dictionary.vercel.app/home ↗</a></span>
+      <span>💡 Trên Zalo Bot, nhắn <code>data &lt;từ khóa&gt;</code> hoặc <code>7</code> để tra nhanh.</span>
+    </div>
+  </div>
+
+  <script>
+    var CAT_VI = ${JSON.stringify(DATASET_CAT_VI)};
+    var CAT_ALIASES = ${JSON.stringify(DATASET_CAT_ALIASES)};
+    var VI_TOKENS = ${JSON.stringify(DATASET_VI_TOKEN_MAP)};
+    var DOMAINS = ${JSON.stringify(DOMAIN_MAP)};
+    var STOPWORDS = { ve:1, cua:1, cho:1, voi:1, va:1, trong:1, tu:1, cac:1, nhung:1, nganh:1, linh:1, vuc:1, chu:1, de:1, du:1, lieu:1, data:1, dataset:1, datasets:1, mien:1, phi:1, mo:1, tim:1 };
+
+    var state = { db: null, domain: 'all', cat: 'all', query: '' };
+
+    function normVn(str) {
+      if (!str) return '';
+      return String(str)
+        .normalize('NFD')
+        .replace(/[\\u0300-\\u036f]/g, '')
+        .replace(/đ/g, 'd')
+        .replace(/Đ/g, 'D')
+        .toLowerCase()
+        .replace(/[^a-z0-9\\s]/g, ' ')
+        .replace(/\\s+/g, ' ')
+        .trim();
+    }
+
+    function escapeHtml(str) {
+      var div = document.createElement('div');
+      div.textContent = str || '';
+      return div.innerHTML;
+    }
+
+    function applyQuick(val) {
+      document.getElementById('qInput').value = val;
+      state.query = val;
+      state.cat = 'all';
+      state.domain = 'all';
+      syncTabUI();
+      render();
+    }
+
+    function resetFilters() {
+      document.getElementById('qInput').value = '';
+      state.query = '';
+      state.cat = 'all';
+      state.domain = 'all';
+      syncTabUI();
+      render();
+    }
+
+    function setDomain(dom) {
+      state.domain = dom;
+      state.cat = 'all';
+      syncTabUI();
+      render();
+    }
+
+    function setCat(catKey) {
+      state.cat = state.cat === catKey ? 'all' : catKey;
+      render();
+    }
+
+    function syncTabUI() {
+      var btns = document.querySelectorAll('.tab-btn');
+      for (var i = 0; i < btns.length; i++) {
+        btns[i].classList.toggle('active', btns[i].getAttribute('data-domain') === state.domain);
+      }
+    }
+
+    function filterItems() {
+      if (!state.db || !state.db.items) return [];
+      var items = state.db.items;
+      var domKeys = state.domain === 'all' ? null : (DOMAINS[state.domain] || []);
+      var qRaw = (state.query || '').trim();
+      var qNorm = normVn(qRaw).replace(/^(?:ve|nganh|chu de|linh vuc)\\s+/, '').trim();
+
+      var filtered = items.filter(function(it) {
+        if (domKeys && domKeys.indexOf(it.cat_key) === -1) return false;
+        if (state.cat !== 'all' && it.cat_key !== state.cat) return false;
+        return true;
+      });
+
+      if (!qNorm) return filtered;
+
+      if (state.cat === 'all' && CAT_ALIASES[qNorm]) {
+        var aliasSet = CAT_ALIASES[qNorm];
+        return filtered.filter(function(it) { return aliasSet.indexOf(it.cat_key) !== -1; });
+      }
+
+      var translated = {};
+      Object.keys(VI_TOKENS).forEach(function(vp) {
+        if (qNorm.indexOf(vp) !== -1) {
+          VI_TOKENS[vp].forEach(function(en) { translated[en] = true; });
+        }
+      });
+      var rawWords = qNorm.split(' ').filter(function(w) { return w.length >= 2 && !STOPWORDS[w]; });
+      rawWords.forEach(function(rw) {
+        if (VI_TOKENS[rw]) VI_TOKENS[rw].forEach(function(en) { translated[en] = true; });
+      });
+      var transKeys = Object.keys(translated);
+
+      var scored = [];
+      for (var i = 0; i < filtered.length; i++) {
+        var it = filtered[i];
+        var nN = normVn(it.name);
+        var cN = normVn(it.cat);
+        var cvN = normVn(CAT_VI[it.cat_key] || '');
+        var dN = normVn(it.desc || '');
+        var uL = (it.url || '').toLowerCase();
+        var sc = 0;
+
+        if (nN === qNorm) sc += 120;
+        else if (nN.indexOf(qNorm) === 0) sc += 75;
+        else if (qNorm.length >= 3 && nN.indexOf(qNorm) !== -1) sc += 60;
+        if (qNorm.length >= 3 && (dN.indexOf(qNorm) !== -1 || uL.indexOf(qNorm) !== -1)) sc += 45;
+        if (cN.indexOf(qNorm) !== -1 || cvN.indexOf(qNorm) !== -1) sc += 35;
+
+        for (var j = 0; j < rawWords.length; j++) {
+          var rw = rawWords[j];
+          if (nN.indexOf(rw) !== -1) sc += 30;
+          if (cN.indexOf(rw) !== -1 || cvN.indexOf(rw) !== -1) sc += 20;
+          if (dN.indexOf(rw) !== -1) sc += 15;
+          if (uL.indexOf(rw) !== -1) sc += 10;
+        }
+        for (var k = 0; k < transKeys.length; k++) {
+          var tk = transKeys[k];
+          if (nN.indexOf(tk) !== -1) sc += 34;
+          if (cN.indexOf(tk) !== -1) sc += 22;
+          if (dN.indexOf(tk) !== -1) sc += 18;
+        }
+        if (sc > 0) scored.push({ it: it, sc: sc, idx: i });
+      }
+      scored.sort(function(a, b) { return (b.sc - a.sc) || (a.idx - b.idx); });
+      return scored.map(function(x) { return x.it; });
+    }
+
+    function copyUrl(btn, url) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(function() {
+          var old = btn.textContent;
+          btn.textContent = 'Đã copy!';
+          setTimeout(function() { btn.textContent = old; }, 1400);
+        });
+      }
+    }
+
+    function renderCategories() {
+      var strip = document.getElementById('catStrip');
+      if (!state.db || !state.db.categories) { strip.innerHTML = ''; return; }
+      var domKeys = state.domain === 'all' ? null : (DOMAINS[state.domain] || []);
+      var cats = state.db.categories.filter(function(c) {
+        return !domKeys || domKeys.indexOf(c.key) !== -1;
+      });
+      var html = '<button class="cat-pill ' + (state.cat === 'all' ? 'active' : '') + '" onclick="setCat(\\'all\\')">Tất cả (' + cats.reduce(function(a,c){return a+c.count;},0) + ')</button>';
+      for (var i = 0; i < cats.length; i++) {
+        var c = cats[i];
+        var lbl = (CAT_VI[c.key] || c.name) + ' (' + c.count + ')';
+        html += '<button class="cat-pill ' + (state.cat === c.key ? 'active' : '') + '" onclick="setCat(\\'' + escapeHtml(c.key) + '\\')">' + escapeHtml(lbl) + '</button>';
+      }
+      strip.innerHTML = html;
+    }
+
+    function render() {
+      renderCategories();
+      var list = filterItems();
+      var total = state.db ? state.db.total : 0;
+      document.getElementById('resultCount').textContent = 'Hiển thị ' + list.length + ' / ' + total + ' bộ dữ liệu';
+
+      var grid = document.getElementById('grid');
+      if (list.length === 0) {
+        grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;">Không tìm thấy bộ dữ liệu khớp với từ khóa hiện tại. Hãy thử chọn chủ đề khác hoặc bấm <strong>Đặt lại</strong>.</div>';
+        return;
+      }
+
+      var cards = [];
+      for (var i = 0; i < list.length; i++) {
+        var it = list[i];
+        var catLbl = (CAT_VI[it.cat_key] || it.cat) + ' • ' + it.cat;
+        var metaTags = '';
+        if (it.years) metaTags += '<span class="meta-tag">📅 ' + escapeHtml(it.years) + '</span>';
+        if (it.access) metaTags += '<span class="meta-tag">🔑 ' + escapeHtml(it.access) + '</span>';
+
+        cards.push(
+          '<div class="ds-card">' +
+            '<div>' +
+              '<span class="ds-cat">' + escapeHtml(catLbl) + '</span>' +
+              '<h3 class="ds-title">' + escapeHtml(it.name) + '</h3>' +
+              (it.desc ? '<p class="ds-desc">' + escapeHtml(it.desc) + '</p>' : '') +
+              (metaTags ? '<div class="ds-meta">' + metaTags + '</div>' : '') +
+            '</div>' +
+            '<div class="ds-actions">' +
+              '<a class="btn" href="' + escapeHtml(it.url) + '" target="_blank" rel="noopener">Mở nguồn dữ liệu ↗</a>' +
+              '<button class="btn btn-ghost" onclick="copyUrl(this, \\'' + escapeHtml(it.url).replace(/'/g, '') + '\\')">Copy link</button>' +
+            '</div>' +
+          '</div>'
+        );
+      }
+      grid.innerHTML = cards.join('');
+    }
+
+    document.getElementById('qInput').addEventListener('input', function(e) {
+      state.query = e.target.value;
+      render();
+    });
+
+    fetch('${workerOrigin}/api/datasets')
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (!data || !data.ok) throw new Error(data && data.error ? data.error : 'Load error');
+        state.db = data;
+        document.getElementById('statPill').textContent = data.total + ' bộ dữ liệu • ' + (data.categories || []).length + ' chủ đề';
+        if (data.updated_at) {
+          document.getElementById('updatedMeta').textContent = 'Cập nhật: ' + String(data.updated_at).slice(0, 10);
+        }
+        render();
+      })
+      .catch(function(err) {
+        document.getElementById('statPill').textContent = 'Lỗi tải dữ liệu';
+        document.getElementById('grid').innerHTML = '<div class="empty-state" style="grid-column:1/-1;">Không thể tải danh mục dữ liệu: ' + escapeHtml(err.message) + '</div>';
+      });
+  </script>
+</body>
+</html>`;
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const path = url.pathname;
 
-    // 1. Trang chủ Web Portal
+    // 1. Trang chủ Web Portal (Tra cứu Tạp chí)
     if (request.method === "GET" && path === "/") {
       const savedToken =
         env.ZALO_BOT_TOKEN || (await env.SCOPUS_BOT_KV.get("ZALO_BOT_TOKEN"));
@@ -2705,12 +3365,65 @@ export default {
       );
     }
 
-    // 2. API Tra cứu trực tiếp trên Web (/api/search?q=...)
+    // 1b. Trang Web Độc Lập cho Kho Dữ liệu Mở NCKH (/datasets)
+    if (request.method === "GET" && (path === "/datasets" || path === "/datasets/")) {
+      return new Response(renderDatasetsPortal(url.origin), {
+        headers: { "Content-Type": "text/html; charset=utf-8" },
+      });
+    }
+
+    // 1c. API JSON riêng cho Kho Dữ liệu Mở NCKH (/api/datasets)
+    if (request.method === "GET" && path === "/api/datasets") {
+      try {
+        const ds = await getDatasetsDatabase();
+        const catFilter = (url.searchParams.get("cat") || "").trim().toLowerCase();
+        const q = (url.searchParams.get("q") || "").trim();
+
+        let items = Array.isArray(ds.items) ? ds.items : [];
+        if (q) {
+          const matched = findMatchingDatasets("data " + q, ds);
+          items = matched.isMenu ? items : matched.matches;
+        }
+        if (catFilter) {
+          items = items.filter((it) => it.cat_key === catFilter);
+        }
+
+        const enrichedCats = (ds.categories || []).map((c) => ({
+          ...c,
+          name_vi: DATASET_CAT_VI[c.key] || c.name,
+        }));
+        const enrichedItems = items.map((it) => ({
+          ...it,
+          cat_vi: DATASET_CAT_VI[it.cat_key] || it.cat,
+        }));
+
+        return Response.json(
+          {
+            ok: true,
+            source_name: ds.source_name,
+            source_url: ds.source_url,
+            updated_at: ds.updated_at,
+            total: ds.total || (ds.items || []).length,
+            filtered_total: enrichedItems.length,
+            categories: enrichedCats,
+            items: enrichedItems,
+          },
+          { headers: { "Access-Control-Allow-Origin": "*" } }
+        );
+      } catch (err) {
+        return Response.json(
+          { ok: false, error: err.message },
+          { status: 500, headers: { "Access-Control-Allow-Origin": "*" } }
+        );
+      }
+    }
+
+    // 2. API Tra cứu trực tiếp Tạp chí trên Web (/api/search?q=...)
     if (path === "/api/search") {
       const q = url.searchParams.get("q") || "";
       try {
         const db = await getLookupDatabase();
-        const result = await resolveAndSearch(q, db);
+        const result = await resolveAndSearch(q, db, null);
         return Response.json({
           ok: true,
           query: q,
@@ -2847,6 +3560,9 @@ export default {
     // Tự động giữ RAM ấm (Pre-warm In-Memory Cache) để người dùng nhắn tin không bị độ trễ Cold-Start
     if (!memoryCache.data) {
       ctx.waitUntil(getLookupDatabase().catch(() => {}));
+    }
+    if (!datasetsMemoryCache.data) {
+      ctx.waitUntil(getDatasetsDatabase().catch(() => {}));
     }
     ctx.waitUntil(pollZaloUpdatesLoop(env));
   },
