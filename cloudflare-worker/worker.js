@@ -83,10 +83,11 @@ function buildUserGuideMessage(displayName = "bạn", isFirstTime = false) {
     `• Gõ 4 : Bật/tắt nhận thông báo định kỳ (Gõ 'huy' để tắt)\n` +
     `• Gõ 5 : Xem 16 Tạp chí Việt Nam trong Scopus / WoS quốc tế\n` +
     `• Gõ 6 : Danh mục điểm 28 Hội đồng Giáo sư Nhà nước (QĐ 26/QĐ-HĐGSNN)\n` +
+    `• Gõ 7 / data : Kho 150+ bộ dữ liệu mở NCKH Xã hội & Kinh tế\n` +
     `• Gõ aci : Xem danh mục Tạp chí Việt Nam trong ASEAN Citation Index\n` +
     `• Gõ nafosted : Xem chuẩn công nhận bài báo Quỹ NAFOSTED Quốc gia\n` +
     `• So sánh 2 tạp chí : Nhắn 'so sánh JED và JABES' hoặc 'JED vs JABES'\n\n` +
-    `👉 Hãy thử nhắn: VJCS, so sánh JED và JABES, aci, hdgs y hoc`
+    `👉 Hãy thử nhắn: VJCS, so sánh JED và JABES, data tai chinh, hdgs y hoc`
   );
 }
 
@@ -728,6 +729,7 @@ function searchJournal(query, lookupDb) {
   // TRƯỜNG HỢP: KHÔNG TÌM THẤY TẠP CHÍ NÀO TRONG MỌI NGUỒN DỮ LIỆU
   if (!matchedDisc && !matchedHijacked && !matchedSjr && !matchedAbdc && !matchedVn && !matchedHdgs && !matchedWosDelisted && !matchedBeallJournal && !matchedBeallPublisher) {
     const suggestions = findClosestSuggestions(q, lookupDb, 3);
+    const datasetHints = findDatasetHintsForQuery(q, lookupDb, 2);
     const lines = [
       `🔍 KẾT QUẢ TRA CỨU: "${q}"`,
       `\n❓ KHÔNG TÌM THẤY TRONG CSDL KHOA HỌC (SCOPUS / ABDC / CHUẨN VN 2026 / HĐGSNN / ACI)`,
@@ -740,13 +742,22 @@ function searchJournal(query, lookupDb) {
       lines.push(`\n👉 Bạn chỉ cần copy và gửi lại tên tạp chí ở trên để tra cứu ngay!`);
     }
 
+    if (datasetHints.length > 0) {
+      lines.push(`\n📂 GỢI Ý KHO DỮ LIỆU MỞ NCKH:`);
+      datasetHints.forEach((dh) => {
+        const catVi = DATASET_CAT_VI[dh.cat_key] || dh.cat;
+        lines.push(`• ${dh.name} [${catVi}]`);
+      });
+      lines.push(`👉 Nhắn 'data ${q}' để xem mô tả chi tiết & link tải miễn phí!`);
+    }
+
     lines.push(
       `\n───────────────────────────────────────`,
       `💡 MẸO TRA CỨU CHÍNH XÁC:`,
       `• Nhắn mã ISSN (ví dụ: 0148-2963 hoặc 2515-964X)`,
       `• Nhắn mã DOI bài báo (ví dụ: 10.1016/j.jbusres.2021.08.043) để tra tự động`,
       `• Nhắn từ viết tắt chuẩn (VJCS, JABES, JED, JSAMD, JBR, JCR...)`,
-      `• Gõ '6' để xem 28 Hội đồng GSNN | Gõ 'aci' xem ACI | Gõ 'nafosted' xem NAFOSTED`,
+      `• Gõ '6' xem 28 HĐGSNN | '7' / 'data' xem kho 150+ bộ dữ liệu mở NCKH`,
       `• Gõ '1' để xem lại toàn bộ hướng dẫn tra cứu.`
     );
 
@@ -1037,7 +1048,8 @@ const FOOTER_TIPS = [
   "💡 MẸO HAY: Gõ '5' (hoặc 'vn') để xem 16 Tạp chí Việt Nam trong Scopus/WoS (có VJCS của NTTU, JABES, JED...)!",
   "💡 MẸO HAY: Gõ '2' để xem các tạp chí khối Kinh tế - Quản trị vừa bị Scopus loại bỏ gần đây.",
   "💡 MẸO HAY: Bạn có thể gõ từ viết tắt chuẩn như VJCS, JABES, JED, JSAMD, JBR, JCR... để tra cứu nhanh!",
-  "💡 MẸO HAY: Hệ thống hỗ trợ tra cứu toàn bộ 341 tạp chí đạt Tiêu chuẩn Khoa học Việt Nam năm 2026."
+  "💡 MẸO HAY: Hệ thống hỗ trợ tra cứu toàn bộ 341 tạp chí đạt Tiêu chuẩn Khoa học Việt Nam năm 2026.",
+  "💡 MẸO HAY: Gõ 'data' (hoặc '7') để tra cứu kho 150+ bộ dữ liệu mở NCKH Xã hội, Kinh tế, Tài chính!"
 ];
 
 function getRandomFooterTip() {
@@ -1335,7 +1347,12 @@ async function resolveAndSearch(query, lookupDb) {
     return getNafostedGuideMessage(lookupDb);
   }
 
-  // 4. Phím tắt Top 16 Tạp chí Việt Nam trong Scopus/WoS
+  // 4. Phím tắt Kho dữ liệu mở NCKH (Todd Jones - Social Science Datasets)
+  if (isDatasetCommand(text, lookupDb)) {
+    return handleDatasetCommand(text, lookupDb);
+  }
+
+  // 5. Phím tắt Top 16 Tạp chí Việt Nam trong Scopus/WoS
   if (["5", "vn", "vietnam", "tcvn", "việt nam"].includes(cmd)) {
     return getVietnamScopusList(lookupDb);
   }
@@ -1660,6 +1677,531 @@ function getNafostedGuideMessage(lookupDb) {
   return res;
 }
 
+const DATASET_CAT_VI = {
+  finance: "Tài chính",
+  personal_finance: "Tài chính cá nhân",
+  businesses: "Doanh nghiệp",
+  macroeconomics: "Kinh tế vĩ mô",
+  inflation_and_cost_of_living: "Lạm phát & Chi phí SH",
+  working: "Lao động & Việc làm",
+  shopping: "Tiêu dùng & Mua sắm",
+  real_estate: "Bất động sản",
+  patents: "Sáng chế",
+  education: "Giáo dục",
+  academia: "Học thuật & ĐH",
+  household_surveys: "Khảo sát hộ gia đình",
+  us_censuses_and_economic_history: "Tổng điều tra & LS KT",
+  time_use: "Sử dụng thời gian",
+  family: "Gia đình",
+  mobility_and_migration: "Di cư & Dịch chuyển",
+  demography: "Nhân khẩu học",
+  beliefs_and_values: "Niềm tin & Giá trị",
+  social_networks: "Mạng xã hội",
+  religion: "Tôn giáo",
+  health_public_health_and_epidemiology: "Y tế & Dịch tễ học",
+  injury_and_death: "Chấn thương & Tử vong",
+  environment_and_energy: "Môi trường & Năng lượng",
+  weather: "Thời tiết & Khí hậu",
+  maps_and_geography: "Bản đồ & Địa lý",
+  crashes_and_traffic: "Tai nạn & Giao thông",
+  government: "Chính phủ",
+  politics_and_voting: "Chính trị & Bầu cử",
+  law: "Pháp luật",
+  crime: "Tội phạm",
+  states_conflict_and_regimes: "Quốc gia & Xung đột",
+  sports: "Thể thao",
+  names: "Tên gọi & Nhân danh",
+  misc: "Tổng hợp (OWID, Gapminder)",
+};
+
+const DATASET_CAT_ALIASES = {
+  "tai chinh": ["finance", "personal_finance"],
+  "tai chinh ca nhan": ["personal_finance"],
+  "kinh te": ["macroeconomics", "businesses", "inflation_and_cost_of_living", "finance"],
+  "kinh te vi mo": ["macroeconomics"],
+  "vi mo": ["macroeconomics"],
+  "doanh nghiep": ["businesses"],
+  "cong ty": ["businesses"],
+  "kinh doanh": ["businesses"],
+  "lao dong": ["working"],
+  "viec lam": ["working"],
+  "nhan luc": ["working"],
+  "giao duc": ["education", "academia"],
+  "hoc thuat": ["academia"],
+  "dai hoc": ["academia", "education"],
+  "y te": ["health_public_health_and_epidemiology"],
+  "y hoc": ["health_public_health_and_epidemiology"],
+  "suc khoe": ["health_public_health_and_epidemiology"],
+  "dich te": ["health_public_health_and_epidemiology"],
+  "moi truong": ["environment_and_energy", "weather"],
+  "nang luong": ["environment_and_energy"],
+  "thoi tiet": ["weather"],
+  "khi hau": ["weather", "environment_and_energy"],
+  "bat dong san": ["real_estate"],
+  "nha dat": ["real_estate"],
+  "nha o": ["real_estate"],
+  "tieu dung": ["shopping"],
+  "mua sam": ["shopping"],
+  "ban le": ["shopping"],
+  "ho gia dinh": ["household_surveys"],
+  "khao sat": ["household_surveys"],
+  "khao sat ho gia dinh": ["household_surveys"],
+  "gia dinh": ["family"],
+  "toi pham": ["crime"],
+  "phap luat": ["law"],
+  "luat": ["law"],
+  "chinh phu": ["government"],
+  "chinh tri": ["politics_and_voting"],
+  "bau cu": ["politics_and_voting"],
+  "di cu": ["mobility_and_migration"],
+  "dan so": ["demography"],
+  "nhan khau": ["demography"],
+  "nhan khau hoc": ["demography"],
+  "sang che": ["patents"],
+  "mang xa hoi": ["social_networks"],
+  "lam phat": ["inflation_and_cost_of_living"],
+  "chi phi": ["inflation_and_cost_of_living"],
+  "giao thong": ["crashes_and_traffic"],
+  "tai nan": ["crashes_and_traffic", "injury_and_death"],
+  "tu vong": ["injury_and_death", "demography"],
+  "thoi gian": ["time_use"],
+  "ban do": ["maps_and_geography"],
+  "dia ly": ["maps_and_geography"],
+  "ton giao": ["religion"],
+  "van hoa": ["beliefs_and_values"],
+  "niem tin": ["beliefs_and_values"],
+  "gia tri": ["beliefs_and_values"],
+  "xung dot": ["states_conflict_and_regimes"],
+  "chien tranh": ["states_conflict_and_regimes"],
+  "the thao": ["sports"],
+  "tong dieu tra": ["us_censuses_and_economic_history"],
+  "lich su": ["us_censuses_and_economic_history"],
+  "ten": ["names"],
+  "tong hop": ["misc"],
+  "khac": ["misc"],
+  finance: ["finance", "personal_finance"],
+  "personal finance": ["personal_finance"],
+  business: ["businesses"],
+  businesses: ["businesses"],
+  macro: ["macroeconomics"],
+  macroeconomics: ["macroeconomics"],
+  working: ["working"],
+  work: ["working"],
+  labor: ["working"],
+  labour: ["working"],
+  education: ["education"],
+  academia: ["academia"],
+  academic: ["academia"],
+  health: ["health_public_health_and_epidemiology"],
+  epidemiology: ["health_public_health_and_epidemiology"],
+  environment: ["environment_and_energy"],
+  energy: ["environment_and_energy"],
+  weather: ["weather"],
+  climate: ["weather", "environment_and_energy"],
+  "real estate": ["real_estate"],
+  housing: ["real_estate"],
+  shopping: ["shopping"],
+  household: ["household_surveys"],
+  surveys: ["household_surveys"],
+  census: ["us_censuses_and_economic_history"],
+  history: ["us_censuses_and_economic_history"],
+  family: ["family"],
+  crime: ["crime"],
+  law: ["law"],
+  government: ["government"],
+  politics: ["politics_and_voting"],
+  voting: ["politics_and_voting"],
+  migration: ["mobility_and_migration"],
+  mobility: ["mobility_and_migration"],
+  demography: ["demography"],
+  patent: ["patents"],
+  patents: ["patents"],
+  social: ["social_networks"],
+  "social networks": ["social_networks"],
+  inflation: ["inflation_and_cost_of_living"],
+  cpi: ["inflation_and_cost_of_living"],
+  traffic: ["crashes_and_traffic"],
+  crash: ["crashes_and_traffic"],
+  crashes: ["crashes_and_traffic"],
+  injury: ["injury_and_death"],
+  death: ["injury_and_death"],
+  time: ["time_use"],
+  "time use": ["time_use"],
+  map: ["maps_and_geography"],
+  maps: ["maps_and_geography"],
+  geo: ["maps_and_geography"],
+  geography: ["maps_and_geography"],
+  religion: ["religion"],
+  beliefs: ["beliefs_and_values"],
+  values: ["beliefs_and_values"],
+  conflict: ["states_conflict_and_regimes"],
+  war: ["states_conflict_and_regimes"],
+  states: ["states_conflict_and_regimes"],
+  sports: ["sports"],
+  sport: ["sports"],
+  names: ["names"],
+  misc: ["misc"],
+};
+
+const DATASET_VI_TOKEN_MAP = {
+  "bien doi khi hau": ["weather", "temperature", "environmental", "precipitation"],
+  "khi hau": ["weather", "temperature", "environmental"],
+  "tien luong": ["wage", "salary", "earnings", "income", "pay"],
+  luong: ["wage", "salary", "earnings", "income", "pay"],
+  "thu nhap": ["income", "earnings"],
+  thue: ["tax"],
+  "ngan hang": ["bank", "central bank", "monetary", "credit"],
+  "chinh sach tien te": ["monetary policy", "central bank"],
+  "tien te": ["monetary", "bank"],
+  "chung khoan": ["equity", "stock", "ownership", "corporate"],
+  "so huu": ["ownership", "voteholders"],
+  "sinh vien": ["student", "college", "university"],
+  "hoc sinh": ["student", "school", "k 12"],
+  "dai hoc": ["college", "university", "phd", "faculty"],
+  "giao vien": ["teacher", "faculty", "school"],
+  "benh vien": ["hospital", "healthcare", "medical"],
+  "y te": ["health", "medical", "mortality"],
+  "o nhiem": ["pollution", "air", "environment", "environmental", "hazards"],
+  "phat thai": ["emission", "pollution", "energy"],
+  dien: ["electricity", "energy", "power"],
+  "gia nha": ["home price", "housing", "zillow", "property"],
+  "bat dong san": ["housing", "home", "property", "zillow"],
+  "hon nhan": ["marriage", "divorce", "family"],
+  "ly hon": ["divorce", "marriage"],
+  "sinh san": ["fertility", "birth"],
+  "tu vong": ["mortality", "death"],
+  "canh sat": ["police", "crime"],
+  "toa an": ["court", "judge", "law"],
+  "thuong mai": ["trade", "amazon", "e commerce"],
+  "mua sam": ["purchase", "amazon", "e commerce"],
+  "viec lam": ["employment", "job", "occupation", "workforce"],
+  "that nghiep": ["unemployment", "employment", "work"],
+  "di cu": ["migration", "mobility"],
+  "sang che": ["patent"],
+  "bau cu": ["voting", "election", "voter", "congress"],
+  "nghi vien": ["congress", "legislator"],
+  "hanh phuc": ["happiness", "flourishing"],
+  "ti le": ["rate"],
+};
+
+const DATASET_VI_STOPWORDS = new Set([
+  "ve", "cua", "cho", "voi", "va", "trong", "tu", "cac", "nhung", "nganh",
+  "linh", "vuc", "chu", "de", "du", "lieu", "data", "dataset", "datasets",
+  "mien", "phi", "mo", "tim",
+]);
+
+function isDatasetCommand(rawText, lookupDb = null) {
+  if (!rawText) return false;
+  const trimmed = rawText.trim();
+  const cmd = trimmed.toLowerCase();
+  const exactSet = [
+    "7",
+    "data",
+    "/data",
+    "dataset",
+    "/dataset",
+    "datasets",
+    "/datasets",
+    "du lieu",
+    "dữ liệu",
+    "kho du lieu",
+    "kho dữ liệu",
+  ];
+  if (exactSet.includes(cmd)) return true;
+
+  // Nếu bắt đầu bằng "data " (không có dấu /), ưu tiên kiểm tra xem có phải tên Tạp chí thật không (vd: "Data in Brief")
+  if (/^data\s+/i.test(trimmed) && lookupDb) {
+    if (
+      lookupDb.sjr_rankings?.[cmd] ||
+      lookupDb.abdc_rankings?.[cmd] ||
+      (lookupDb.discontinued_journals || []).some((j) => (j.title || "").toLowerCase() === cmd)
+    ) {
+      return false;
+    }
+  }
+
+  return (
+    cmd.startsWith("data ") ||
+    cmd.startsWith("/data ") ||
+    cmd.startsWith("dataset ") ||
+    cmd.startsWith("/dataset ") ||
+    cmd.startsWith("datasets ") ||
+    cmd.startsWith("/datasets ") ||
+    cmd.startsWith("du lieu ") ||
+    cmd.startsWith("dữ liệu ") ||
+    cmd.startsWith("tim du lieu ") ||
+    cmd.startsWith("tìm dữ liệu ") ||
+    cmd.startsWith("kho du lieu ") ||
+    cmd.startsWith("kho dữ liệu ")
+  );
+}
+
+function findDatasetHintsForQuery(rawQuery, lookupDb, maxResults = 2) {
+  const items = lookupDb?.research_datasets?.items || [];
+  if (!items.length) return [];
+  const qNorm = normalizeVnText(rawQuery);
+  if (qNorm.length < 3) return [];
+  const hits = [];
+  for (const it of items) {
+    const nNorm = normalizeVnText(it.name);
+    if (!nNorm) continue;
+    if (
+      nNorm === qNorm ||
+      matchTitleSafely(it.name, rawQuery) ||
+      (qNorm.length >= 5 && nNorm.includes(qNorm))
+    ) {
+      hits.push(it);
+      if (hits.length >= maxResults) break;
+    }
+  }
+  return hits;
+}
+
+function buildDatasetMenuMessage(ds) {
+  const total = ds.total || (ds.items || []).length;
+  const cats = ds.categories || [];
+  const knownSlugs = new Set([
+    "finance", "personal_finance", "businesses", "macroeconomics", "working",
+    "shopping", "real_estate", "inflation_and_cost_of_living", "patents",
+    "education", "academia", "household_surveys", "us_censuses_and_economic_history",
+    "family", "demography", "mobility_and_migration", "time_use",
+    "beliefs_and_values", "social_networks",
+    "health_public_health_and_epidemiology", "injury_and_death",
+    "environment_and_energy", "weather", "maps_and_geography", "crashes_and_traffic",
+    "government", "politics_and_voting", "law", "crime",
+    "states_conflict_and_regimes", "religion", "sports", "names", "misc",
+  ]);
+  const extraCats = cats
+    .filter((c) => !knownSlugs.has(c.key))
+    .map((c) => `${DATASET_CAT_VI[c.key] || c.name} (${c.key.replace(/_/g, " ")})`);
+
+  let msg =
+    `📂 KHO DỮ LIỆU MỞ NCKH XÃ HỘI & KINH TẾ (${total} bộ • ${cats.length} chủ đề)\n` +
+    `🔗 Nguồn: Todd Jones (github.com/toddrjones/datasets)\n` +
+    `───────────────────────────────────────\n` +
+    `💼 KINH TẾ - TÀI CHÍNH - DOANH NGHIỆP:\n` +
+    `• Tài chính (finance) | TC cá nhân (personal finance)\n` +
+    `• Doanh nghiệp (businesses) | Kinh tế vĩ mô (macro)\n` +
+    `• Lao động (working) | Tiêu dùng (shopping) | BĐS (real estate)\n` +
+    `• Lạm phát (inflation) | Sáng chế (patents)\n\n` +
+    `🎓 GIÁO DỤC - HỌC THUẬT - XÃ HỘI:\n` +
+    `• Giáo dục (education) | Học thuật (academia)\n` +
+    `• Hộ gia đình (household) | Tổng điều tra KT (census)\n` +
+    `• Gia đình (family) | Nhân khẩu (demography) | Di cư (migration)\n` +
+    `• Thời gian (time use) | Niềm tin (beliefs) | Mạng XH (social)\n\n` +
+    `🌿 Y TẾ - MÔI TRƯỜNG - ĐỊA LÝ:\n` +
+    `• Y tế & Dịch tễ (health) | Chấn thương/Tử vong (injury)\n` +
+    `• Môi trường/NL (environment) | Thời tiết (weather)\n` +
+    `• Bản đồ/Địa lý (maps) | Giao thông/Tai nạn (traffic)\n\n` +
+    `⚖️ CHÍNH SÁCH - PHÁP LUẬT - KHÁC:\n` +
+    `• Chính phủ (government) | Bầu cử (politics) | Pháp luật (law)\n` +
+    `• Tội phạm (crime) | Xung đột (conflict) | Tôn giáo (religion)\n` +
+    `• Thể thao (sports) | Tên gọi (names) | Tổng hợp (misc)`;
+
+  if (extraCats.length > 0) {
+    msg += `\n• Chủ đề mới: ${extraCats.join(" | ")}`;
+  }
+
+  msg +=
+    `\n───────────────────────────────────────\n` +
+    `💡 Cú pháp: Nhắn 'data <chủ đề/từ khóa>' để xem link tải\n` +
+    `VD: data tài chính, data doanh nghiệp, data IPUMS, data tiền lương`;
+
+  return msg;
+}
+
+function findMatchingDatasets(rawQuery, lookupDb) {
+  const ds = lookupDb?.research_datasets;
+  if (!ds || !Array.isArray(ds.items)) {
+    return { isMenu: false, matches: [], matchedCatKeys: [], qNorm: "" };
+  }
+
+  let body = (rawQuery || "").trim();
+  body = body.replace(
+    /^(?:\/?datasets?|\/?data|tìm\s+dữ\s+liệu|tim\s+du\s+lieu|kho\s+dữ\s+liệu|kho\s+du\s+lieu|dữ\s+liệu|du\s+lieu|7)(?=\s|$)/i,
+    ""
+  ).trim();
+  body = body.replace(
+    /^(?:(?:về|ve|ngành|nganh|chủ\s+đề|chu\s+de|lĩnh\s+vực|linh\s+vuc|miễn\s+phí|mien\s+phi|mở|mo|của|cua)\s+)+/i,
+    ""
+  ).trim();
+
+  const qNorm = normalizeVnText(body);
+  if (!qNorm || ["menu", "ds", "list", "danh sach", "tat ca", "all"].includes(qNorm)) {
+    return { isMenu: true, matches: [], matchedCatKeys: [], qNorm: "" };
+  }
+
+  // 1. Khớp theo chủ đề (Aliases tiếng Việt/Anh hoặc tên chủ đề chính thức)
+  let catKeys = DATASET_CAT_ALIASES[qNorm] ? [...DATASET_CAT_ALIASES[qNorm]] : [];
+  if (catKeys.length === 0) {
+    for (const c of ds.categories || []) {
+      const cSlugNorm = c.key.replace(/_/g, " ");
+      const cEnNorm = normalizeVnText(c.name);
+      const cViNorm = normalizeVnText(DATASET_CAT_VI[c.key] || "");
+      if (qNorm === cSlugNorm || qNorm === cEnNorm || (cViNorm && qNorm === cViNorm)) {
+        catKeys.push(c.key);
+      }
+    }
+  }
+  if (catKeys.length === 0 && qNorm.length >= 4) {
+    for (const c of ds.categories || []) {
+      const cEnNorm = normalizeVnText(c.name);
+      const cViNorm = normalizeVnText(DATASET_CAT_VI[c.key] || "");
+      if (cEnNorm.includes(qNorm) || (cViNorm && cViNorm.includes(qNorm))) {
+        catKeys.push(c.key);
+      }
+    }
+  }
+
+  if (catKeys.length > 0) {
+    const keyRank = new Map(catKeys.map((k, i) => [k, i]));
+    const catMatches = ds.items
+      .filter((it) => keyRank.has(it.cat_key))
+      .sort((a, b) => keyRank.get(a.cat_key) - keyRank.get(b.cat_key));
+    return { isMenu: false, matches: catMatches, matchedCatKeys: catKeys, qNorm, displayQuery: body };
+  }
+
+  // 2. Mở rộng từ khóa Việt -> Anh và chấm điểm toàn văn
+  const translatedTokens = new Set();
+  for (const [viPhrase, enList] of Object.entries(DATASET_VI_TOKEN_MAP)) {
+    if (qNorm.includes(viPhrase)) {
+      for (const en of enList) translatedTokens.add(en);
+    }
+  }
+  const rawWords = qNorm.split(" ").filter((w) => w.length >= 2 && !DATASET_VI_STOPWORDS.has(w));
+  for (const rw of rawWords) {
+    if (DATASET_VI_TOKEN_MAP[rw]) {
+      for (const en of DATASET_VI_TOKEN_MAP[rw]) translatedTokens.add(en);
+    }
+  }
+
+  const scored = [];
+  for (let idx = 0; idx < ds.items.length; idx++) {
+    const it = ds.items[idx];
+    const nameNorm = normalizeVnText(it.name);
+    const catNorm = normalizeVnText(it.cat);
+    const catViNorm = normalizeVnText(DATASET_CAT_VI[it.cat_key] || "");
+    const descNorm = normalizeVnText(it.desc || "");
+    const metaNorm = normalizeVnText(`${it.years || ""} ${it.access || ""}`);
+    const urlLower = (it.url || "").toLowerCase();
+
+    let score = 0;
+    if (nameNorm === qNorm) score += 120;
+    else if (matchTitleSafely(it.name, body) || nameNorm.startsWith(qNorm)) score += 75;
+    else if (qNorm.length >= 3 && nameNorm.includes(qNorm)) score += 60;
+
+    if (qNorm.length >= 3 && (descNorm.includes(qNorm) || urlLower.includes(qNorm))) score += 45;
+    if (catNorm.includes(qNorm) || catViNorm.includes(qNorm)) score += 35;
+
+    for (const rw of rawWords) {
+      if (nameNorm.includes(rw)) score += 30;
+      if (catNorm.includes(rw) || catViNorm.includes(rw)) score += 20;
+      if (descNorm.includes(rw)) score += 15;
+      if (metaNorm.includes(rw)) score += 8;
+      if (urlLower.includes(rw)) score += 10;
+    }
+
+    for (const tok of translatedTokens) {
+      if (nameNorm.includes(tok)) score += 34;
+      if (catNorm.includes(tok)) score += 22;
+      if (descNorm.includes(tok)) score += 18;
+    }
+
+    if (score > 0) {
+      scored.push({ item: it, score, idx });
+    }
+  }
+
+  scored.sort((a, b) => b.score - a.score || a.idx - b.idx);
+  return {
+    isMenu: false,
+    matches: scored.map((s) => s.item),
+    matchedCatKeys: [],
+    qNorm,
+    displayQuery: body,
+  };
+}
+
+function formatDatasetEntry(item, idx, includeCat = false) {
+  const catVi = DATASET_CAT_VI[item.cat_key] || item.cat;
+  const header = includeCat ? `${idx}. ${item.name} [${catVi}]` : `${idx}. ${item.name}`;
+  const parts = [header];
+  if (item.desc) parts.push(`   • ${item.desc}`);
+  const meta = [
+    item.years ? `Năm: ${item.years}` : "",
+    item.access ? `Truy cập: ${item.access}` : "",
+  ]
+    .filter(Boolean)
+    .join(" | ");
+  if (meta) parts.push(`   • ${meta}`);
+  parts.push(`   🔗 ${item.url}`);
+  return parts.join("\n");
+}
+
+function handleDatasetCommand(query, lookupDb) {
+  const ds = lookupDb?.research_datasets;
+  if (!ds || !Array.isArray(ds.items) || ds.items.length === 0) {
+    return (
+      `📂 KHO DỮ LIỆU MỞ NCKH XÃ HỘI & KINH TẾ (TODD JONES)\n` +
+      `⚠️ Dữ liệu đang được đồng bộ lại vào hệ thống.\n` +
+      `🔗 Bạn có thể truy cập trực tiếp tại: https://github.com/toddrjones/datasets`
+    );
+  }
+
+  const res = findMatchingDatasets(query, lookupDb);
+  if (res.isMenu) {
+    return buildDatasetMenuMessage(ds);
+  }
+
+  if (res.matches.length === 0) {
+    return (
+      `🔍 KHÔNG TÌM THẤY BỘ DỮ LIỆU PHÙ HỢP VỚI "${res.displayQuery || query}"\n\n` +
+      `💡 GỢI Ý TRA CỨU NHANH:\n` +
+      `• Theo chủ đề: data kinh tế, data tài chính, data doanh nghiệp, data lao động, data giáo dục, data y tế, data môi trường\n` +
+      `• Theo từ khóa: data IPUMS, data Amazon, data OpenAlex, data tiền lương, data bất động sản\n` +
+      `• Gõ 'data' (hoặc '7') để xem toàn bộ ${ds.categories?.length || 34} chủ đề dữ liệu mở!`
+    );
+  }
+
+  const isSingleCat = res.matchedCatKeys.length === 1;
+  let titleLabel = `"${res.displayQuery}"`;
+  if (res.matchedCatKeys.length > 0) {
+    titleLabel = res.matchedCatKeys
+      .map((k) => DATASET_CAT_VI[k] || k)
+      .slice(0, 3)
+      .join(" & ");
+  }
+
+  const headerBlock =
+    `📂 KHO DỮ LIỆU MỞ: ${titleLabel} (${res.matches.length} bộ)\n` +
+    `───────────────────────────────────────\n`;
+
+  const MAX_BODY_WITH_CLOSING = 1660;
+  const shown = [];
+  let runningLen = headerBlock.length;
+
+  for (let i = 0; i < res.matches.length; i++) {
+    const entry = formatDatasetEntry(res.matches[i], i + 1, !isSingleCat);
+    const addition = (shown.length > 0 ? "\n\n" : "") + entry;
+    if (runningLen + addition.length > MAX_BODY_WITH_CLOSING && shown.length > 0) {
+      break;
+    }
+    shown.push(entry);
+    runningLen += addition.length;
+  }
+
+  const remaining = res.matches.length - shown.length;
+  const closingLines = [
+    `\n───────────────────────────────────────`,
+    remaining > 0
+      ? `📌 Đang hiển thị ${shown.length}/${res.matches.length} bộ dữ liệu. Gõ 'data <từ khóa cụ thể>' để lọc hẹp hơn.`
+      : `💡 Gõ 'data' xem đủ ${ds.categories?.length || 34} chủ đề | Gõ 'data <từ khóa>' để tìm tiếp.`,
+    `🔗 Kho gốc: https://github.com/toddrjones/datasets`,
+  ];
+
+  return headerBlock + shown.join("\n\n") + closingLines.join("\n");
+}
+
 const recentProcessedMsgCache = new Map();
 
 async function processZaloIncomingMessage(env, botToken, update) {
@@ -1788,7 +2330,8 @@ async function processZaloIncomingMessage(env, botToken, update) {
         `• SCImago Scopus SJR: ${Object.keys(db.sjr_rankings || {}).length.toLocaleString()} tạp chí quốc tế (Q1-Q4)\n` +
         `• Danh mục ABDC (Úc): ${Object.keys(db.abdc_rankings || {}).length.toLocaleString()} tạp chí (A*, A, B, C)\n` +
         `• Chuẩn Khoa học Quốc gia VN: ${(db.vn_standards_2026 || []).length} tạp chí (gồm 16 tạp chí Scopus/WoS)\n` +
-        `• 28 Hội đồng GSNN: Đầy đủ 28/28 Hội đồng ngành/liên ngành\n\n` +
+        `• 28 Hội đồng GSNN: Đầy đủ 28/28 Hội đồng ngành/liên ngành\n` +
+        `• Kho Dữ liệu mở NCKH (Todd Jones): ${db.research_datasets?.total || 0} bộ dữ liệu (${(db.research_datasets?.categories || []).length} chủ đề)\n\n` +
         `2️⃣ HỆ THỐNG CẢNH BÁO RỦI RO & SĂN MỒI:\n` +
         `• Scopus Discontinued (bị loại): ${(db.discontinued_journals || []).length.toLocaleString()} tạp chí\n` +
         `• WoS Delisted (bị tước chỉ mục): ${(db.wos_delisted_journals || []).length} tạp chí quốc tế\n` +
@@ -1825,6 +2368,11 @@ async function processZaloIncomingMessage(env, botToken, update) {
     } else if (["nafosted", "/nafosted", "nafos"].includes(cmd)) {
       const db = await getLookupDatabase();
       replyText = getNafostedGuideMessage(db);
+    } else if (isDatasetCommand(text)) {
+      const db = await getLookupDatabase();
+      replyText = isDatasetCommand(text, db)
+        ? handleDatasetCommand(text, db)
+        : await resolveAndSearch(text, db);
     } else {
       const db = await getLookupDatabase();
       replyText = await resolveAndSearch(text, db);

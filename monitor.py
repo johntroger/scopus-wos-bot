@@ -21,6 +21,7 @@ RETRACTION_WATCH_CSV_URL = "https://gitlab.com/crossref/retraction-watch-data/-/
 HIJACKED_JOURNALS_CSV_URL = "https://docs.google.com/spreadsheets/d/1ak985WGOgGbJRJbZFanoktAN_UFeExpE/export?format=csv&gid=5255084"
 ABDC_RANKINGS_JSON_URL = "https://raw.githubusercontent.com/ben-AI-cybersec/zotero-publication-rankings/main/update-scripts/abdc_rankings.json"
 SJR_RANKINGS_JSON_URL = "https://raw.githubusercontent.com/ben-AI-cybersec/zotero-publication-rankings/main/update-scripts/sjr_rankings.json"
+TODDRJONES_DATASETS_README_URL = "https://raw.githubusercontent.com/toddrjones/datasets/main/README.md"
 
 STATE_FILE = "state.json"
 WATCHLIST_FILE = "watchlist.json"
@@ -199,7 +200,7 @@ def load_json_file(path: str, default: dict) -> dict:
 def save_json_file(path: str, data: dict) -> None:
     # Đối với cơ sở dữ liệu lớn discontinued_lookup.json: lưu dạng compact và kiểm tra tính toàn vẹn
     if "lookup" in path:
-        critical_keys = ["hdgs_by_issn", "hdgs_councils", "aci_journals", "nafosted_national", "vn_standards_2026", "issn_linked_map"]
+        critical_keys = ["hdgs_by_issn", "hdgs_councils", "aci_journals", "nafosted_national", "vn_standards_2026", "issn_linked_map", "research_datasets"]
         for ck in critical_keys:
             if ck not in data:
                 print(f"[CẢNH BÁO TOÀN VẸN] Khóa '{ck}' không có trong CSDL! Đang giữ nguyên bản ghi trước đó...")
@@ -613,6 +614,243 @@ def sync_academic_rankings(lookup_db: dict) -> None:
                 print(f"[SCImago SJR] Đã nạp {len(lookup_db['sjr_rankings'])} tạp chí phân hạng SJR.")
     except Exception as exc:
         print(f"[SCImago SJR] Lỗi: {exc}")
+
+
+def _strip_md_links(text: str) -> str:
+    if not text:
+        return ""
+    s = re.sub(r"\[([^\]]+)\]\((https?://[^)]+)\)", r"\1", text)
+    s = re.sub(r"\[([^\]]+)\]\(([^)]+)\)", r"\1", s)
+    return re.sub(r"\s+", " ", s).strip()
+
+
+def _extract_md_links(text: str) -> List[Tuple[str, str]]:
+    if not text:
+        return []
+    return [
+        (m.group(1).strip(), m.group(2).strip())
+        for m in re.finditer(r"\[([^\]]+)\]\((https?://[^)\s]+)\)", text)
+    ]
+
+
+def _truncate_dataset_desc(text: str, max_len: int = 180) -> str:
+    s = re.sub(r"\s+", " ", text or "").strip()
+    if len(s) <= max_len:
+        return s
+    return s[: max_len - 3].rstrip() + "..."
+
+
+def _extract_dataset_meta_from_subs(subs: List[Tuple[int, str]]) -> Tuple[str, str, List[str]]:
+    years = ""
+    access = ""
+    extra_descs: List[str] = []
+
+    for _, sub_text in subs:
+        plain = _strip_md_links(sub_text)
+        if not years:
+            ym = (
+                re.search(r"\bYears?:\s*([^.;]+)", plain, flags=re.IGNORECASE)
+                or re.search(r"\bFrom\s+(\d{4}\s*(?:to|-|–)\s*(?:\d{4}|present))", plain, flags=re.IGNORECASE)
+                or re.search(r"\bSince\s+(\d{4})", plain, flags=re.IGNORECASE)
+            )
+            if ym:
+                years = re.sub(r"[.;,]+$", "", ym.group(1).strip())
+                if len(years) > 45:
+                    years = years[:42].strip() + "..."
+
+        if not access:
+            am = (
+                re.search(r"\bAccess:\s*([^.;]+)", plain, flags=re.IGNORECASE)
+                or re.search(r"\b(Free for academic[^.;]*)", plain, flags=re.IGNORECASE)
+                or re.search(r"\b(Requires [^.;]*agreement[^.;]*)", plain, flags=re.IGNORECASE)
+            )
+            if am:
+                access = re.sub(r"[.;,]+$", "", am.group(1).strip())
+                if len(access) > 60:
+                    access = access[:57].strip() + "..."
+
+        if not re.match(r"^(?:Years?:|Access:|Sample paper:|From\s+)", plain, flags=re.IGNORECASE):
+            extra_descs.append(plain)
+
+    return years, access, extra_descs
+
+
+def parse_toddrjones_datasets_markdown(raw: str) -> dict:
+    """Phân tích README của toddrjones/datasets thành cấu trúc chỉ mục JSON chuẩn."""
+    clean = re.sub(r"<!--[\s\S]*?-->", "", raw)
+    lines = clean.splitlines()
+
+    cur_cat = ""
+    cur_cat_key = ""
+    current_bullet = None
+    raw_bullets = []
+
+    for line in lines:
+        if line.startswith("### "):
+            cur_cat = line[4:].strip()
+            if cur_cat == "Contents":
+                cur_cat = ""
+                cur_cat_key = ""
+            else:
+                cur_cat_key = re.sub(r"[^a-z0-9]+", "_", cur_cat.lower()).strip("_")
+            current_bullet = None
+            continue
+
+        if not cur_cat:
+            continue
+
+        top_match = re.match(r"^-\s+(.+)$", line)
+        if top_match:
+            current_bullet = {
+                "cat": cur_cat,
+                "cat_key": cur_cat_key,
+                "raw": top_match.group(1).strip(),
+                "subs": [],
+            }
+            raw_bullets.append(current_bullet)
+            continue
+
+        sub_match = re.match(r"^(\s+)-\s+(.+)$", line)
+        if sub_match and current_bullet is not None:
+            current_bullet["subs"].append((len(sub_match.group(1)), sub_match.group(2).strip()))
+
+    items: List[dict] = []
+    seen: Set[str] = set()
+
+    def push_item(name: str, url: str, cat_key: str, cat: str, desc: str, years: str = "", access: str = "") -> None:
+        if not name or not url or not re.match(r"^https?://", url, flags=re.IGNORECASE):
+            return
+        dedup_key = f"{cat_key}::{url}"
+        if dedup_key in seen:
+            return
+        seen.add(dedup_key)
+        entry = {
+            "name": name.strip(),
+            "url": url.strip(),
+            "cat_key": cat_key,
+            "cat": cat,
+            "desc": _truncate_dataset_desc(desc),
+        }
+        if years:
+            entry["years"] = years
+        if access:
+            entry["access"] = access
+        items.append(entry)
+
+    for b in raw_bullets:
+        top = b["raw"]
+        subs = b["subs"]
+        years, access, extra_descs = _extract_dataset_meta_from_subs(subs)
+
+        # Case 1: Bắt đầu bằng [Title](https://...)
+        c1 = re.match(r"^\[([^\]]+)\]\((https?://[^)\s]+)\)(.*)$", top)
+        if c1:
+            name = c1.group(1).strip()
+            url = c1.group(2).strip()
+            trail = re.sub(r"^[\s\-–—:]+", "", c1.group(3) or "")
+            desc = _strip_md_links(trail)
+            if not desc and extra_descs:
+                desc = extra_descs[0]
+            elif not desc and subs:
+                desc = _strip_md_links(subs[0][1])
+            push_item(name, url, b["cat_key"], b["cat"], desc, years, access)
+            continue
+
+        # Case 2: Không bắt đầu bằng link nhưng dòng đầu có link nội tuyến
+        top_links = _extract_md_links(top)
+        if top_links:
+            lbl, first_url = top_links[0]
+            if lbl.lower() in {"here", "link", "this site"}:
+                cleaned_title = re.sub(r"^See\s+here\s+for\s+", "", _strip_md_links(top), flags=re.IGNORECASE)
+                cleaned_title = re.sub(r"\.+$", "", cleaned_title).strip()
+                name = cleaned_title[:1].upper() + cleaned_title[1:] if cleaned_title else lbl
+            elif re.search(r"urban institute", top, flags=re.IGNORECASE) and lbl.lower() == "educationdata":
+                name = "educationdata (Urban Institute)"
+            else:
+                name = lbl
+            push_item(name, first_url, b["cat_key"], b["cat"], _strip_md_links(top), years, access)
+            continue
+
+        # Case 3: Dòng đầu không có link, kiểm tra sub-bullets
+        if any(_extract_md_links(st) for _, st in subs):
+            if len(top) <= 45 and not top.endswith(":"):
+                min_indent = min(ind for ind, _ in subs)
+                for ind, sub_text in subs:
+                    if ind > min_indent or re.match(r"^From\s+\[", sub_text, flags=re.IGNORECASE):
+                        continue
+                    slinks = _extract_md_links(sub_text)
+                    if not slinks:
+                        continue
+                    primary_lbl, primary_url = slinks[0]
+                    plain_sub = _strip_md_links(sub_text)
+                    desc_txt = f"{top} dataset" if plain_sub.lower() == primary_lbl.lower() else plain_sub
+                    push_item(f"{top}: {primary_lbl}", primary_url, b["cat_key"], b["cat"], desc_txt)
+            else:
+                split_m = re.match(r"^(.+?)\s+[-–—]\s+(.+)$", top)
+                name = split_m.group(1).strip() if split_m else re.sub(r":$", "", top).strip()
+                base_desc = re.sub(r":$", "", split_m.group(2) if split_m else top).strip()
+                all_sub_links: List[Tuple[str, str]] = []
+                for _, sub_text in subs:
+                    all_sub_links.extend(_extract_md_links(sub_text))
+                if all_sub_links:
+                    preferred = next(
+                        (
+                            lnk
+                            for lnk in all_sub_links
+                            if re.search(r"openpolicedata|policedatainitiative|arcgis|tooledesign", lnk[1], flags=re.IGNORECASE)
+                        ),
+                        all_sub_links[0],
+                    )
+                    example_labels = [
+                        lbl
+                        for lbl, _ in all_sub_links
+                        if lbl.lower() not in {"this site", "this older site", "this other site"}
+                    ][:4]
+                    full_desc = f"{base_desc} ({', '.join(example_labels)}, ...)" if example_labels else base_desc
+                    push_item(name, preferred[1], b["cat_key"], b["cat"], full_desc)
+            continue
+
+    cat_order: List[dict] = []
+    cat_map: Dict[str, dict] = {}
+    for item in items:
+        ck = item["cat_key"]
+        if ck not in cat_map:
+            cat_entry = {"key": ck, "name": item["cat"], "count": 0}
+            cat_map[ck] = cat_entry
+            cat_order.append(cat_entry)
+        cat_map[ck]["count"] += 1
+
+    return {
+        "source_name": "Free Datasets for Social Science Research (Todd Jones)",
+        "source_url": "https://github.com/toddrjones/datasets",
+        "updated_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+        "total": len(items),
+        "categories": cat_order,
+        "items": items,
+    }
+
+
+def sync_research_datasets(lookup_db: dict) -> int:
+    """Đồng bộ danh mục 150+ bộ dữ liệu mở KHXH & Kinh tế từ toddrjones/datasets."""
+    print("[Research Datasets] Đang đồng bộ kho dữ liệu mở toddrjones/datasets...")
+    try:
+        resp = requests.get(TODDRJONES_DATASETS_README_URL, headers=HEADERS, timeout=30)
+        resp.raise_for_status()
+        parsed = parse_toddrjones_datasets_markdown(resp.text)
+        if parsed.get("total", 0) >= 50:
+            lookup_db["research_datasets"] = parsed
+            print(
+                f"[Research Datasets] Đã đồng bộ thành công {parsed['total']} bộ dữ liệu "
+                f"({len(parsed['categories'])} chủ đề)."
+            )
+            return parsed["total"]
+        print(
+            f"[Research Datasets] Cảnh báo: Số lượng parse được ({parsed.get('total', 0)}) dưới ngưỡng an toàn (50). "
+            "Giữ nguyên dữ liệu hiện có."
+        )
+    except Exception as exc:
+        print(f"[Research Datasets] Lỗi khi đồng bộ toddrjones/datasets: {exc}")
+    return lookup_db.get("research_datasets", {}).get("total", 0)
 
 
 # ==============================================================================
@@ -1162,9 +1400,10 @@ def main():
     rw_msgs = check_retraction_watch(state, watchlist, lookup_db)
     all_notifications.extend(rw_msgs)
 
-    # 3. Đồng bộ danh sách tạp chí bị mạo danh (Hijacked Journals) & Phân hạng (ABDC, SJR Q1-Q4)
+    # 3. Đồng bộ danh sách tạp chí bị mạo danh (Hijacked Journals) & Phân hạng (ABDC, SJR Q1-Q4) & Kho dữ liệu mở
     sync_hijacked_journals(lookup_db)
     sync_academic_rankings(lookup_db)
+    sync_research_datasets(lookup_db)
 
     # 4. Nếu người dùng truyền từ khóa tra cứu trực tiếp từ giao diện GitHub Actions (workflow_dispatch input)
     manual_query = os.environ.get("LOOKUP_QUERY", "").strip()
